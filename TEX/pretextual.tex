@@ -1,0 +1,158 @@
+% ----------------------------------------------------------
+% ELEMENTOS PRÉ-TEXTUAIS
+% ----------------------------------------------------------
+% \pretextual
+
+% ---
+% Capa
+% ---
+\imprimircapa
+% ---
+
+% ---
+% Folha de rosto
+% (o * indica que haverá a ficha bibliográfica)
+% ---
+%\imprimirfolhaderosto*
+\imprimirfolhaderosto
+% ---
+
+
+
+% ---
+% Agradecimentos
+% ---
+\begin{agradecimentos}
+Este trabalho é dedicado a minha família como forma de retribuição a todo esforço empenhado para garantir a minha educação ao longo de minha vida.
+
+Com uma menção especial a minha esposa Camila e minhas duas filhas Isadora e Flávia que me ajudaram de várias maneiras até que a última palavra fosse inserida nesse trabalho.
+
+Além é claro dos professores e coleguinhas que me acompanharam ao longo de todos os anos de curso e contribuíram para minha formação acadêmica de forma completa.
+
+\end{agradecimentos}
+% ---
+
+% ---
+% Epígrafe
+% ---
+
+\begin{comment}
+Epígrafe (Não se escreve a palavra epígrafe). Elemento opcional. 
+A epígrafe deve ser colocada após o agradecimento; trata-se de uma citação, seguida de indicação de autoria, relacionada à matéria tratada no corpo do trabalho. Deve ser “[...] elaborada conforme a NBR 10520 [...]. Podem também constar epígrafes nas folhas ou páginas de abertura das seções primárias” (ABNT, 2002, p. 7). 
+A fonte da epígrafe deve sempre ser mencionada nas referências. 
+
+Citação direta até 3 linhas deve estar entre aspas e em parágrafo normal (vá até a janela de Estilo - selecione - Parágrafo), se tiver mais de 3 linhas, deve ser recuada 4 cm da margem esquerda, com fonte menor que 12 e espaçamento entre linhas simples 
+\end{comment}
+
+\begin{epigrafe}
+    \vspace*{\fill}
+	\begin{flushright}
+		\textit{“42 is the Answer to the Ultimate Question of Life, the Universe, and Everything.”  \\
+        \citeonline{adams2007hitchhiker}
+}
+	\end{flushright}
+\end{epigrafe}
+% ---
+
+% ---
+% RESUMOS
+% ---
+
+% resumo em português
+\setlength{\absparsep}{18pt} % ajusta o espaçamento dos parágrafos do resumo
+\begin{resumo}
+  
+ \textbf{Palavras-chave}: Energy Harvesting, low power, IoT, LP Wan.
+\end{resumo}
+
+% resumo em inglês
+\begin{resumo}[Abstract]
+ \begin{otherlanguage*}{english}
+
+   \vspace{\onelineskip}
+ 
+   \noindent 
+   \textbf{Keywords}: Energy Harvesting, low power, IoT, LP Wan.
+ \end{otherlanguage*}
+\end{resumo}
+
+
+% ---
+% inserir lista de ilustrações
+% ---
+\pdfbookmark[0]{\listfigurename}{lof}
+\listoffigures*
+\cleardoublepage
+% ---
+
+% ---
+% inserir lista de quadros
+% ---
+\pdfbookmark[0]{\listofquadrosname}{loq}
+\listofquadros*
+\cleardoublepage
+% ---
+
+% ---
+% inserir lista de tabelas
+% ---
+\pdfbookmark[0]{\listtablename}{lot}
+\listoftables*
+\cleardoublepage
+% ---
+
+% ---
+% inserir lista de abreviaturas e siglas
+% ---
+\begin{siglas}
+    \item[A/D] \textit{Conversor Analógico-Digital}
+    \item[Anatel]   \textit{Agência Nacional de Telecomunicações}
+    \item[DBPSK]    \textit{differential binary phase shift keying} (Modulação por chaveamento de deslocamento de fase binária diferencial)
+    \item[CI]   \textit{Circuito integrado}
+    \item[CMOS] \textit{Complementary metal–oxide–semiconductor}  (metal óxido semicondutor de simetria complementar)
+    \item[CSV]  \textit{Comma-separated values} (Valores separados por vírgula)
+    \item[DC]  \textit{Direct Current} (Corrente contínua)
+    \item[FLV] \textit{Frutas, Verduras e Legumes}
+    \item[FSK] \textit{Frequency Shifting Keying} (Modulação por chaveamento de frequência)
+    \item[GPIO]     \textit{General Purpose Input/Output} (Entradas e Saídas de uso Geral)
+    \item[EH]   \textit{Energy Harvesting} (Coleta de Energia) 
+    \item[ESR]  \textit{Equivalent series resistor} (Resistor série equivalente)
+    \item[I$^2$C]  \textit{Inter-Integrated Circuit} (Comunicação Entre circuitos Integrados)
+    \item[IOT]  \textit{Internet of Things} (Internet das coisas)
+    \item[ISM]  \textit{industrial, scientific and medical} (Indústria, Ciência e Medicina)
+    \item[LoRa] \textit{Long Range} (Longo alcance)
+    \item[LPWAN] \textit{Low-power wide-area network} (Redes de longa distância de baixa potência)
+    \item[M2M] \textit{machine-to-machine} (Máquina à máquina) 
+    \item[MLP] \textit{Multilayer Perceptron} (Perceptron multicamadas)
+    \item[PA]  \textit{Power Amplifier} (Amplificador de Potência)
+    \item[PCI] \textit{Placa de circuito impresso}
+    \item[RF]  \textit{Rádio Frequência}
+    \item[RTC]  \textit{Real-time clock} (Relógio de tempo real)
+    \item[TACO] \textit{Tabela Brasileira de Composição de Alimentos}
+    \item[UNISINOS]  \textit{Universidade do Vale do Rio dos Sinos}
+
+\end{siglas}
+% ---
+
+% ---
+% inserir lista de símbolos
+% ---
+\begin{simbolos}
+  \item[$t$] Tempo
+  \item[$\tau$] Tau - Constante de tempo
+  \item[$C$] Capacitor
+  \item[$I$] Corrente
+  \item[$V_{cc}$] Tensão da Fonte de corrente contínua
+  \item[$\Delta V$] Diferença de tensão
+  \item[$A$] Ampere
+  \item[$F$] Faraday
+\end{simbolos}
+% ---
+
+% ---
+% inserir o sumario
+% ---
+\pdfbookmark[0]{\contentsname}{toc}
+\tableofcontents*
+\cleardoublepage
+% ---
