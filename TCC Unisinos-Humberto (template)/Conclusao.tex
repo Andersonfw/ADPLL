@@ -1,0 +1,28 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Conclusão}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Neste trabalho, foi apresentada uma solução de baixo consumo de energia para se empregado a um sistema de colheita de energia. Uma abordagem dos entes envolvidos no ambiente a que esse projeto se submete foi discutida e apresentada. Como exemplo de aplicação, desenvolveu-se um dispositivo eletrônico capaz de funcionar por mais de 20 dias sem o uso de baterias. A solução empregada envolvendo um super capacitor em alternativa aos sistema convencionais de baterias apresentou um resultado eficaz, apesar de concessões ao uso de um amplificador de potência de rádio.
+
+A placa eletrônica deste dispositivo foi fabricada e colocada em testes para garantir que os resultados teóricos previstos no seu desenvolvimento fossem plenamente verificados, tendo sido visto apenas uma discrepância quanto ao tempo estimado de duração da energia do super capacitor devido a sua corrente de fuga.
+
+Baseado no trabalho desenvolvido por~\citeonline{renan}, onde se propõe o desenvolvimento de um dispositivo de colheita de energia onde se conseguiu um total de 1,08~mJ em 51 minutos. Com isso pode se relacionar a quantidade de tempo necessária para realizar o acúmulo de energia. Embora o trabalho citado tenha executado uma análise para o carregamento total de um capacitor que demandaria muita energia e tempo, pode-se aqui comparar uma eventual recarga apenas da energia consumida em um ciclo de evento do RTC. Para isso, considera-se apenas a energia suficiente para verificar e salvar os dados de temperatura na memória (sem considerar as transmissões de RF). 
+
+Considerando os resultados obtido na avaliação de desempenho energético, chega-se a uma energia total de aproximadamente 410~mJ. Com isso, estima-se que o tempo necessário para acumular essa energia seria de aproximadamente 13 dias de carregamento, que embora seja uma quantidade de tempo excessiva, já serve como uma comparação inicial.
+
+A principal contribuição deste trabalho foi de apresentar solução para energização de dispositivos de IoT que dispensem o uso de pilhas e baterias, garantindo assim um emprego efetivo do desenvolvimento tecnológico alinhado com preocupações ambientais. Além de possibilitar uma autonomia de 20 dias sem a necessidade de carregamento externo e ainda conseguindo: ler, gravar e transmitir 499 dados coletados.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Trabalhos futuros}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Como proposta de trabalhos futuros, pode-se avaliar o comportamento energético utilizando outra rede de comunicação como LoRa, NB-IoT e até mesmo 5G, uma vez que o consumo constante de rádio pode ser descartado com o uso do RTC.
+
+Pode-se também considerar para descarregamento dos dados, algo como NFC que possui características de consumo própria para comunicações de curto alcance, visto que o processo de obtenção dos dados salvos pode ser executado por um \textit{"scaner"} próximo ao dispositivo no destino final.
+
+Além disso já é possível integrar uma solução de colheita de energia para carregamento do super capacitor e um dispositivo de \textit{"Wake-up Receiver}.
+
+No quesito software, pode-se otimizar o uso de memória tanto para aumentar a quantidade de pacotes salvos, como para diminuir o tempo de gravação de dados na memória.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

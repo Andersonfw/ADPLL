@@ -1,0 +1,48 @@
+FAZER
+
+-12dBm -> W = 0.1mW
+    tempo de carga em 0,1mW
+
+
+fazer um quadro comparativo entre RTCs de mercado
+
+
+
+FEITO
+- levar quadro do protocolo para análise
+- Anexo esquema elétrico do iMCP
+- explicar melhor os trabalhos correlatos
+- tempo de coleta( ver trabalho do renan sobre a capacidade de coleta) (feito)
+- arrumar introdução (feito)
+- metodologia tem que definir os requisitos do projeto (feito)
+   - dizer o que vou fazer (feito)
+- usar o wakeup: considerar o do fernando (feito)
+- ajustar unidades do texto (feito)
+- levar wakeup receiver para fundamentação (feito)
+- custo beneficio de energia (feito)
+- tabela de consumo de todo mundo (feito)
+- quanto precisa de carga para funcionar (feito)
+- Esquema elétrico (feito)
+- Placa (feito)
+- Resultado  (feito)
+- esquema elétrico  (feito)
+- Queda de corrente no tempo (feito)
+- Titulo (Sistema para monitoramento de temperatura de produtos perecíveis.) (feito)
+- Quanto se conseguiu de desempenho? nº de transmissões 500 com queda de 300mV (feito)
+
+Metodologia - ver trabalho do renan (feito)
+    Dizer que usei altium 
+    softwre do firmware
+    dizer que tem que escolher o protocolo
+    tem que fazer placa
+    tem que fazer firmware
+    tem que implementar
+    dizer que precisei fazer a biblioteca do rtc
+    o software de exemplo do sigfox
+
+escolha do protocolo passa para resultado (feito)
+Resultado - seguir sequencia da metodologia (feito)
+como foi feita as medidas (feito)
+    fotos (feito)
+
+
