@@ -5,7 +5,6 @@ Created on abril 01 21:23:40 2023
 
 @author: Ânderson Felipe Weschenfelder
 """
-from _ast import expr
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,11 +41,14 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
     return XdB, f
 
 
-N = 3
-fs = 450e6
+N = 10
+fs = 5e9
 ts = 1 / fs
-f1 = 1.33e6
+f1 = 25.01e6
 V = 1
+# Zero-order hold (ZOH) increase the sampling rate of a discrete-time signal by inserting zeros between the
+# original samples and then interpolating the values of the inserted zeros based on the neighboring samples.
+L = 1   # ZOH
 t = np.arange(0, 400 * 1 / f1, ts)
 # resolução de cada nível. Para N = 3bits são 8 níveis, e se V=1V, cada nível vale 1/8V.,
 res_quantization = V * 2 / 2 ** N
@@ -58,21 +60,27 @@ x_n = np.round(x_t / res_quantization)
 # Do valor arredondado multiplica pela resolução para normalizar a amplitude V novamente.
 x_n = x_n * res_quantization
 
+# signal with ZOH aplyed
+x_n = np.repeat(x_n, L)
+x_t = np.repeat(x_t, L)
+# Time signal with ZOH aplyed
+t = np.arange(0, 400 * 1 / f1, ts/L)
+
 # Calculando o erro
 err = x_t - x_n
-
 # Quanto mais níveis melhor a resolução e menor o erro de quantização
 
 # Plotando o sinal original, quantizado e o erro de quantização
 fig, axs = plt.subplots(3, 1, figsize=(10, 8))
 
-axs[0].plot(t[:1000], x_t[:1000])
+graf_number_vector = 1000  # numero de elementos utilizados no gráfico
+axs[0].plot(t[:graf_number_vector], x_t[:graf_number_vector])
 axs[0].set_title('Sinal Original')
 
-axs[1].step(t[:1000], x_n[:1000], where='post')
+axs[1].step(t[:graf_number_vector], x_n[:graf_number_vector], where='post')
 axs[1].set_title('Sinal Quantizado (3 bits)')
 
-axs[2].plot(t[:1000], err[:1000])
+axs[2].plot(t[:graf_number_vector], err[:graf_number_vector])
 axs[2].set_title('Erro de Quantização')
 
 plt.tight_layout()  # ajustar automaticamente as posições das subplots de um gráfico para que não haja sobreposição de legendas, rótulos de eixos ou títulos.
@@ -81,8 +89,8 @@ plt.tight_layout()  # ajustar automaticamente as posições das subplots de um g
 # XdB_o, fo = fun_calc_psd((x_t), fs, 100e3)
 # XdB_q, fq = fun_calc_psd((x_n), fs, 100e3)
 
-XdB_o, fo = fun_calc_psd((x_t), fs, 100e3)
-XdB_q, fq = fun_calc_psd((x_n), fs, 100e3)
+XdB_o, fo = fun_calc_psd((x_t), fs * L, 10e3)
+XdB_q, fq = fun_calc_psd((x_n), fs * L, 10e3)
 
 # plt.figure()
 # f , x = signal.welch(x_t, fs, nperseg=1024)
@@ -98,7 +106,7 @@ plt.grid(visible=True)
 plt.legend()
 plt.xlabel('Feq (MHz)')
 plt.ylabel('Amplitude')
-# plt.show()
+plt.show()
 
 Xq_value_raw = 10 ** (XdB_q / 10)   # PSD do sinal quantizado em valores de pico não em DB
 Xt_value_raw = 10 ** (XdB_o / 10)   # PSD do sinal original em valores de pico não em DB
@@ -143,3 +151,8 @@ SNR_Calc = 6.02 * N + 1.76
 SNR_Calc_dbc = - SNR_Calc - 10 * np.log10(fs)
 print('SNR Teorico: {:.2f} DB'.format(SNR_Calc))
 print('SNR Teorico: {:.2f} dBc/Hz'.format(SNR_Calc_dbc))
+
+max_PSD_value = max(XdB_q)
+max_PSD_freq = fq[np.argmax(XdB_q)] / 1e6
+
+print("Pico máximo da PSD é de", max_PSD_value, "dB na frequência de ", max_PSD_freq,"MHz")
