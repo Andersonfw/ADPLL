@@ -35,7 +35,7 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
     fftstr = f'len(x)={len_x:.2f}, rbw={rbw / 1e3:.2f}kHz, fstep={fstep / 1e3:.2f}kHz, nfft={nfft:d}, nwin={nwin:d}'
     print(f'Calculating the PSD: {fftstr} ...')
     f, X = signal.welch(x, fs=fs, window=signal.windows.blackman(nwin), nperseg=nwin, nfft=nfft, scaling='density')
-    # X *= (np.sinc(f / fs)) ** 2  # correct for ZOH
+    X *= (np.sinc(f / fs)) ** 2  # correct for ZOH
     XdB = 10 * np.log10(X)
     XdB_sig = np.max(XdB)
     print(f'Signal PSD peak = {XdB_sig:.2f} dB, 10log(rbw) = {10 * np.log10(rbw):.1f}')
@@ -78,6 +78,9 @@ axs[2].set_title('Erro de Quantização')
 plt.tight_layout()  # ajustar automaticamente as posições das subplots de um gráfico para que não haja sobreposição de legendas, rótulos de eixos ou títulos.
 # plt.show()
 
+# XdB_o, fo = fun_calc_psd((x_t), fs, 100e3)
+# XdB_q, fq = fun_calc_psd((x_n), fs, 100e3)
+
 XdB_o, fo = fun_calc_psd((x_t), fs, 100e3)
 XdB_q, fq = fun_calc_psd((x_n), fs, 100e3)
 
@@ -90,39 +93,53 @@ plt.plot(fo / 1e6, XdB_o, label="Full resolution")
 # plt.semilogy(fo/1e6, XdB_o,label="full resolution")
 plt.plot(fq / 1e6, XdB_q, label="Quantized")
 # plt.semilogy(fq/1e6, XdB_q,label=""full resolution")
-plt.plot(fq / 1e6, np.full_like(fq,  np.mean(XdB_q)), 'black',label="mean")
+plt.plot(fq / 1e6, np.full_like(fq, np.mean(XdB_q)), 'black', label="mean")
 plt.grid(visible=True)
 plt.legend()
 plt.xlabel('Feq (MHz)')
 plt.ylabel('Amplitude')
 plt.show()
 
+Xq_value_raw = 10 ** (XdB_q / 10)   # PSD do sinal quantizado em valores de pico não em DB
+Xt_value_raw = 10 ** (XdB_o / 10)   # PSD do sinal original em valores de pico não em DB
+# X_value_q = XdB_q
+# X_value_t = XdB_o
+
 # Identificar a banda de frequência do sinal
-f_signal_min = f1 - f1/2    # margem esquerda da banda
-f_signal_max = f1 + f1/2   # margem direita da banda
+f_signal_min = 0  # margem esquerda da banda
+f_signal_max = fs/2  # margem direita da banda
 
 # Identificar a banda de frequência do ruído
-f_noise_min = 0     # margem esquerda da banda
-f_noise_max = 100e3    # margem direita da banda
+f_noise_min = 0   # margem esquerda da banda
+f_noise_max = fs/2   # margem direita da banda
 
 # Calcular a PSD média do sinal na banda de interesse
-Pxx_signal = np.mean(XdB_q[(fq >= f_signal_min) & (fq <= f_signal_max)])
+Pxx_signal = np.mean(Xq_value_raw[(fq >= f_signal_min) & (fq <= f_signal_max)])
 
 # Calcular a potência do sinal na banda de interesse
-Ps = np.trapz(XdB_q[(fq >= f_signal_min) & (fq <= f_signal_max)], fq[(fq >= f_signal_min) & (fq <= f_signal_max)])
-# Ps = np.trapz(XdB_o, fo)
-print("ps:", Ps)
+# Potência téorica e dada por V^2 /2
+Ps_calc = V**2 / 2
+print("potência do sinal calculado", Ps_calc)
+Ps = np.trapz(Xq_value_raw[(fq >= f_signal_min) & (fq <= f_signal_max)], fq[(fq >= f_signal_min) & (fq <= f_signal_max)])
+print("potência do sinal medida", Ps)
 
 # Calcular a potência do ruído fora da banda de interesse
-Pn = np.trapz(XdB_q[(fq >= f_noise_min) & (fq <= f_noise_max)], fq[(fq >= f_noise_min) & (fq <= f_noise_max)])
-# Pn = np.trapz(XdB_q, fq)
-print("pn:", Pn)
+Pn = np.trapz(Xt_value_raw[(fq >= f_noise_min) & (fq <= f_noise_max)], fq[(fq >= f_noise_min) & (fq <= f_noise_max)])
+# print("pn total:", Pn)
+Pn = (Ps - Pn)
+print("potência do ruido", Pn)
 
 # Calcular a SNR em dB
 SNR = 10 * np.log10(Ps / Pn)
+# SNR em dBc/Hz (decibéis em relação à potência do sinal no canal por Hertz)
+SNR_dbc = - SNR - 10* np.log10(fs)
+print('SNR: {:.2f} DB'.format(SNR))
+print('SNR: {:.2f} dBc/Hz'.format(SNR_dbc))
 
-print('SNR: {:.2f} dBc / Hz'.format(SNR))
+# SNR em dB teórico
+SNR_Calc = 6.02 * N + 1.76
 
-SNR_Calc = -6.02 * N - 1.76 - 10 * np.log10(fs)
-
-print('SNR Teorico: {:.2f} dBc/ Hz'.format(SNR_Calc))
+# SNR em dBc teórico
+SNR_Calc_dbc = - SNR_Calc - 10 * np.log10(fs)
+print('SNR Teorico: {:.2f} DB'.format(SNR_Calc))
+print('SNR Teorico: {:.2f} dBc/Hz'.format(SNR_Calc_dbc))
