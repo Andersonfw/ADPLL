@@ -98,7 +98,7 @@ plt.grid(visible=True)
 plt.legend()
 plt.xlabel('Feq (MHz)')
 plt.ylabel('Amplitude')
-plt.show()
+# plt.show()
 
 Xq_value_raw = 10 ** (XdB_q / 10)   # PSD do sinal quantizado em valores de pico não em DB
 Xt_value_raw = 10 ** (XdB_o / 10)   # PSD do sinal original em valores de pico não em DB
@@ -106,8 +106,8 @@ Xt_value_raw = 10 ** (XdB_o / 10)   # PSD do sinal original em valores de pico n
 # X_value_t = XdB_o
 
 # Identificar a banda de frequência do sinal
-f_signal_min = 0  # margem esquerda da banda
-f_signal_max = fs/2  # margem direita da banda
+f_signal_min = f1/2  # margem esquerda da banda
+f_signal_max = f1 + f1/2  # margem direita da banda
 
 # Identificar a banda de frequência do ruído
 f_noise_min = 0   # margem esquerda da banda
@@ -124,9 +124,9 @@ Ps = np.trapz(Xq_value_raw[(fq >= f_signal_min) & (fq <= f_signal_max)], fq[(fq 
 print("potência do sinal medida", Ps)
 
 # Calcular a potência do ruído fora da banda de interesse
-Pn = np.trapz(Xt_value_raw[(fq >= f_noise_min) & (fq <= f_noise_max)], fq[(fq >= f_noise_min) & (fq <= f_noise_max)])
+Pn = np.trapz(Xq_value_raw[(fq >= f_noise_min) & (fq <= f_noise_max)], fq[(fq >= f_noise_min) & (fq <= f_noise_max)])
 # print("pn total:", Pn)
-Pn = (Ps - Pn)
+Pn = (Pn - Ps)
 print("potência do ruido", Pn)
 
 # Calcular a SNR em dB
