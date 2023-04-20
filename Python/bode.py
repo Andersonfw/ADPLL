@@ -1,16 +1,23 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
-
+import control
 R = 100e3
 C = 1e-3
 # Defina a função de transferência em s
 num = [1]  # Numerador
 den = [1, R*C]  # Denominador
+den = [1536, 576, -86.4, 4.6, -0.1]
+num = [7680, 4800, 1.205e4, 1465, 72.5, 1.5]
 sys = signal.TransferFunction(num, den)
+
+print(sys)
+
 
 # Calcule a resposta em frequência
 f, mag, phase = signal.bode(sys)
+
+
 
 # Plote o mapa de Bode
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
@@ -34,5 +41,25 @@ ax1.annotate(f'Frequeância {f[idx_3db]}Hz',  # Valor do marcador
              # xycoords='data',  # Coordenadas em relação aos dados do gráfico
              xytext=(f[idx_3db - 10], mag[idx_3db - 10]),  # Posição do texto do valor do marcador
              textcoords='offset points',  # Coordenadas do texto em relação ao marcador
-             arrowprops=dict(facecolor='black',shrink=0.05))  # Estilo de seta do marcador
+             arrowprops=dict(arrowstyle="->"))
+
+# find the cross-over frequency and gain at cross-over
+wc = np.interp(-180.0,np.flipud(phase),np.flipud(f))
+Kcu = np.interp(wc,f,mag)
+
+print('Crossover freq = ', wc, ' HZ')
+print('Gain at crossover = ', Kcu)
+
+# ax1,ax2 = plt.gcf().axes     # get subplot axes
+#
+# plt.sca(ax1)                 # magnitude plot
+# plt.plot(plt.xlim(),[Kcu,Kcu],'r--')
+# plt.plot([wc,wc],plt.ylim(),'r--')
+# plt.title("Gain at Crossover = {0:.3g}".format(Kcu))
+#
+# plt.sca(ax2)                 # phase plot
+# plt.plot(plt.xlim(),[-180,-180],'r--')
+# plt.plot([wc,wc],plt.ylim(),'r--')
+# plt.title("Crossover Frequency = {0:.3g} rad/sec".format(wc))
+
 plt.show()
