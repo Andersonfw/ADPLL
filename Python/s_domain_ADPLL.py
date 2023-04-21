@@ -7,13 +7,95 @@ import warnings
 warnings.filterwarnings('ignore')
 
 '''
+            Exibir duas funções de transferência em uma mesma figura
+            Parameters
+            ----------
+            name1 : Nome da legenda da função 1
+            name2 : Nome da legenda da função 2
+            sys1 : Função de transferênci da função 1
+            sys1 : Função de transferênci da função 2
+            w :   Lista de frequências para ser usada pela resposta em frequência
+            margem : (opcional) Plotar a margem e ganho de fase
+'''
+def format_plot(name1, name2, sys1, sys2,  omega, margins=False):
+    mag1, phase1, omega1 = control.bode(sys1, omega, Hz=False, Plot=False)
+    mag2, phase2, omega2 = control.bode(sys2, omega, Hz=False, Plot=False)
+
+    mag_dB1 = 20 * np.log10(mag1)
+    mag_dB2 = 20 * np.log10(mag2)
+    if margins:
+        gm1, pm1, sm1, wg1, wp1, ws1 = control.stability_margins(sys1)
+        gm2, pm2, sm2, wg2, wp2, ws2 = control.stability_margins(sys2)
+
+    omega1 = omega1 / (2 * np.pi)
+    omega2 = omega2 / (2 * np.pi)
+    wp1 = wp1 / (2 * np.pi)
+    wg1 = wg1 / (2 * np.pi)
+    wp2 = wp2 / (2 * np.pi)
+    wg2 = wg2 / (2 * np.pi)
+
+    plt.subplot(221)
+    if margins:
+        plt.hlines(0, omega1[0], omega1[-1], linestyle='--')
+        plt.vlines([wp1, wg1], np.min(mag_dB1), np.max(mag_dB1), linestyle='--')
+    plt.semilogx(omega1, mag_dB1, '-r',  label="{}".format(name1))
+    plt.xlabel('Frequência (Hz)')
+    plt.ylabel('Magnitude (dB)')
+    plt.legend()
+    plt.grid()
+
+    if margins:
+        plt.title(
+            ' bode pm: {:0.2f} deg @{:0.2f} Hz gm: {:0.2f} dB @{:0.2f} Hz'.
+            format(pm1, wp1,  20 * np.log10(gm1), wg1))
+    else:
+        plt.title(name1 + ' bode')
+    plt.subplot(223)
+    phase_deg = np.rad2deg(phase1)
+    plt.semilogx(omega1, phase_deg, '-r',  label="{}".format(name1))
+    if margins:
+        plt.vlines([wp1, wg1],
+                   np.min(phase_deg),
+                   np.max(phase_deg),
+                   linestyle='--')
+        plt.hlines(-180, omega1[0], omega1[-1], linestyle='--')
+    plt.legend()
+    plt.grid()
+
+    plt.subplot(222)
+    if margins:
+        plt.hlines(0, omega2[0], omega2[-1], linestyle='--')
+        plt.vlines([wp2, wg2], np.min(mag_dB2), np.max(mag_dB2), linestyle='--')
+    plt.semilogx(omega2, mag_dB2, '-b',  label="{}".format(name2))
+    plt.xlabel('Frequência (Hz)')
+    plt.ylabel('Magnitude (dB)')
+    plt.legend()
+    plt.grid()
+
+    if margins:
+        plt.title(
+            ' bode pm: {:0.2f} deg @{:0.2f} Hz gm: {:0.2f} dB @{:0.2f} Hz'.
+            format(pm2, wp2,  20 * np.log10(gm2), wg2))
+    else:
+        plt.title(name2 + ' bode')
+
+    plt.subplot(224)
+    phase_deg = np.rad2deg(phase2)
+    plt.semilogx(omega2, phase_deg, '-b',  label="{}".format(name2))
+    if margins:
+        plt.vlines([wp2, wg2],
+                   np.min(phase_deg),
+                   np.max(phase_deg),
+                   linestyle='--')
+        plt.hlines(-180, omega2[0], omega2[-1], linestyle='--')
+    plt.legend()
+    plt.grid()
+'''
             Extrai os parêmetros do numerador e denominador de uma função de transferência em S
             Parameters
             ----------
             H : Função de transferência no dominio de frequência S
 '''
-
-
 def extract_parameters(H):
     # Converter a string em uma expressão simbólica
     expressao = sp.sympify(H)
@@ -58,13 +140,13 @@ def IRR_filter(lp):
             numerador : (opcional) array dos parâmetros do numerador da Função de transferência sem "S"
             denominador : (opcional) array dos parâmetros do denominador da Função de transferência sem "S"
             irr : (opcional) array de coeficientes do filtro IRR
-            w : (opcional) Kista de frequências para ser usada pela resposta em frequência
+            w : (opcional) Lista de frequências para ser usada pela resposta em frequência
             margem : (opcional) Plotar a margem e ganho de fase
             prints : (opcional) Printar informações
 '''
 
 
-def h_to_bode(H=None, numerador=None, denominador=None, irr=None, freq=None, margem=False, prints=False):
+def h_to_bode(H=None, numerador=None, denominador=None, irr=None, freq=None, margem=False, prints=False, plot=False):
     if irr:
         IRR = IRR_filter(irr)
     else:
@@ -87,9 +169,10 @@ def h_to_bode(H=None, numerador=None, denominador=None, irr=None, freq=None, mar
     if prints:
         print("função de transferencia em Laplace com filtro IRR: ", tf)
     if freq is not None:
-        mag, phase, f = control.bode(tf, omega=freq, Hz=True, dB=True, deg=True, margins=margem)
+        mag, phase, f = control.bode(tf, omega=freq, Hz=True, dB=True, deg=True, margins=margem, plot=plot)
     else:
-        mag, phase, f = control.bode(tf, Hz=True, dB=True, deg=True, margins=margem)
+        mag, phase, f = control.bode(tf, Hz=True, dB=True, deg=True, margins=margem, plot=plot)
+
     return mag, phase, f, tf
 
 
@@ -101,56 +184,53 @@ s = sp.symbols('s')
 N = 69.23  # relação de f/f_r
 
 # Livro Bogdan PG 137/152
-# fr = 26e6  # Frequeência de referência
-# a = 2 ** -7  # alpha value
-# p = 2 ** -15  # rho value
-# #   Coeficiêntes do filtro IIR
-# l = [2**-3, 2**-3, 2**-3, 2**-4]
+fr = 26e6  # Frequeência de referência
+a = 2 ** -7  # alpha value
+p = 2 ** -15  # rho value
+#   Coeficiêntes do filtro IIR
+l = [2**-3, 2**-3, 2**-3, 2**-4]
 
 # Aassignment 4
-fr = 40e6  # Frequeência de referência
-a = 2 ** -6  # alpha value
-p = 2 ** -14  # rho value
-# Coeficiêntes do filtro IIR
-l = [2**-2, 2**-3, 2**-2, 2**-3]
+# fr = 40e6  # Frequeência de referência
+# a = 2 ** -6  # alpha value
+# p = 2 ** -14  # rho value
+# # Coeficiêntes do filtro IIR
+# l = [2 ** -2, 2 ** -3, 2 ** -2, 2 ** -3]
 
 # Função de tranferência de loop aberto
-Hol = (a + p * fr / s) * (fr / s)
-
+HOL = (a + p * fr / s) * (fr / s)
 
 if __name__ == "__main__":
-    w = np.logspace(3, 10, 10000)  # List of frequencies in rad/sec to be used for frequency response ( 10^-1 até 10^3)
+    w = np.logspace(3, 8, 10000)  # List of frequencies in rad/sec to be used for frequency response ( 10^-1 até 10^3)
+    margem = True
+    # show the response in frequency of signal sampled
     # # Plotar bode da TF
-    # mag, phase, f, Hol = h_to_bode(H=Hol, freq=w, irr=l, margem=True, prints=True)
-    mag, phase, f, Hol = h_to_bode(H=Hol, freq=w, irr=None, margem=True, prints=True)
-    ax1, ax2 = plt.gcf().axes  # get subplot axes
-    ax1.set_title('Magnitude Open Loop Hol(s)')
-    ax2.set_title('Phase Open Loop Hol(s)')
+    mag, phase, f, Hol = h_to_bode(H=HOL, freq=w, irr=None, margem=margem, prints=True, plot=False)
+    # ax1, ax2 = plt.gcf().axes  # get subplot axes
+    # ax1.set_title('Magnitude Open Loop Hol(s)')
+    # ax2.set_title('Phase Open Loop Hol(s)')
+
+    mag, phase, f, Hol_irr = h_to_bode(H=HOL, freq=w, irr=l, margem=margem, prints=True, plot=False)
+    # plt.figure()
+    format_plot("Open Loop Hol(s)" ,"Open Loop Hol(s) + IRR", Hol, Hol_irr, w, margins=True)
 
     plt.figure()
-    # Função de tranferência de loop fechado para referência
-    Hol_ref = N * (Hol / (1 + Hol))
-    control.bode(Hol_ref, omega=w, Hz=True, dB=True, deg=True, margins=True)
-    # mag, phase, f, Hol = h_to_bode(H=Hol_ref, freq=w, prints=True)
-    ax1, ax2 = plt.gcf().axes  # get subplot axes
-    ax1.set_title('Magnitude Closed Loop Hcl reference(s)')
-    ax2.set_title('Phase Closed Loop Hcl reference (s)')
+    # # Função de tranferência de loop fechado para referência
+    Hcl_ref = N * (Hol / (1 + Hol))
+    Hcl_ref_irr = N * (Hol_irr / (1 + Hol_irr))
+    format_plot("Closed Loop Hcl reference(s)", "Closed Loop Hcl reference(s) + IRR", Hcl_ref, Hcl_ref_irr, w, margins=True)
 
     plt.figure()
-    # Função de tranferência de loop fechado para o TDC
-    Hol_TDC = (Hol / (1 + Hol))
-    control.bode(Hol_TDC, omega=w, Hz=True, dB=True, deg=True, margins=True)
-    ax1, ax2 = plt.gcf().axes  # get subplot axes
-    ax1.set_title('Magnitude Closed Loop Hcl TDC(s)')
-    ax2.set_title('Phase Closed Loop Hcl TDC (s)')
+    # # Função de tranferência de loop fechado para o TDC
+    Hcl_TDC = (Hol / (1 + Hol))
+    Hcl_TDC_irr = (Hol_irr / (1 + Hol_irr))
+    format_plot("Closed Loop Hcl TDC(s)", "Closed Loop Hcl TDC(s) + IRR", Hcl_TDC, Hcl_TDC_irr, w, margins=True)
 
     plt.figure()
-    # Função de tranferência de loop fechado para o DCO
-    Hol_DCO = ( 1 / (1 + Hol))
-    control.bode(Hol_DCO, omega=w, Hz=True, dB=True, deg=True, margins=True)
-    ax1, ax2 = plt.gcf().axes  # get subplot axes
-    ax1.set_title('Magnitude Closed Loop Hcl DCO(s)')
-    ax2.set_title('Phase Closed Loop Hcl DCO (s)')
+    # # Função de tranferência de loop fechado para o DCO
+    Hcl_DCO = (1 / (1 + Hol))
+    Hcl_DCO_irr = (1 / (1 + Hol_irr))
+    format_plot("Closed Loop Hcl DCO(s)", "Closed Loop Hcl DCO(s) + IRR", Hcl_DCO, Hcl_DCO_irr, w, margins=True)
 
     plt.tight_layout()
     plt.show()
