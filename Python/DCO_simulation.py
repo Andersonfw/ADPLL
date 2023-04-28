@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 
+
 class LSB_BANK:
     def __init__(self, fc, nb, fr):
         self.fc = fc
@@ -26,8 +27,8 @@ def Init_DCO():
     trk_i_bank = LSB_BANK(F0, TRK_NB_I, FR_TRK_I)
     trk_f_bank = LSB_BANK(F0, TRK_NB_F, FR_TRK_F)
     global C0, pvt_lsb, acq_lsb, trk_i_lsb, trk_f_lsb
-    # C0 = pvt_bank.cmin
-    C0=10e-4
+    C0 = pvt_bank.cmin
+    # C0=10e-4
     pvt_lsb = pvt_bank.lsb
     acq_lsb = acq_bank.lsb
     trk_i_lsb = trk_i_bank.lsb
@@ -88,10 +89,10 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
         DEFINIÇÕES GERAIS
 '''
 F0 = 2045e6  # Frequência desajda na sáida do DCO
-FREF = 26e6   # Frequência de referência
-FREF_edge = 1/FREF  # tempo de borda de FREF
-F0_edge = 1/F0  # tempo de borda de F0
-FCW = 76    # Frequency command word
+FREF = 26e6  # Frequência de referência
+FREF_edge = 1 / FREF  # tempo de borda de FREF
+F0_edge = 1 / F0  # tempo de borda de F0
+FCW = 70  # Frequency command word
 
 FR_PVT = 500e6  # range de frequência em PVT mode
 FR_ACQ = 100e6  # range de frequência em acquisition mode
@@ -104,13 +105,12 @@ TRK_NB_I = 6  # número de bits Trekking integer mode
 TRK_NB_F = 5  # número de bits Trekking fractional mode
 OVERSAMPLE = 100  # oversample de frequência para discretizar a frequência do DCO
 
-Wt_noise = 12e-15   # Wander noise time
-Wf_noise = 1/Wt_noise   # Wander noise frequency
+Wt_noise = 12e-15  # Wander noise time
+Wf_noise = 1 / Wt_noise  # Wander noise frequency
 Jt_noise = 111e-15  # jitter noise time
-Jf_noise = 1/Jt_noise   #jitter noise frequency
+Jf_noise = 1 / Jt_noise  # jitter noise frequency
 
-
-TIME = 390  # simulação de X bordas de FREF
+TIME = 1000  # simulação de X bordas de FREF
 
 '''
         VARIÁVEIS GLOBAIS
@@ -126,11 +126,11 @@ trk_f_lsb = 0  # valor do LSB em Trekking fractional mode
 '''
 if __name__ == "__main__":
     Init_DCO()
-    fc = SET_DCO("00000000", "00000000", "000000", "101")
+    fc = SET_DCO("10000000", "10000000", "100000", "101")
     tc = 1 / fc
     fs = OVERSAMPLE * fc
     print("freq: ", fc)
-    t = np.arange(0, 10 * tc, 1/fs)
+    t = np.arange(0, 10 * tc, 1 / fs)
     jitter = np.random.randn(len(t)) * Jt_noise
     wander = np.random.randn(len(t)) * Wt_noise
     # plt.subplot(121)
@@ -143,40 +143,102 @@ if __name__ == "__main__":
     # plt.grid(visible=True)
     # plt.show()
 
-    x = np.sin(2 * np.pi * 1/(tc + jitter + wander) * t)
-    x_or = np.sin(2 * np.pi * fc * t)
-    len_simulation = 6 * OVERSAMPLE     # plotar 6 periodos do DCO
-
-    Xdb_o, f = fun_calc_psd((x_or), fs, 1e3, 10e3)
-    Xdb, f = fun_calc_psd((x), fs, 1e3, 10e3)
-
-    plt.figure()
-    # plt.plot(f / 1e6, Xdb_o, label="Original")
-    plt.semilogx(f, Xdb_o, label="Original")
-    # plt.plot(f / 1e6, Xdb, label="ERROR")
-    plt.semilogx(f, Xdb, label="With Noise")
-    plt.grid(visible=True)
-    plt.legend()
-    plt.xlabel('Freq (MHz)')
-    plt.ylabel('Amplitude (dB)')
+    # x = np.sin(2 * np.pi * 1/(tc + jitter + wander) * t)
+    # x_or = np.sin(2 * np.pi * fc * t)
+    # len_simulation = 6 * OVERSAMPLE     # plotar 6 periodos do DCO
+    #
+    # Xdb_o, f = fun_calc_psd((x_or), fs, 1e3, 10e3)
+    # Xdb, f = fun_calc_psd((x), fs, 1e3, 10e3)
+    #
+    # plt.figure()
+    # # plt.plot(f / 1e6, Xdb_o, label="Original")
+    # plt.semilogx(f, Xdb_o, label="Original")
+    # # plt.plot(f / 1e6, Xdb, label="ERROR")
+    # plt.semilogx(f, Xdb, label="With Noise")
+    # plt.grid(visible=True)
+    # plt.legend()
+    # plt.xlabel('Freq (MHz)')
+    # plt.ylabel('Amplitude (dB)')
+    # # plt.show()
+    #
+    # plt.figure()
+    # plt.plot(t[:len_simulation] / 1e-9, x[:len_simulation], label="V(t)")
+    # plt.plot(t[:len_simulation] / 1e-9, x_or[:len_simulation], label="V(t) Original")
+    # plt.grid(visible=True)
+    # plt.legend()
+    # plt.xlabel('Time (ns)')
+    # plt.ylabel('Amplitude (V)')
     # plt.show()
-
-    plt.figure()
-    plt.plot(t[:len_simulation] / 1e-9, x[:len_simulation], label="V(t)")
-    plt.plot(t[:len_simulation] / 1e-9, x_or[:len_simulation], label="V(t) Original")
-    plt.grid(visible=True)
-    plt.legend()
-    plt.xlabel('Time (ns)')
-    plt.ylabel('Amplitude (V)')
-    plt.show()
 
     r_rk = 0
     r_vn = 0
     r_vk = 0
 
-    for k in range(TIME):
+    pvt_bank_calib = False
+    acq_bank_calib = False
+    trk_bank_calib = False
+    OTW_pvt = "00000000"
+    OTW_acq = "10000000"
+    OTW_trk = "100000"
+    phase_dif = 0
+    prev_phase = 0
+    count = 0
+    k = 1
+    n = 1
+    for k in range(1, TIME):
         r_rk += FCW
-        for n in
+        while tc * n < (FREF_edge * k):
+            n += 1
+            r_vn = n
+        r_vk = r_vn
+        phase_dif += r_rk - r_vk
+        if not pvt_bank_calib:
+            if phase_dif < 0:
+                phase_dif + 255
+            OTW_pvt = bin(int(255 - phase_dif))[2:]
+            if prev_phase == phase_dif:
+                count += 1
+                if count == 30:
+                    count = 0
+                    pvt_bank_calib = True
+                    phase_dif = 0
+                    OTW_acq = "0"
+            else:
+                prev_phase = phase_dif
+                count = 0
+
+        elif not acq_bank_calib:
+            if phase_dif < 0:
+                phase_dif + 255
+            OTW_acq = bin(int(255 - phase_dif))[2:]
+            if prev_phase == phase_dif:
+                count += 1
+                if count == 30:
+                    count = 0
+                    acq_bank_calib = True
+                    phase_dif = 0
+                    OTW_trk = "0"
+            else:
+                prev_phase = phase_dif
+                count = 0
+
+        elif not trk_bank_calib:
+            if phase_dif < 0:
+                phase_dif + 64
+            OTW_trk = bin(int(64 - phase_dif))[2:]
+            # if prev_phase == phase_dif:
+            #     count += 1
+            #     if count == 30:
+            #         count = 0
+            #         trk_bank_calib = True
+            # else:
+            #     prev_phase = phase_dif
+            #     count = 0
+        fc = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, "101")
+        tc = 1 / fc
+
+    print("freq ajustada: ", fc, " E a desejada era de :", FREF * FCW, "diferença de :", fc - (FREF * FCW))
+
 '''
 For each f_ref cycle
     Accumulate FCW:

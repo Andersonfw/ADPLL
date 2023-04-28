@@ -108,7 +108,7 @@ def extract_parameters(H):
     den_Hol = sp.Poly(den_Hol, s).all_coeffs()
     # print("numerador:", num_Hol)
     # print("denominador:", den_Hol)
-    # Tranforma em array para aplicar a transformada de laplace
+    # Transforma em array para aplicar a transformada de laplace
     num = np.array(num_Hol, dtype=float)
     den = np.array(den_Hol, dtype=float)
     return num, den
@@ -184,21 +184,26 @@ s = sp.symbols('s')
 N = 69.23  # relação de f/f_r
 
 # Livro Bogdan PG 137/152
-fr = 26e6  # Frequeência de referência
-a = 2 ** -7  # alpha value
-p = 2 ** -15  # rho value
-#   Coeficiêntes do filtro IIR
-l = [2**-3, 2**-3, 2**-3, 2**-4]
+# fr = 26e6  # Frequeência de referência
+# a = 2 ** -7  # alpha value
+# p = 2 ** -15  # rho value
+# #   Coeficiêntes do filtro IIR
+# l = [2**-3, 2**-3, 2**-3, 2**-4]
 
 # Aassignment 4
-# fr = 40e6  # Frequeência de referência
-# a = 2 ** -6  # alpha value
-# p = 2 ** -14  # rho value
-# # Coeficiêntes do filtro IIR
-# l = [2 ** -2, 2 ** -3, 2 ** -2, 2 ** -3]
+fr = 40e6  # Frequeência de referência
+a = 2 ** -7  # alpha value
+p = 2 ** -14  # rho value
+# Coeficiêntes do filtro IIR
+l = [2 ** -2, 2 ** -3, 2 ** -2, 2 ** -3]
 
+# Open Loop Unit Gain
+w1 = a * fr * ( 0.5 + 0.5 * np.sqrt(1 + (4 * p / a**2)))
+
+print("Frequência de ganho unitarío é: ", w1)
 # Função de tranferência de loop aberto
 HOL = (a + p * fr / s) * (fr / s)
+# HOL = a * (fr/s)
 
 if __name__ == "__main__":
     w = np.logspace(3, 8, 10000)  # List of frequencies in rad/sec to be used for frequency response ( 10^-1 até 10^3)
@@ -231,6 +236,9 @@ if __name__ == "__main__":
     Hcl_DCO = (1 / (1 + Hol))
     Hcl_DCO_irr = (1 / (1 + Hol_irr))
     format_plot("Closed Loop Hcl DCO(s)", "Closed Loop Hcl DCO(s) + IRR", Hcl_DCO, Hcl_DCO_irr, w, margins=True)
+
+    # plt.figure()
+    # control.bode(Hcl_DCO_irr, w, Hz=True, dB=True, deg=False, Plot=True, margins=False)
 
     plt.tight_layout()
     plt.show()
