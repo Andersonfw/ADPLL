@@ -32,7 +32,7 @@ def Init_DCO():
     pvt_lsb = pvt_bank.lsb
     acq_lsb = acq_bank.lsb
     trk_i_lsb = trk_i_bank.lsb
-    trk_f_lsb = trk_f_bank.lsb
+    trk_f_lsb = trk_i_bank.lsb / (2 ** TRK_NB_F)
     print("PVT -----  fmin: ", pvt_bank.fmin, " fmax: ", pvt_bank.fmax, "cmax: ", pvt_bank.cmax, " cmim: ",
           pvt_bank.cmin, " LSB: ", pvt_bank.lsb)
     print("ACQ -----  fmin: ", acq_bank.fmin, " fmax: ", acq_bank.fmax, "cmax: ", acq_bank.cmax, " cmim: ",
@@ -50,8 +50,8 @@ def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
     pvt = 255 - int(pvt_OTW)
     acq = 255 - int(acq_OTW)
     trk_i = 64 - int(trk_i_OTW)
-    trk_f = trk_f_OTW
-    f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb)))
+    trk_f = 32 - int(trk_f_OTW)
+    f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb + trk_f_lsb * trk_f)))
     return f
 
 
@@ -88,14 +88,12 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
 '''
         DEFINIÇÕES GERAIS
 '''
-F0 = 2045e6 # frequência central de ajuste do DCO
-FCW = 70  # Frequency command word
+F0 = 2045e6  # frequência central de ajuste do DCO
+FCW = 76.9230  # Frequency command word
 FREF = 26e6  # Frequência de referência
-FDCO = FREF * FCW # Frequência desajda na sáida do DCO
+FDCO = FREF * FCW  # Frequência desajda na sáida do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
-
-
 
 FR_PVT = 500e6  # range de frequência em PVT mode
 FR_ACQ = 100e6  # range de frequência em acquisition mode
@@ -113,7 +111,7 @@ Wf_noise = 1 / Wt_noise  # Wander noise frequency
 Jt_noise = 111e-15  # jitter noise time
 Jf_noise = 1 / Jt_noise  # jitter noise frequency
 
-TIME = 800  # simulação de X bordas de FREF
+TIME = 2000  # simulação de X bordas de FREF
 
 '''
         VARIÁVEIS GLOBAIS
@@ -129,7 +127,7 @@ trk_f_lsb = 0  # valor do LSB em Trekking fractional mode
 '''
 if __name__ == "__main__":
     Init_DCO()
-    f_CKV = SET_DCO(128, 128, 32,0)
+    f_CKV = SET_DCO(128, 128, 32, 0)
     T0 = 1 / f_CKV
     fs = OVERSAMPLE * f_CKV
     print("freq: ", f_CKV)
@@ -147,8 +145,8 @@ if __name__ == "__main__":
     # plt.show()
 
     # x = np.sin(2 * np.pi * 1/(tc + jitter + wander) * t)
-    x_init= np.sin(2 * np.pi * f_CKV * t_init)
-    len_simulation = 6 * OVERSAMPLE     # plotar 6 periodos do DCO
+    x_init = np.sin(2 * np.pi * f_CKV * t_init)
+    len_simulation = 6 * OVERSAMPLE  # plotar 6 periodos do DCO
     #
     # Xdb_o, f = fun_calc_psd((x_or), fs, 1e3, 10e3)
     # Xdb, f = fun_calc_psd((x), fs, 1e3, 10e3)
@@ -180,6 +178,8 @@ if __name__ == "__main__":
     t_R = 0
     TDEV_I = 0
     TDEV_F = 0
+    last_jitter = 0
+    last_error = 0
 
     pvt_bank_calib = False
     acq_bank_calib = False
@@ -187,6 +187,7 @@ if __name__ == "__main__":
     OTW_pvt = 128
     OTW_acq = 128
     OTW_trk = 32
+    OTW_trk_f = 0
     phase_dif = 0
     prev_phase = 0
     count = 0
@@ -198,41 +199,52 @@ if __name__ == "__main__":
         RR_k += FCW
         t_R = k * FREF_edge
         while t_CKV < t_R:
-            n +=1
+            n += 1
             delta_f = f_CKV - FDCO
             TDEV_I = delta_f / (FDCO * (FDCO + delta_f))
-            t_CKV = n * T0 #- TDEV_I
+            jitter = np.random.randn() * Jt_noise
+            wander = np.random.randn() * Wt_noise
+            t_CKV = n * T0 + jitter + wander - last_jitter  # - TDEV_I
+            last_jitter = jitter
             RV_n += 1
+            if trk_bank_calib:
+                count += 1
+                if count == 4:
+                    count = 0
+                    error_f = phase_error % 1 #+ last_error
+                    last_error = error_f % 1
+                    OTW_trk_f = error_f * 2** TRK_NB_F
         RV_k = RV_n
         delta_tR = t_CKV - t_R
-        error_fractional = 1 - delta_tR/T0
+        error_fractional = 1 - delta_tR / T0
         phase_error = RR_k - RV_k + error_fractional
         if not pvt_bank_calib:
             # if phase_dif < 0:
             #     phase_dif += 255
-            OTW_prev = OTW_pvt + (phase_error*2**-4)
+            OTW_prev = OTW_pvt + (int(phase_error) * 2 ** -4)
             OTW_pvt = OTW_prev
             if k == 150:
                 print("teste")
             if k == 200:
                 pvt_bank_calib = True
-                    # phase_dif = 0
-                    # OTW_acq = "0"
+                # phase_dif = 0
+                # OTW_acq = "0"
 
         elif not acq_bank_calib:
             # if phase_dif < 0:
             #     phase_dif += 255
-            OTW_prev = OTW_acq + (phase_error*2**-4)
+            OTW_prev = OTW_acq + (int(phase_error) * 2 ** -4)
             OTW_acq = OTW_prev
             if k == 400:
                 acq_bank_calib = True
-                    # phase_dif = 32
-                    # OTW_trk = "0"
+                trk_bank_calib = True
+                # phase_dif = 32
+                # OTW_trk = "0"
 
-        elif not trk_bank_calib:
+        elif trk_bank_calib:
             # if phase_dif < 0:
             #     phase_dif += 64
-            OTW_prev = OTW_trk + (phase_error*2**-13)
+            OTW_prev = OTW_trk + (int(phase_error) * 2 ** -13)
             OTW_trk = OTW_prev
             # if prev_phase == phase_dif:
             #     count += 1
@@ -242,15 +254,14 @@ if __name__ == "__main__":
             # else:
             #     prev_phase = phase_dif
             #     count = 0
-        f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, "101")
+        f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
         T0 = 1 / f_CKV
         freqs[k] = f_CKV
     print("freq ajustada: ", f_CKV, " E a desejada era de :", FREF * FCW, "diferença de :", f_CKV - (FREF * FCW))
 
     plt.figure()
-    plt.plot(np.arange(1,TIME,1), freqs[1:TIME])
+    plt.plot(np.arange(1, TIME, 1), freqs[1:TIME])
     plt.grid(visible=True)
-
 
     fs = OVERSAMPLE * f_CKV
     print("freq: ", f_CKV)
