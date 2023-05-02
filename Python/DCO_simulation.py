@@ -54,6 +54,10 @@ def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
     f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb + trk_f_lsb * trk_f)))
     return f
 
+def TDC (T_ckv, res_TDC, ):
+
+    return 0
+
 
 def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
     # Calculate power spectral density
@@ -89,7 +93,7 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
         DEFINIÇÕES GERAIS
 '''
 F0 = 2045e6  # frequência central de ajuste do DCO
-FCW = 76.9230  # Frequency command word
+FCW = 76#76.9230  # Frequency command word
 FREF = 26e6  # Frequência de referência
 FDCO = FREF * FCW  # Frequência desajda na sáida do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
@@ -100,11 +104,15 @@ FR_ACQ = 100e6  # range de frequência em acquisition mode
 FR_TRK_I = 2e6  # range de frequência em Trekking integer mode
 FR_TRK_F = 2e6  # range de frequência em Trekking fractional mode
 L = 1e-9  # Indutor utilizado
+
 PVT_NB = 8  # número de bits em PVT mode
 ACQ_NB = 8  # número de bits em acquisition mode
 TRK_NB_I = 6  # número de bits Trekking integer mode
 TRK_NB_F = 5  # número de bits Trekking fractional mode
 OVERSAMPLE = 100  # oversample de frequência para discretizar a frequência do DCO
+
+TDC_res = 15e-12
+TDC_chains = 40
 
 Wt_noise = 12e-15  # Wander noise time
 Wf_noise = 1 / Wt_noise  # Wander noise frequency
@@ -202,58 +210,41 @@ if __name__ == "__main__":
             n += 1
             delta_f = f_CKV - FDCO
             TDEV_I = delta_f / (FDCO * (FDCO + delta_f))
-            jitter = np.random.randn() * Jt_noise
-            wander = np.random.randn() * Wt_noise
+            jitter = 0
+            wander = 0
+            # jitter = np.random.randn() * Jt_noise
+            # wander = np.random.randn() * Wt_noise
             t_CKV = n * T0 + jitter + wander - last_jitter  # - TDEV_I
             last_jitter = jitter
             RV_n += 1
-            if trk_bank_calib:
-                count += 1
-                if count == 4:
-                    count = 0
-                    error_f = phase_error % 1 #+ last_error
-                    last_error = error_f % 1
-                    OTW_trk_f = error_f * 2** TRK_NB_F
+            # if trk_bank_calib:
+            #     count += 1
+                # if count == 4:
+                #     count = 0
+                #     error_f = phase_error % 1 #+ last_error
+                #     last_error = error_f % 1
+                #     OTW_trk_f = error_f * 2** TRK_NB_F
         RV_k = RV_n
+        error_TDC = TDC(k, n)
         delta_tR = t_CKV - t_R
         error_fractional = 1 - delta_tR / T0
         phase_error = RR_k - RV_k + error_fractional
         if not pvt_bank_calib:
-            # if phase_dif < 0:
-            #     phase_dif += 255
             OTW_prev = OTW_pvt + (int(phase_error) * 2 ** -4)
             OTW_pvt = OTW_prev
-            if k == 150:
-                print("teste")
             if k == 200:
                 pvt_bank_calib = True
-                # phase_dif = 0
-                # OTW_acq = "0"
 
         elif not acq_bank_calib:
-            # if phase_dif < 0:
-            #     phase_dif += 255
             OTW_prev = OTW_acq + (int(phase_error) * 2 ** -4)
             OTW_acq = OTW_prev
             if k == 400:
                 acq_bank_calib = True
                 trk_bank_calib = True
-                # phase_dif = 32
-                # OTW_trk = "0"
 
         elif trk_bank_calib:
-            # if phase_dif < 0:
-            #     phase_dif += 64
             OTW_prev = OTW_trk + (int(phase_error) * 2 ** -13)
             OTW_trk = OTW_prev
-            # if prev_phase == phase_dif:
-            #     count += 1
-            #     if count == 30:
-            #         count = 0
-            #         trk_bank_calib = True
-            # else:
-            #     prev_phase = phase_dif
-            #     count = 0
         f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
         T0 = 1 / f_CKV
         freqs[k] = f_CKV
