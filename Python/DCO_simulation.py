@@ -20,8 +20,11 @@ class LSB_BANK:
         self.lsb = (self.cmax - self.cmin) / 2 ** nb
         self.freq_lsb = fr / 2 ** nb
 
-
 def Init_DCO():
+    '''
+    Configuração inicial do DCO
+    '''
+
     pvt_bank = LSB_BANK(F0, PVT_NB, FR_PVT)
     acq_bank = LSB_BANK(F0, ACQ_NB, FR_ACQ)
     trk_i_bank = LSB_BANK(F0, TRK_NB_I, FR_TRK_I)
@@ -37,7 +40,6 @@ def Init_DCO():
     FREQ_RES_ACQ = acq_bank.freq_lsb
     FREQ_RES_TRK = trk_i_bank.freq_lsb
     FREQ_RES_TRK_F = trk_f_bank.freq_lsb
-
     print("PVT -----  fmin: ", pvt_bank.fmin, " fmax: ", pvt_bank.fmax, "cmax: ", pvt_bank.cmax, " cmim: ",
           pvt_bank.cmin, " LSB: ", pvt_bank.lsb)
     print("ACQ -----  fmin: ", acq_bank.fmin, " fmax: ", acq_bank.fmax, "cmax: ", acq_bank.cmax, " cmim: ",
@@ -46,11 +48,22 @@ def Init_DCO():
           trk_i_bank.cmin, " LSB: ", trk_i_bank.lsb)
     print("TRK_F -----  fmin: ", trk_f_bank.fmin, " fmax: ", trk_f_bank.fmax, "cmax: ", trk_f_bank.cmax, " cmim: ",
           trk_f_bank.cmin, " LSB: ", trk_f_bank.lsb)
-
     return
 
-
 def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
+    '''
+    Ajusta a frequência do DCO conforme valor binario de cada bank capacitor
+
+    INPUT arguments
+    pvt_OTW     :  Valor inteiro do bank pvt
+    acq_OTW     :  Valor inteiro do bank acquisition
+    trk_i_OTW   :  Valor inteiro do bank trekking integer
+    trk_f_OTW   :  Valor inteiro do bank trekking fractional
+
+    OUTPUT
+    f	: valor de frequência [Hz]
+    '''
+
     global C0, pvt_lsb, acq_lsb, trk_i_lsb, trk_f_lsb
     pvt = 255 - int(pvt_OTW)
     acq = 255 - int(acq_OTW)
@@ -63,18 +76,60 @@ def TDC (T_ckv, res_TDC, ):
 
     return 0
 
+def plot_DCO_signal():
+    '''
+    plotar sinal de saída do DCO e comparar ao sinal de inicio
+
+    INPUT arguments
+    none
+    '''
+    global len_simulation, dco_init_time, dco_freq_init, f_CKV, T0, OVERSAMPLE, fs
+    fs = OVERSAMPLE * f_CKV
+    t = np.arange(0, 10 * T0, 1 / fs)
+    # x_noise = np.sin(2 * np.pi * 1/(tc + jitter + wander) * t)
+    x = np.sin(2 * np.pi * f_CKV * t)
+    plt.figure()
+    plt.plot(dco_init_time[:len_simulation] / 1e-9, dco_freq_init[:len_simulation], label="DCO Inicial")
+    plt.plot(t[:len_simulation] / 1e-9, x[:len_simulation], label="DCO out")
+    plt.grid(visible=True)
+    plt.legend()
+    plt.xlabel('Time (ns)')
+    plt.ylabel('Amplitude (V)')
+    plt.show()
+
+def plot_histogram_noise(lenght):
+    '''
+    plotar histograma do ruído Wander e jitter
+
+    INPUT arguments
+    lenght     :  Quantidade de pontos aleatórios
+    '''
+    global Jt_noise, Wt_noise
+    jitter_noise = np.random.randn(lenght) * Jt_noise
+    wander_noise = np.random.randn(lenght) * Wt_noise
+    plt.subplot(121)
+    plt.hist(jitter_noise, bins=50, label="Normal distribution of the Jitter noise")
+    plt.legend()
+    plt.grid(visible=True)
+    plt.subplot(122)
+    plt.hist(wander_noise, bins=50, color="r", label="Normal distribution of the wander noise")
+    plt.legend()
+    plt.grid(visible=True)
+    plt.show()
 
 def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
-    # Calculate power spectral density
-    #
-    # INPUT arguments
-    # x     :  data vector
-    # fs    :  sample rate [Hz]
-    # rbw   :  resolution bandwidth [Hz]
-    # fstep :  FFT frequency bin separation [Hz]
-    # OUTPUT
-    # XdB	: spectrum of x [dB]
-    # f	: frequency vector [Hz]
+    '''
+    Calculate power spectral density
+
+    INPUT arguments
+    x     :  data vector
+    fs    :  sample rate [Hz]
+    rbw   :  resolution bandwidth [Hz]
+    fstep :  FFT frequency bin separation [Hz]
+    OUTPUT
+    XdB	: spectrum of x [dB]
+    f	: frequency vector [Hz]
+    '''
 
     if fstep is None:
         fstep = rbw / 1.62
@@ -93,17 +148,19 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
     print(f'Signal PSD peak = {XdB_sig:.2f} dB, 10log(rbw) = {10 * np.log10(rbw):.1f}')
     return XdB, f
 
-
 '''
         DEFINIÇÕES GERAIS
 '''
 F0 = 2045e6  # frequência central de ajuste do DCO
-FCW = 76#76.9230  # Frequency command word
+FCW = 76    # 76.9230  # Frequency command word
 FREF = 26e6  # Frequência de referência
 FDCO = FREF * FCW  # Frequência desajda na sáida do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
 
+'''
+        BANK CAPACITOR
+'''
 FR_PVT = 500e6  # range de frequência em PVT mode
 FR_ACQ = 100e6  # range de frequência em acquisition mode
 FR_TRK_I = 2e6  # range de frequência em Trekking integer mode
@@ -113,31 +170,63 @@ FREQ_RES_ACQ = 0
 FREQ_RES_TRK = 0
 FREQ_RES_TRK_F = 0
 L = 1e-9  # Indutor utilizado
-
+C0 = 0  # valor de capacitância inicial
 PVT_NB = 8  # número de bits em PVT mode
 ACQ_NB = 8  # número de bits em acquisition mode
 TRK_NB_I = 6  # número de bits Trekking integer mode
 TRK_NB_F = 5  # número de bits Trekking fractional mode
-OVERSAMPLE = 100  # oversample de frequência para discretizar a frequência do DCO
+pvt_lsb = 0  # valor do LSB em PVT mode
+acq_lsb = 0  # valor do LSB em acquisition mode
+trk_i_lsb = 0  # valor do LSB em Trekking integer mode
+trk_f_lsb = 0  # valor do LSB em Trekking fractional mode
 
+'''
+        TDC
+'''
 TDC_res = 15e-12
 TDC_chains = 40
 
+'''
+        RUÍDO
+'''
 Wt_noise = 12e-15  # Wander noise time
 Wf_noise = 1 / Wt_noise  # Wander noise frequency
 Jt_noise = 111e-15  # jitter noise time
 Jf_noise = 1 / Jt_noise  # jitter noise frequency
 
+'''
+        VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
+'''
 TIME = 2000  # simulação de X bordas de FREF
+OVERSAMPLE = 100  # oversample de frequência para discretizar a frequência do DCO
+len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 
 '''
-        VARIÁVEIS GLOBAIS
+        VARIÁVEIS DE CONTROLE
 '''
-C0 = 0  # valor de capacitância inicial
-pvt_lsb = 0  # valor do LSB em PVT mode
-acq_lsb = 0  # valor do LSB em acquisition mode
-trk_i_lsb = 0  # valor do LSB em Trekking integer mode
-trk_f_lsb = 0  # valor do LSB em Trekking fractional mode
+RR_k = 0    # reference phase
+RV_n = 0    # variable phase with index n
+RV_k = 0    # variable phase with index k
+t_CKV = 0   # period of DCO output
+t_R = 0     # time reference
+TDEV_I = 0  # time deviation integer
+TDEV_F = 0  # time deviation fractional
+last_jitter = 0 # last value of jitter
+last_error = 0  # last value os error
+
+pvt_bank_calib = False
+acq_bank_calib = False
+trk_bank_calib = False
+OTW_pvt = 128   # initial value of pvt bank
+OTW_acq = 128   # initial value of acq bank
+OTW_trk = 32    # initial value of trk integer bank
+OTW_trk_f = 0   # initial value of trk fractional bank
+phase_dif = 0   # phase difference
+prev_phase = 0  # new phase difference
+count = 0       # counter of k index
+k = 1           # index k
+n = 0           # index n
+freqs = np.zeros(TIME)  # array of different DCO output values
 
 '''
         Main
@@ -147,70 +236,11 @@ if __name__ == "__main__":
     f_CKV = SET_DCO(128, 128, 32, 0)
     T0 = 1 / f_CKV
     fs = OVERSAMPLE * f_CKV
-    print("freq: ", f_CKV)
-    t_init = np.arange(0, 10 * T0, 1 / fs)
-    # jitter = np.random.randn(len(t)) * Jt_noise
-    # wander = np.random.randn(len(t)) * Wt_noise
-    # plt.subplot(121)
-    # plt.hist(jitter, bins=100, label="Normal distribution of the Jitter noise")
-    # plt.legend()
-    # plt.grid(visible=True)
-    # plt.subplot(122)
-    # plt.hist(watter, bins=100, color="r", label="Normal distribution of the wander noise")
-    # plt.legend()
-    # plt.grid(visible=True)
-    # plt.show()
-
-    # x = np.sin(2 * np.pi * 1/(tc + jitter + wander) * t)
-    x_init = np.sin(2 * np.pi * f_CKV * t_init)
-    len_simulation = 6 * OVERSAMPLE  # plotar 6 periodos do DCO
-    #
-    # Xdb_o, f = fun_calc_psd((x_or), fs, 1e3, 10e3)
-    # Xdb, f = fun_calc_psd((x), fs, 1e3, 10e3)
-    #
-    # plt.figure()
-    # # plt.plot(f / 1e6, Xdb_o, label="Original")
-    # plt.semilogx(f, Xdb_o, label="Original")
-    # # plt.plot(f / 1e6, Xdb, label="ERROR")
-    # plt.semilogx(f, Xdb, label="With Noise")
-    # plt.grid(visible=True)
-    # plt.legend()
-    # plt.xlabel('Freq (MHz)')
-    # plt.ylabel('Amplitude (dB)')
-    # # plt.show()
-    #
-    # plt.figure()
-    # plt.plot(t[:len_simulation] / 1e-9, x[:len_simulation], label="V(t)")
-    # plt.plot(t[:len_simulation] / 1e-9, x_or[:len_simulation], label="V(t) Original")
-    # plt.grid(visible=True)
-    # plt.legend()
-    # plt.xlabel('Time (ns)')
-    # plt.ylabel('Amplitude (V)')
-    # plt.show()
-
-    RR_k = 0
-    RV_n = 0
-    RV_k = 0
-    t_CKV = 0
-    t_R = 0
-    TDEV_I = 0
-    TDEV_F = 0
-    last_jitter = 0
-    last_error = 0
-
-    pvt_bank_calib = False
-    acq_bank_calib = False
-    trk_bank_calib = False
-    OTW_pvt = 128
-    OTW_acq = 128
-    OTW_trk = 32
-    OTW_trk_f = 0
-    phase_dif = 0
-    prev_phase = 0
-    count = 0
-    k = 1
-    n = 0
-    freqs = np.zeros(TIME)
+    print("frequência inicial do DCO é: ", f_CKV/1e6, "MHz")
+    dco_init_time = np.arange(0, 10 * T0, 1 / fs)
+    dco_freq_init = np.sin(2 * np.pi * f_CKV * dco_init_time)
+    # plot_histogram_noise(10000)
+    # plot_DCO_signal()
 
     for k in range(1, TIME):
         RR_k += FCW
@@ -219,12 +249,14 @@ if __name__ == "__main__":
         n_init = n
         while t_CKV < t_R:
             n += 1
+            # delta_f = KDCO * OTW
             delta_f = f_CKV - FDCO
             TDEV_I = delta_f / (FDCO * (FDCO + delta_f))
             jitter = 0
             wander = 0
-            # jitter = np.random.randn() * Jt_noise
-            # wander = np.random.randn() * Wt_noise
+            jitter = np.random.randn() * Jt_noise
+            wander = np.random.randn() * Wt_noise
+            last_t_CKV = t_CKV
             t_CKV = n * T0 + jitter + wander - last_jitter  # - TDEV_I
             last_jitter = jitter
             RV_n += 1
@@ -236,10 +268,11 @@ if __name__ == "__main__":
                 #     last_error = error_f % 1
                 #     OTW_trk_f = error_f * 2** TRK_NB_F
         RV_k = RV_n
+        t_CKV = last_t_CKV
         teste_error = t_R
         error_TDC = TDC(k, n)
-        # delta_tR = t_CKV - t_R
-        delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
+        delta_tR = int((t_R - last_t_CKV) / TDC_res)    # diferença de tempo entre a ultima borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
+        # delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
         error_fractional = 1 - (delta_tR * TDC_res) / T0
         phase_error = RR_k - RV_k + error_fractional
         if not pvt_bank_calib:
@@ -279,29 +312,31 @@ if __name__ == "__main__":
         f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
         T0 = 1 / f_CKV
         freqs[k] = f_CKV
-        if f_CKV < (FREF * FCW):
-            print("freq menor")
-    print("freq ajustada: ", f_CKV, " E a desejada era de :", FREF * FCW, "diferença de :", f_CKV - (FREF * FCW))
+        # if f_CKV < (FREF * FCW):
+        #     print("freq menor")
+    print("freq ajustada: ", f_CKV/1e6, "MHz E a desejada era de :", (FREF * FCW)/1e6, "MHz diferença de :", (f_CKV - (FREF * FCW))/1e3, "kHz")
 
     plt.figure()
     plt.plot(np.arange(1, TIME, 1), freqs[1:TIME])
     plt.grid(visible=True)
 
-    fs = OVERSAMPLE * f_CKV
-    print("freq: ", f_CKV)
-    t = np.arange(0, 10 * T0, 1 / fs)
-    # x = np.sin(2 * np.pi * 1/(tc + jitter + wander) * t)
-    x_or = np.sin(2 * np.pi * f_CKV * t)
+    plot_DCO_signal()
 
-    plt.figure()
-    plt.plot(t_init[:len_simulation] / 1e-9, x_init[:len_simulation], label="V(t) Inicial")
-    plt.plot(t[:len_simulation] / 1e-9, x_or[:len_simulation], label="V(t)")
-    plt.grid(visible=True)
-    plt.legend()
-    plt.xlabel('Time (ns)')
-    plt.ylabel('Amplitude (V)')
-    plt.show()
 
+    #
+    # Xdb_o, f = fun_calc_psd((x_or), fs, 1e3, 10e3)
+    # Xdb, f = fun_calc_psd((x), fs, 1e3, 10e3)
+    #
+    # plt.figure()
+    # # plt.plot(f / 1e6, Xdb_o, label="Original")
+    # plt.semilogx(f, Xdb_o, label="Original")
+    # # plt.plot(f / 1e6, Xdb, label="ERROR")
+    # plt.semilogx(f, Xdb, label="With Noise")
+    # plt.grid(visible=True)
+    # plt.legend()
+    # plt.xlabel('Freq (MHz)')
+    # plt.ylabel('Amplitude (dB)')
+    # # plt.show()
 '''
 For each f_ref cycle
     Accumulate FCW:
