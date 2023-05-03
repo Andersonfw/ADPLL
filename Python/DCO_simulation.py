@@ -8,7 +8,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 
-
 class LSB_BANK:
     def __init__(self, fc, nb, fr):
         self.fc = fc
@@ -19,6 +18,7 @@ class LSB_BANK:
         self.cmax = 1 / (L * (2 * np.pi * self.fmin) ** 2)
         self.cmin = 1 / (L * (2 * np.pi * self.fmax) ** 2)
         self.lsb = (self.cmax - self.cmin) / 2 ** nb
+        self.freq_lsb = fr / 2 ** nb
 
 
 def Init_DCO():
@@ -26,13 +26,18 @@ def Init_DCO():
     acq_bank = LSB_BANK(F0, ACQ_NB, FR_ACQ)
     trk_i_bank = LSB_BANK(F0, TRK_NB_I, FR_TRK_I)
     trk_f_bank = LSB_BANK(F0, TRK_NB_F, FR_TRK_F)
-    global C0, pvt_lsb, acq_lsb, trk_i_lsb, trk_f_lsb
+    global C0, pvt_lsb, acq_lsb, trk_i_lsb, trk_f_lsb, FREQ_RES_PVT, FREQ_RES_ACQ, FREQ_RES_TRK, FREQ_RES_TRK_F
     C0 = pvt_bank.cmin
     # C0=10e-4
     pvt_lsb = pvt_bank.lsb
     acq_lsb = acq_bank.lsb
     trk_i_lsb = trk_i_bank.lsb
     trk_f_lsb = trk_i_bank.lsb / (2 ** TRK_NB_F)
+    FREQ_RES_PVT = pvt_bank.freq_lsb
+    FREQ_RES_ACQ = acq_bank.freq_lsb
+    FREQ_RES_TRK = trk_i_bank.freq_lsb
+    FREQ_RES_TRK_F = trk_f_bank.freq_lsb
+
     print("PVT -----  fmin: ", pvt_bank.fmin, " fmax: ", pvt_bank.fmax, "cmax: ", pvt_bank.cmax, " cmim: ",
           pvt_bank.cmin, " LSB: ", pvt_bank.lsb)
     print("ACQ -----  fmin: ", acq_bank.fmin, " fmax: ", acq_bank.fmax, "cmax: ", acq_bank.cmax, " cmim: ",
@@ -103,6 +108,10 @@ FR_PVT = 500e6  # range de frequência em PVT mode
 FR_ACQ = 100e6  # range de frequência em acquisition mode
 FR_TRK_I = 2e6  # range de frequência em Trekking integer mode
 FR_TRK_F = 2e6  # range de frequência em Trekking fractional mode
+FREQ_RES_PVT = 0
+FREQ_RES_ACQ = 0
+FREQ_RES_TRK = 0
+FREQ_RES_TRK_F = 0
 L = 1e-9  # Indutor utilizado
 
 PVT_NB = 8  # número de bits em PVT mode
@@ -206,6 +215,8 @@ if __name__ == "__main__":
     for k in range(1, TIME):
         RR_k += FCW
         t_R = k * FREF_edge
+        ntdc_init = t_CKV
+        n_init = n
         while t_CKV < t_R:
             n += 1
             delta_f = f_CKV - FDCO
@@ -225,22 +236,42 @@ if __name__ == "__main__":
                 #     last_error = error_f % 1
                 #     OTW_trk_f = error_f * 2** TRK_NB_F
         RV_k = RV_n
+        teste_error = t_R
         error_TDC = TDC(k, n)
-        delta_tR = t_CKV - t_R
-        error_fractional = 1 - delta_tR / T0
+        # delta_tR = t_CKV - t_R
+        delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
+        error_fractional = 1 - (delta_tR * TDC_res) / T0
         phase_error = RR_k - RV_k + error_fractional
         if not pvt_bank_calib:
-            OTW_prev = OTW_pvt + (int(phase_error) * 2 ** -4)
+            OTW_prev = OTW_pvt + (int(phase_error) * 2 ** -2)
             OTW_pvt = OTW_prev
-            if k == 200:
+            if k >= 158:
+                print("debug")
+            if k == 150:
                 pvt_bank_calib = True
+            num = abs((FREF * FCW) - f_CKV )
+            if num <= FREQ_RES_PVT:
+                count +=1
+                if count == 5:
+                    pvt_bank_calib = True
+                    count = 0
+            else:
+                count = 0
 
         elif not acq_bank_calib:
             OTW_prev = OTW_acq + (int(phase_error) * 2 ** -4)
             OTW_acq = OTW_prev
-            if k == 400:
-                acq_bank_calib = True
-                trk_bank_calib = True
+            # if k == 400:
+            #     acq_bank_calib = True
+            #     trk_bank_calib = True
+            num = abs((FREF * FCW) - f_CKV )
+            if num <= FREQ_RES_ACQ:
+                count +=1
+                if count == 5:
+                    acq_bank_calib = True
+                    trk_bank_calib = True
+            else:
+                count = 0
 
         elif trk_bank_calib:
             OTW_prev = OTW_trk + (int(phase_error) * 2 ** -13)
@@ -248,6 +279,8 @@ if __name__ == "__main__":
         f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
         T0 = 1 / f_CKV
         freqs[k] = f_CKV
+        if f_CKV < (FREF * FCW):
+            print("freq menor")
     print("freq ajustada: ", f_CKV, " E a desejada era de :", FREF * FCW, "diferença de :", f_CKV - (FREF * FCW))
 
     plt.figure()
