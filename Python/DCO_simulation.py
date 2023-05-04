@@ -229,7 +229,7 @@ last_error = 0  # last value os error
 pvt_bank_calib = False
 acq_bank_calib = False
 trk_bank_calib = False
-OTW_pvt = 128  # initial value of pvt bank
+OTW_pvt = 0  # initial value of pvt bank
 OTW_acq = 128  # initial value of acq bank
 OTW_trk = 32  # initial value of trk integer bank
 OTW_trk_f = 0  # initial value of trk fractional bank
@@ -245,7 +245,7 @@ freqs = np.zeros(TIME)  # array of different DCO output values
 '''
 if __name__ == "__main__":
     Init_DCO()
-    f_CKV = SET_DCO(128, 128, 32, 0)
+    f_CKV = SET_DCO(0, 128, 32, 0)
     T0 = 1 / f_CKV
     fs = OVERSAMPLE * f_CKV
     print("frequência inicial do DCO é: ", f_CKV / 1e6, "MHz")
@@ -318,7 +318,7 @@ if __name__ == "__main__":
                 count = 0
 
         elif trk_bank_calib:
-            OTW_prev = OTW_trk + (int(phase_error) * 2 ** -13)
+            OTW_prev = OTW_trk + ((int(phase_error)) * 2 ** -5)
             OTW_trk = OTW_prev
         f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
         T0 = 1 / f_CKV
