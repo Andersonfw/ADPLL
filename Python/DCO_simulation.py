@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 
+
 class LSB_BANK:
     def __init__(self, fc, nb, fr):
         self.fc = fc
@@ -19,6 +20,7 @@ class LSB_BANK:
         self.cmin = 1 / (L * (2 * np.pi * self.fmax) ** 2)
         self.lsb = (self.cmax - self.cmin) / 2 ** nb
         self.freq_lsb = fr / 2 ** nb
+
 
 def Init_DCO():
     '''
@@ -50,6 +52,7 @@ def Init_DCO():
           trk_f_bank.cmin, " LSB: ", trk_f_bank.lsb)
     return
 
+
 def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
     '''
     Ajusta a frequência do DCO conforme valor binario de cada bank capacitor
@@ -72,9 +75,15 @@ def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
     f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb + trk_f_lsb * trk_f)))
     return f
 
-def TDC (T_ckv, res_TDC, ):
 
-    return 0
+def TDC(tR, t_ckv):
+    global TDC_res, T0
+    tR_Q = int((
+                           tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
+    # delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
+    error = 1 - (tR_Q * TDC_res) / T0
+    return error
+
 
 def plot_DCO_signal():
     '''
@@ -97,6 +106,7 @@ def plot_DCO_signal():
     plt.ylabel('Amplitude (V)')
     plt.show()
 
+
 def plot_histogram_noise(lenght):
     '''
     plotar histograma do ruído Wander e jitter
@@ -116,6 +126,7 @@ def plot_histogram_noise(lenght):
     plt.legend()
     plt.grid(visible=True)
     plt.show()
+
 
 def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
     '''
@@ -148,11 +159,12 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
     print(f'Signal PSD peak = {XdB_sig:.2f} dB, 10log(rbw) = {10 * np.log10(rbw):.1f}')
     return XdB, f
 
+
 '''
         DEFINIÇÕES GERAIS
 '''
 F0 = 2045e6  # frequência central de ajuste do DCO
-FCW = 76    # 76.9230  # Frequency command word
+FCW = 72  # 76.9230  # Frequency command word
 FREF = 26e6  # Frequência de referência
 FDCO = FREF * FCW  # Frequência desajda na sáida do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
@@ -204,28 +216,28 @@ len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 '''
         VARIÁVEIS DE CONTROLE
 '''
-RR_k = 0    # reference phase
-RV_n = 0    # variable phase with index n
-RV_k = 0    # variable phase with index k
-t_CKV = 0   # period of DCO output
-t_R = 0     # time reference
+RR_k = 0  # reference phase
+RV_n = 0  # variable phase with index n
+RV_k = 0  # variable phase with index k
+t_CKV = 0  # period of DCO output
+t_R = 0  # time reference
 TDEV_I = 0  # time deviation integer
 TDEV_F = 0  # time deviation fractional
-last_jitter = 0 # last value of jitter
+last_jitter = 0  # last value of jitter
 last_error = 0  # last value os error
 
 pvt_bank_calib = False
 acq_bank_calib = False
 trk_bank_calib = False
-OTW_pvt = 128   # initial value of pvt bank
-OTW_acq = 128   # initial value of acq bank
-OTW_trk = 32    # initial value of trk integer bank
-OTW_trk_f = 0   # initial value of trk fractional bank
-phase_dif = 0   # phase difference
+OTW_pvt = 128  # initial value of pvt bank
+OTW_acq = 128  # initial value of acq bank
+OTW_trk = 32  # initial value of trk integer bank
+OTW_trk_f = 0  # initial value of trk fractional bank
+phase_dif = 0  # phase difference
 prev_phase = 0  # new phase difference
-count = 0       # counter of k index
-k = 1           # index k
-n = 0           # index n
+count = 0  # counter of k index
+k = 1  # index k
+n = 0  # index n
 freqs = np.zeros(TIME)  # array of different DCO output values
 
 '''
@@ -236,7 +248,7 @@ if __name__ == "__main__":
     f_CKV = SET_DCO(128, 128, 32, 0)
     T0 = 1 / f_CKV
     fs = OVERSAMPLE * f_CKV
-    print("frequência inicial do DCO é: ", f_CKV/1e6, "MHz")
+    print("frequência inicial do DCO é: ", f_CKV / 1e6, "MHz")
     dco_init_time = np.arange(0, 10 * T0, 1 / fs)
     dco_freq_init = np.sin(2 * np.pi * f_CKV * dco_init_time)
     # plot_histogram_noise(10000)
@@ -256,24 +268,23 @@ if __name__ == "__main__":
             wander = 0
             jitter = np.random.randn() * Jt_noise
             wander = np.random.randn() * Wt_noise
-            last_t_CKV = t_CKV
+            last_t_CKV = t_CKV  # aramazena o valor anterior de t_CKV
             t_CKV = n * T0 + jitter + wander - last_jitter  # - TDEV_I
             last_jitter = jitter
             RV_n += 1
             # if trk_bank_calib:
             #     count += 1
-                # if count == 4:
-                #     count = 0
-                #     error_f = phase_error % 1 #+ last_error
-                #     last_error = error_f % 1
-                #     OTW_trk_f = error_f * 2** TRK_NB_F
+            # if count == 4:
+            #     count = 0
+            #     error_f = phase_error % 1 #+ last_error
+            #     last_error = error_f % 1
+            #     OTW_trk_f = error_f * 2** TRK_NB_F
         RV_k = RV_n
-        t_CKV = last_t_CKV
-        teste_error = t_R
-        error_TDC = TDC(k, n)
-        delta_tR = int((t_R - last_t_CKV) / TDC_res)    # diferença de tempo entre a ultima borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
+        # error_TDC = TDC(t_R, last_t_CKV)
+        # delta_tR = int((t_R - last_t_CKV) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
         # delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
-        error_fractional = 1 - (delta_tR * TDC_res) / T0
+        # error_fractional = 1 - (delta_tR * TDC_res) / T0
+        error_fractional = TDC(t_R, last_t_CKV)
         phase_error = RR_k - RV_k + error_fractional
         if not pvt_bank_calib:
             OTW_prev = OTW_pvt + (int(phase_error) * 2 ** -2)
@@ -282,9 +293,9 @@ if __name__ == "__main__":
                 print("debug")
             if k == 150:
                 pvt_bank_calib = True
-            num = abs((FREF * FCW) - f_CKV )
+            num = abs((FREF * FCW) - f_CKV)
             if num <= FREQ_RES_PVT:
-                count +=1
+                count += 1
                 if count == 5:
                     pvt_bank_calib = True
                     count = 0
@@ -297,9 +308,9 @@ if __name__ == "__main__":
             # if k == 400:
             #     acq_bank_calib = True
             #     trk_bank_calib = True
-            num = abs((FREF * FCW) - f_CKV )
+            num = abs((FREF * FCW) - f_CKV)
             if num <= FREQ_RES_ACQ:
-                count +=1
+                count += 1
                 if count == 5:
                     acq_bank_calib = True
                     trk_bank_calib = True
@@ -314,14 +325,14 @@ if __name__ == "__main__":
         freqs[k] = f_CKV
         # if f_CKV < (FREF * FCW):
         #     print("freq menor")
-    print("freq ajustada: ", f_CKV/1e6, "MHz E a desejada era de :", (FREF * FCW)/1e6, "MHz diferença de :", (f_CKV - (FREF * FCW))/1e3, "kHz")
+    print("freq ajustada: ", f_CKV / 1e6, "MHz E a desejada era de :", (FREF * FCW) / 1e6, "MHz diferença de :",
+          (f_CKV - (FREF * FCW)) / 1e3, "kHz")
 
     plt.figure()
     plt.plot(np.arange(1, TIME, 1), freqs[1:TIME])
     plt.grid(visible=True)
 
     plot_DCO_signal()
-
 
     #
     # Xdb_o, f = fun_calc_psd((x_or), fs, 1e3, 10e3)
