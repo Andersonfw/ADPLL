@@ -78,8 +78,7 @@ def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
 
 def TDC(tR, t_ckv):
     global TDC_res, T0
-    tR_Q = int((
-                           tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
+    tR_Q = int((tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
     # delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
     error = 1 - (tR_Q * TDC_res) / T0
     return error
@@ -199,6 +198,14 @@ TDC_res = 15e-12
 TDC_chains = 40
 
 '''
+        LOOP FILTER
+'''
+Kp_PVT = 2 ** -2
+Kp_ACQ = 2 ** -5
+Kp_TRK = 2 ** -5
+Ki_TRK = 2 ** -11
+
+'''
         RUÍDO
 '''
 Wt_noise = 12e-15  # Wander noise time
@@ -239,7 +246,7 @@ count = 0  # counter of k index
 k = 1  # index k
 n = 0  # index n
 freqs = np.zeros(TIME)  # array of different DCO output values
-
+NTW = 0  # normalize tuning word
 '''
         Main
 '''
@@ -259,47 +266,38 @@ if __name__ == "__main__":
     F_start_DCO = f_CKV
     phase_error = 0
     for k in range(1, TIME):
-        RR_k += FCW
+        RR_k += FCW     # reference phase accumulator
         t_R = k * FREF_edge
-        ntdc_init = t_CKV
-        n_init = n
-
+        # ntdc_init = t_CKV
+        # n_init = n
         while t_CKV < t_R:
             n += 1
-            delta_f = f_CKV - (F_start_DCO + (KDCO *(OTW)))
+            # delta_f = f_CKV - (F_start_DCO + (KDCO * (OTW)))
             # delta_f = f_CKV - FDCO
-            TDEV_I = delta_f / (f_CKV * (f_CKV + delta_f))
-            jitter = 0
-            wander = 0
+            # TDEV_I = delta_f / (f_CKV * (f_CKV + delta_f))
+            # jitter = 0
+            # wander = 0
             jitter = np.random.randn() * Jt_noise
             wander = np.random.randn() * Wt_noise
             last_t_CKV = t_CKV  # aramazena o valor anterior de t_CKV
-            t_CKV = n * T0 + jitter + wander - last_jitter # - TDEV_I
+            t_CKV = n * T0 + jitter + wander - last_jitter  # - TDEV_I
             last_jitter = jitter
-            RV_n += 1
-            # if trk_bank_calib:
-            #     count += 1
-            # if count == 4:
-            #     count = 0
-            #     error_f = phase_error % 1 #+ last_error
-            #     last_error = error_f % 1
-            #     OTW_trk_f = error_f * 2** TRK_NB_F
-        RV_k = RV_n
+            RV_n += 1     # variable phase accumulator
+        RV_k = RV_n     # variable phase accumulator
         # error_TDC = TDC(t_R, last_t_CKV)
         # delta_tR = int((t_R - last_t_CKV) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
         # delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
         # error_fractional = 1 - (delta_tR * TDC_res) / T0
-        error_fractional = TDC(t_R, last_t_CKV)
+        error_fractional = TDC(t_R, last_t_CKV) # TDC
         last_phase_error = phase_error
-        phase_error = RR_k - RV_k + error_fractional
+        phase_error = RR_k - RV_k + error_fractional    # Phase detector
+
         if not pvt_bank_calib:
-            OTW_prev = OTW_pvt + (int(phase_error) * 2 ** -2)
-            OTW_pvt = OTW_prev
-            OTW = OTW_pvt
-            if k >= 158:
-                print("debug")
-            if k == 150:
-                pvt_bank_calib = True
+            NTW = OTW_pvt + (int(phase_error) * Kp_PVT)
+            OTW_pvt = NTW
+            # OTW = OTW_pvt
+            # if k == 150:
+            #     pvt_bank_calib = True
             num = abs((FREF * FCW) - f_CKV)
             if num <= FREQ_RES_PVT:
                 count += 1
@@ -310,11 +308,8 @@ if __name__ == "__main__":
                 count = 0
 
         elif not acq_bank_calib:
-            OTW_prev = OTW_acq + (int(phase_error) * 2 ** -5)
-            OTW_acq = OTW_prev
-            # if k == 400:
-            #     acq_bank_calib = True
-            #     trk_bank_calib = True
+            NTW = OTW_acq + (int(phase_error) * Kp_ACQ)
+            OTW_acq = NTW
             num = abs((FREF * FCW) - f_CKV)
             if num <= FREQ_RES_ACQ:
                 count += 1
@@ -326,11 +321,9 @@ if __name__ == "__main__":
                 count = 0
 
         elif trk_bank_calib:
-            # OTW_prev = OTW_trk + ((int(phase_error)) * 2 ** -5)
-            kp = 2 ** -5
-            ki = 2 ** -11
-            OTW_prev = phase_error * kp - kp * last_phase_error + ki * last_phase_error + last_ntw
-            OTW_trk = OTW_prev
+            NTW = OTW_trk + ((int(phase_error)) * Kp_TRK)
+            # OTW_prev = phase_error * Kp_TRK - Kp_TRK * last_phase_error + Ki_TRK * last_phase_error + last_ntw
+            OTW_trk = NTW
             last_ntw = OTW_trk
         f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
         T0 = 1 / f_CKV
