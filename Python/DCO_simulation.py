@@ -254,22 +254,27 @@ if __name__ == "__main__":
     # plot_histogram_noise(10000)
     # plot_DCO_signal()
 
+    KDCO = FREQ_RES_PVT
+    OTW = OTW_pvt
+    F_start_DCO = f_CKV
+    phase_error = 0
     for k in range(1, TIME):
         RR_k += FCW
         t_R = k * FREF_edge
         ntdc_init = t_CKV
         n_init = n
+
         while t_CKV < t_R:
             n += 1
-            # delta_f = KDCO * OTW
-            delta_f = f_CKV - FDCO
-            TDEV_I = delta_f / (FDCO * (FDCO + delta_f))
+            delta_f = f_CKV - (F_start_DCO + (KDCO *(OTW)))
+            # delta_f = f_CKV - FDCO
+            TDEV_I = delta_f / (f_CKV * (f_CKV + delta_f))
             jitter = 0
             wander = 0
             jitter = np.random.randn() * Jt_noise
             wander = np.random.randn() * Wt_noise
             last_t_CKV = t_CKV  # aramazena o valor anterior de t_CKV
-            t_CKV = n * T0 + jitter + wander - last_jitter  # - TDEV_I
+            t_CKV = n * T0 + jitter + wander - last_jitter # - TDEV_I
             last_jitter = jitter
             RV_n += 1
             # if trk_bank_calib:
@@ -285,10 +290,12 @@ if __name__ == "__main__":
         # delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
         # error_fractional = 1 - (delta_tR * TDC_res) / T0
         error_fractional = TDC(t_R, last_t_CKV)
+        last_phase_error = phase_error
         phase_error = RR_k - RV_k + error_fractional
         if not pvt_bank_calib:
             OTW_prev = OTW_pvt + (int(phase_error) * 2 ** -2)
             OTW_pvt = OTW_prev
+            OTW = OTW_pvt
             if k >= 158:
                 print("debug")
             if k == 150:
@@ -303,7 +310,7 @@ if __name__ == "__main__":
                 count = 0
 
         elif not acq_bank_calib:
-            OTW_prev = OTW_acq + (int(phase_error) * 2 ** -4)
+            OTW_prev = OTW_acq + (int(phase_error) * 2 ** -5)
             OTW_acq = OTW_prev
             # if k == 400:
             #     acq_bank_calib = True
@@ -314,12 +321,17 @@ if __name__ == "__main__":
                 if count == 5:
                     acq_bank_calib = True
                     trk_bank_calib = True
+                    last_ntw = OTW_trk
             else:
                 count = 0
 
         elif trk_bank_calib:
-            OTW_prev = OTW_trk + ((int(phase_error)) * 2 ** -5)
+            # OTW_prev = OTW_trk + ((int(phase_error)) * 2 ** -5)
+            kp = 2 ** -5
+            ki = 2 ** -11
+            OTW_prev = phase_error * kp - kp * last_phase_error + ki * last_phase_error + last_ntw
             OTW_trk = OTW_prev
+            last_ntw = OTW_trk
         f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
         T0 = 1 / f_CKV
         freqs[k] = f_CKV
