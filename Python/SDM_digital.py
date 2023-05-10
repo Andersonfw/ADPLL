@@ -82,11 +82,11 @@ import matplotlib.pyplot as plt
 '''
 
 # NumberSamples=2^16;
-NumberSamples = 20
-BusSize = 5  # bits
+NumberSamples = 77
+BusSize = 21  # bits
 Fraction = 0.3438  # usable 0 to 1
 FractionInternal = 2**BusSize * Fraction
-AccumulatorBits = 5  # bits
+AccumulatorBits = 21  # bits
 AccumulatorSize = 2**AccumulatorBits
 
 C1 = np.zeros(NumberSamples)    # Carry out of the first accumulator
@@ -98,10 +98,12 @@ U3 = np.zeros(NumberSamples)    # output of the 3rd accum
 Yout1 = np.zeros(NumberSamples) # output to the divider for 1 stage SDM
 Yout2 = np.zeros(NumberSamples) # output to the divider for 2 stage SDM
 Yout3 = np.zeros(NumberSamples) # output to the divider for 3 stage SDM
+out = np.zeros(NumberSamples)
 
-for index in range(2, NumberSamples):
+for index in range(0, NumberSamples):
     U1[index] = FractionInternal + U1[index-1]
-    U2[index] = U1[index-1] + U2[index-1]
+    U2[index] = U1[index - 1] + U2[index - 1]
+    # U2[index] = U1[index-1] + U2[index-1]
     U3[index] = U2[index-1] + U3[index-1]
     if U1[index] > AccumulatorSize:
         C1[index] = 1  # carry 1
@@ -116,12 +118,14 @@ for index in range(2, NumberSamples):
     # The output is the overflow from acc 1, plus the diff of the overflow from
     # acc 2, plus the 2nd derivative of the overflow from acc 3
     Yout3[index] = C1[index] + C2[index] - C2[index-1] + C3[index] - 2*C3[index-1] + C3[index-2]  # output to the divider - 3 stages
+    # Yout3[index] = C1[index - 2] + C2[index - 1] - C2[index - 2] + C3[index] - 2 * C3[index - 1] + C3[index - 2]
     Yout2[index] = C1[index] + C2[index] - C2[index-1]  # output to the divider - 2 stages
     Yout1[index] = C1[index]  # output to the divider - 1 stage
-
+    out[index] = C1[index - 3] + C2[index - 2] - C2[index - 3] + C3[index - 1] - 2 * C3[index - 2] + C3[index - 3]
 MeanFrac = np.mean(Yout3)
+Meanout = np.mean(out)
 print(f"\nMeanFracMASH = {MeanFrac:.4f}\n")
-
+print(f"\nMeanout = {Meanout:.4f}\n")
 # note how the close in noise improves as the order increases
 fig1, ax1 = plt.subplots()
 SignalFreq1 = 20*np.log10(np.abs(np.fft.fft(Yout1)))
@@ -137,8 +141,9 @@ ax1.set_xlim([0, NumberSamples])
 ax1.grid(True)
 
 fig2, ax2 = plt.subplots()
-# ax2.plot(Yout3, 'r')
-ax2.plot(U1, 'r')
+# ax2.plot(Yout2, 'r')
+# ax2.plot(C2, 'r')
+ax2.plot(out, 'b')
 ax2.set_title('Yout3')
 ax2.grid(True)
 
