@@ -33,7 +33,6 @@ def Init_DCO():
     trk_f_bank = LSB_BANK(F0, TRK_NB_F, FR_TRK_F)
     global C0, pvt_lsb, acq_lsb, trk_i_lsb, trk_f_lsb, FREQ_RES_PVT, FREQ_RES_ACQ, FREQ_RES_TRK, FREQ_RES_TRK_F
     C0 = pvt_bank.cmin
-    # C0=10e-4
     pvt_lsb = pvt_bank.lsb
     acq_lsb = acq_bank.lsb
     trk_i_lsb = trk_i_bank.lsb
@@ -183,20 +182,20 @@ FDCO_edge = 1 / FDCO  # tempo de borda de F0
 '''
         BANK CAPACITOR
 '''
+PVT_NB = 8  # número de bits em PVT mode
+ACQ_NB = 8  # número de bits em acquisition mode
+TRK_NB_I = 6  # número de bits Trekking integer mode
+TRK_NB_F = 5  # número de bits Trekking fractional mode
 FR_PVT = 500e6  # range de frequência em PVT mode
 FR_ACQ = 100e6  # range de frequência em acquisition mode
 FR_TRK_I = 2e6  # range de frequência em Trekking integer mode
-FR_TRK_F = 2e6  # range de frequência em Trekking fractional mode
+FR_TRK_F = FR_TRK_I/ 2 ** TRK_NB_I # range de frequência em Trekking fractional mode
 FREQ_RES_PVT = 0
 FREQ_RES_ACQ = 0
 FREQ_RES_TRK = 0
 FREQ_RES_TRK_F = 0
 L = 1e-9  # Indutor utilizado
 C0 = 0  # valor de capacitância inicial
-PVT_NB = 8  # número de bits em PVT mode
-ACQ_NB = 8  # número de bits em acquisition mode
-TRK_NB_I = 6  # número de bits Trekking integer mode
-TRK_NB_F = 5  # número de bits Trekking fractional mode
 pvt_lsb = 0  # valor do LSB em PVT mode
 acq_lsb = 0  # valor do LSB em acquisition mode
 trk_i_lsb = 0  # valor do LSB em Trekking integer mode
@@ -277,6 +276,26 @@ if __name__ == "__main__":
     OTW = OTW_pvt
     F_start_DCO = f_CKV
     phase_error = np.zeros(TIME)
+
+    div = 0
+    NumberSamples = TIME * FCW
+    BusSize = 5  # bits
+    Fraction = 21  # usable 0 to 1
+    FractionInternal = 2 ** BusSize * Fraction
+    AccumulatorBits = 21  # bits
+    AccumulatorSize = 2 ** AccumulatorBits
+
+    C1 = np.zeros(NumberSamples)  # Carry out of the first accumulator
+    C2 = np.zeros(NumberSamples)  # Carry out of the 2nd accumulator
+    C3 = np.zeros(NumberSamples)  # Carry out of the 3nd accumulator
+    U1 = np.zeros(NumberSamples)  # output of the 1st accum
+    U2 = np.zeros(NumberSamples)  # output of the 2nd accum
+    U3 = np.zeros(NumberSamples)  # output of the 3rd accum
+    Yout1 = np.zeros(NumberSamples)  # output to the divider for 1 stage SDM
+    Yout2 = np.zeros(NumberSamples)  # output to the divider for 2 stage SDM
+    Yout3 = np.zeros(NumberSamples)  # output to the divider for 3 stage SDM
+    # out = np.zeros(NumberSamples)
+    index = 2
     for k in range(1, TIME):
         RR_k += FCW  # reference phase accumulator
         t_R = k * FREF_edge
@@ -286,6 +305,30 @@ if __name__ == "__main__":
             # delta_f = f_CKV - (F_start_DCO + (KDCO * (OTW)))
             # delta_f = f_CKV - FDCO
             # TDEV_I = delta_f / (f_CKV * (f_CKV + delta_f))
+            if trk_bank_calib:
+                div+=1
+                if div == 4:
+                    index +=1
+                    div = 0
+                    FractionInternal = 2 ** BusSize * error_fractional[k - 1]
+                    U1[index] = FractionInternal + U1[index - 1]
+                    U2[index] = U1[index - 1] + U2[index - 1]
+                    # U2[index] = U1[index-1] + U2[index-1]
+                    U3[index] = U2[index - 1] + U3[index - 1]
+                    if U1[index] > AccumulatorSize:
+                        C1[index] = 1  # carry 1
+                        U1[index] -= AccumulatorSize
+                    if U2[index] > AccumulatorSize:
+                        C2[index] = 1  # carry 2
+                        U2[index] -= AccumulatorSize
+                    if U3[index] > AccumulatorSize:
+                        C3[index] = 1  # carry 3
+                        U3[index] -= AccumulatorSize
+                    out = C1[index - 3] + C2[index - 2] - C2[index - 3] + C3[index - 1] - 2 * C3[index - 2] + C3[index - 3]
+                    OTW_trk_f +=out
+                    # f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
+                    # T0 = 1 / f_CKV
+
             jitter.append(np.random.randn() * Jt_noise)
             wander.append(np.random.randn() * Wt_noise)
             t_CKV.append(n * T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
@@ -313,12 +356,13 @@ if __name__ == "__main__":
                 count += 1
                 if count == 5:
                     acq_bank_calib = True
+                    trk_bank_calib = True
             else:
                 count = 0
 
         ##################### TREKING MODE ################################################
 
-        elif not trk_bank_calib:
+        elif trk_bank_calib:
             NTW[k] = OTW_trk + ((int(phase_error[k])) * Kp_TRK)  # calcula o novo valor de NTW como inteiro
             # NTW[k] = phase_error[k] * Kp_TRK - Kp_TRK * phase_error[k - 1] + Ki_TRK * phase_error[k - 1] + NTW[k - 1]
             OTW_trk = NTW[k]  # ajusta o novo valor de controle dos capacitores do TRK bank
