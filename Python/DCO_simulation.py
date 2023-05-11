@@ -67,10 +67,10 @@ def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
     '''
 
     global C0, pvt_lsb, acq_lsb, trk_i_lsb, trk_f_lsb
-    pvt = 255 - int(pvt_OTW)
-    acq = 255 - int(acq_OTW)
-    trk_i = 64 - int(trk_i_OTW)
-    trk_f = 32 - int(trk_f_OTW)
+    pvt = (2  ** PVT_NB) - int(pvt_OTW)
+    acq = (2  ** ACQ_NB) - int(acq_OTW)
+    trk_i = (2  ** TRK_NB_I) - int(trk_i_OTW)
+    trk_f = (2 ** TRK_NB_F) - int(trk_f_OTW)
     f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb + trk_f_lsb * trk_f)))
     return f
 
@@ -226,7 +226,7 @@ Jf_noise = 1 / Jt_noise  # jitter noise frequency
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 2000  # simulação de X bordas de FREF
+TIME = 64000  # simulação de X bordas de FREF
 OVERSAMPLE = 100  # oversample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 
@@ -263,7 +263,7 @@ NTW = np.zeros(TIME)  # normalize tuning word
 '''
 if __name__ == "__main__":
     Init_DCO()
-    f_CKV = SET_DCO(255, 255, 64, 0)
+    f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, 0)
     T0 = 1 / f_CKV
     fs = OVERSAMPLE * f_CKV
     print("frequência inicial do DCO é: ", f_CKV / 1e6, "MHz")
@@ -279,9 +279,9 @@ if __name__ == "__main__":
 
     div = 0
     NumberSamples = TIME * FCW
-    BusSize = 5  # bits
-    Fraction = 21  # usable 0 to 1
-    FractionInternal = 2 ** BusSize * Fraction
+    BusSize = 21  # bits
+    # Fraction = 21  # usable 0 to 1
+    # FractionInternal = 2 ** BusSize * Fraction
     AccumulatorBits = 21  # bits
     AccumulatorSize = 2 ** AccumulatorBits
 
@@ -294,7 +294,7 @@ if __name__ == "__main__":
     Yout1 = np.zeros(NumberSamples)  # output to the divider for 1 stage SDM
     Yout2 = np.zeros(NumberSamples)  # output to the divider for 2 stage SDM
     Yout3 = np.zeros(NumberSamples)  # output to the divider for 3 stage SDM
-    # out = np.zeros(NumberSamples)
+    out = np.zeros(NumberSamples)
     index = 2
     for k in range(1, TIME):
         RR_k += FCW  # reference phase accumulator
@@ -310,7 +310,8 @@ if __name__ == "__main__":
                 if div == 4:
                     index +=1
                     div = 0
-                    FractionInternal = 2 ** BusSize * error_fractional[k - 1]
+                    errorf = phase_error[k - 1] % 1
+                    FractionInternal = 2 ** BusSize * errorf
                     U1[index] = FractionInternal + U1[index - 1]
                     U2[index] = U1[index - 1] + U2[index - 1]
                     # U2[index] = U1[index-1] + U2[index-1]
@@ -324,15 +325,15 @@ if __name__ == "__main__":
                     if U3[index] > AccumulatorSize:
                         C3[index] = 1  # carry 3
                         U3[index] -= AccumulatorSize
-                    out = C1[index - 3] + C2[index - 2] - C2[index - 3] + C3[index - 1] - 2 * C3[index - 2] + C3[index - 3]
-                    OTW_trk_f +=out
+                    out[index] = C1[index - 3] + C2[index - 2] - C2[index - 3] + C3[index - 1] - 2 * C3[index - 2] + C3[index - 3]
+                    # NTW[k] +=out[index]
                     # f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
-                    # T0 = 1 / f_CKV
+                    T0 = 1 / f_CKV
 
             jitter.append(np.random.randn() * Jt_noise)
             wander.append(np.random.randn() * Wt_noise)
             t_CKV.append(n * T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
-
+        meam = np.mean(out)
         RV_k = RV_n  # variable phase accumulator
         error_fractional[k] = TDC(t_R, t_CKV[n - 1])  # TDC
         phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
@@ -363,9 +364,15 @@ if __name__ == "__main__":
         ##################### TREKING MODE ################################################
 
         elif trk_bank_calib:
-            NTW[k] = OTW_trk + ((int(phase_error[k])) * Kp_TRK)  # calcula o novo valor de NTW como inteiro
+            # NTW[k] = OTW_trk + ((int(phase_error[k])) * Kp_TRK)  # calcula o novo valor de NTW como inteiro
+            NTW[k] = int(phase_error[k]) * Kp_TRK - Kp_TRK * int(phase_error[k - 1]) + Ki_TRK * int(phase_error[k - 1]) + NTW[k - 1]
+            if NTW[k] > 64:
+                OTW_trk = 64
+            elif NTW[k] < 0:
+                OTW_trk = 0
             # NTW[k] = phase_error[k] * Kp_TRK - Kp_TRK * phase_error[k - 1] + Ki_TRK * phase_error[k - 1] + NTW[k - 1]
-            OTW_trk = NTW[k]  # ajusta o novo valor de controle dos capacitores do TRK bank
+            else :
+                OTW_trk = NTW[k]  # ajusta o novo valor de controle dos capacitores do TRK bank
         f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
         T0 = 1 / f_CKV
         freqs[k] = f_CKV  # insere o valor de frequência ajustado no index k
