@@ -7,6 +7,7 @@ Created on abril 26 18:02:04 2023
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
+import datetime
 
 
 class LSB_BANK:
@@ -75,12 +76,13 @@ def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
     return f
 
 
-def TDC(tR, t_ckv):
+def TDC(tR, t_ckv, T0_avg):
     global TDC_res, T0
     tR_Q = int((
                        tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
     # delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
-    error = 1 - (tR_Q * TDC_res) / T0
+    # error = 1 - (tR_Q * TDC_res) / T0
+    error = 1 - (tR_Q * TDC_res) / T0_avg
     return error
 
 
@@ -136,6 +138,16 @@ def diff_freq(f):
         '''
     return abs((FREF * FCW) - f)
 
+def IRR_filter(k,ntw):
+    global  y1,y2,y3, y_IRR, IRR_coef
+
+    y1[k] = (1 - IRR_coef[0]) * y1[k-1] + IRR_coef[0]*ntw
+    y2[k] = (1 - IRR_coef[1]) * y2[k - 1] + IRR_coef[1] * y1[k]
+    y3[k] = (1 - IRR_coef[2]) * y3[k - 1] + IRR_coef[2] * y2[k]
+    y_IRR[k] = (1 - IRR_coef[3]) * y_IRR[k - 1] + IRR_coef[3] * y3[k]
+
+    return y_IRR[k]
+
 
 def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
     '''
@@ -173,7 +185,7 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
         DEFINIÇÕES GERAIS
 '''
 F0 = 2045e6  # frequência central de ajuste do DCO
-FCW = 72  # 76.9230  # Frequency command word
+FCW = 74.5321  # 76.9230  # Frequency command word
 FREF = 26e6  # Frequência de referência
 FDCO = FREF * FCW  # Frequência desajda na sáida do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
@@ -226,9 +238,18 @@ Jf_noise = 1 / Jt_noise  # jitter noise frequency
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 5000  # simulação de X bordas de FREF
+TIME = 110000  # simulação de X bordas de FREF
 OVERSAMPLE = 100  # oversample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
+
+'''
+        IRR FILTER
+'''
+y1 = np.zeros(TIME)
+y2 = np.zeros(TIME)
+y3 = np.zeros(TIME)
+y_IRR = np.zeros(TIME)
+IRR_coef = [2 ** -2, 2 ** -1, 2 ** -1, 2 ** -1]
 
 '''
         VARIÁVEIS DE CONTROLE
@@ -262,6 +283,8 @@ NTW = np.zeros(TIME)  # normalize tuning word
         Main
 '''
 if __name__ == "__main__":
+    starTime = datetime.datetime.now()
+    print("iniciando simulação em: ", starTime.strftime("%H:%M:%S"), " com um número de bordas de referência em : ", TIME)
     Init_DCO()
     f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, 0)
     T0 = 1 / f_CKV
@@ -278,7 +301,7 @@ if __name__ == "__main__":
     phase_error = np.zeros(TIME)
 
     div = 0
-    NumberSamples = TIME * FCW
+    NumberSamples = TIME * int(FCW) + 1
     BusSize = 5  # bits
     # Fraction = 21  # usable 0 to 1
     # FractionInternal = 2 ** BusSize * Fraction
@@ -296,12 +319,22 @@ if __name__ == "__main__":
     Yout3 = np.zeros(NumberSamples)  # output to the divider for 3 stage SDM
     out = np.zeros(NumberSamples)
     index = 2
+    fmean = 0
+    freqinit = 0
+    freqfinal = 0
+    indexcount = 0
+    media = 0
+    fcount = 0
     for k in range(1, TIME):
         RR_k += FCW  # reference phase accumulator
         t_R = k * FREF_edge
         U1[index] = 0
         U2[index] = 0
         U3[index] = 0
+        freqinit = f_CKV
+        indexcount = 0
+        freqfinal = 0
+
         while t_CKV[n] < t_R:
             n += 1
             RV_n = n  # variable phase accumulator
@@ -313,7 +346,8 @@ if __name__ == "__main__":
                 if div == 4:
                     index += 1
                     div = 0
-                    errorf = phase_error[k - 1] % 1
+
+                    errorf = OTW_trk % 1# NTW[k - 1] % 1
                     FractionInternal = 2 ** BusSize * errorf
                     U1[index] = FractionInternal + U1[index - 1]
                     U2[index] = U1[index - 1] + U2[index - 1]
@@ -327,19 +361,34 @@ if __name__ == "__main__":
                     if U3[index] > AccumulatorSize:
                         C3[index] = 1  # carry 3
                         U3[index] -= AccumulatorSize
-                    out[index] = C1[index - 3] + C2[index - 2] - C2[index - 3] + C3[index - 1] - 2 * C3[index - 2] + C3[
-                        index - 3]
-                    NTW[k - 1] -= out[index]
-                    OTW_trk = NTW[k - 1]
-                    f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
+                    # out[index] = C1[index - 3] + C2[index - 2] - C2[index - 3] + C3[index - 1] - 2 * C3[index - 2] + C3[index - 3]
+                    out[index] =  C1[index] + C2[index] - C2[index-1] + C3[index] - 2*C3[index-1] + C3[index-2]
+                    # NTW[k - 1] += out[index]
+                    otw_prev = OTW_trk + out[index]
+                    # OTW_trk += out[index]
+                    if otw_prev > 64:
+                        otw_prev = 64
+                    elif otw_prev < 0:
+                        otw_prev = 0
+                    f_CKV = SET_DCO(OTW_pvt, OTW_acq, otw_prev, OTW_trk_f)
+                    freqfinal += f_CKV
+                    indexcount += 1
+                    fmean += f_CKV
+                    fcount += 1
                     T0 = 1 / f_CKV
+
 
             jitter.append(np.random.randn() * Jt_noise)
             wander.append(np.random.randn() * Wt_noise)
             t_CKV.append(n * T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
+        # if trk_bank_calib:
+            # media = (freqfinal - freqinit) / (indexcount)
         meam = np.mean(out)
         RV_k = RV_n  # variable phase accumulator
-        error_fractional[k] = TDC(t_R, t_CKV[n - 1])  # TDC
+        if trk_bank_calib:
+            error_fractional[k] = TDC(t_R, t_CKV[n - 1], 1/(fmean/fcount))  # TDC
+        else:
+            error_fractional[k] = TDC(t_R, t_CKV[n - 1], T0)  # TDC
         phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
 
         ##################### PVT MODE #################################################
@@ -362,7 +411,7 @@ if __name__ == "__main__":
                 if count == 5:
                     acq_bank_calib = True
                     trk_bank_calib = True
-                    NTW[k] = 0
+                    NTW[k] = 32
             else:
                 count = 0
 
@@ -370,21 +419,34 @@ if __name__ == "__main__":
 
         elif trk_bank_calib:
             # NTW[k] = OTW_trk + ((int(phase_error[k])) * Kp_TRK)  # calcula o novo valor de NTW como inteiro
-            NTW[k] = int(phase_error[k]) * Kp_TRK - Kp_TRK * int(phase_error[k - 1]) + Ki_TRK * int(
-                phase_error[k - 1]) + NTW[k - 1]
-            if NTW[k] > 64:
-                NTW[k] = 64
-            elif NTW[k] < 0:
-                NTW[k] = 0
-            # NTW[k] = phase_error[k] * Kp_TRK - Kp_TRK * phase_error[k - 1] + Ki_TRK * phase_error[k - 1] + NTW[k - 1]
-            OTW_trk = NTW[k]  # ajusta o novo valor de controle dos capacitores do TRK bank
+            NTW[k] = (phase_error[k]) * Kp_TRK - Kp_TRK * (phase_error[k - 1]) + Ki_TRK * (phase_error[k - 1]) + NTW[k - 1]
+            OTW_trk = IRR_filter(k, NTW[k])
+            # NTW[k] = OTW_trk
+            # if NTW[k] > 64:
+            #     NTW[k] = 64
+            # elif NTW[k] < 0:
+            #     NTW[k] = 0
+            # # NTW[k] = phase_error[k] * Kp_TRK - Kp_TRK * phase_error[k - 1] + Ki_TRK * phase_error[k - 1] + NTW[k - 1]
+            # OTW_trk = NTW[k]  # ajusta o novo valor de controle dos capacitores do TRK bank
         f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
         T0 = 1 / f_CKV
+        fmean += f_CKV
+        fcount += 1
         freqs[k] = f_CKV  # insere o valor de frequência ajustado no index k
 
     print("freq ajustada: ", f_CKV / 1e6,
           "MHz E a desejada era de :", (FREF * FCW) / 1e6,
           "MHz diferença de :", (f_CKV - (FREF * FCW)) / 1e3, "kHz")
+
+    print("freq ajustada considerando a média: ", fmean / fcount / 1e6,
+          "MHz E a desejada era de :", (FREF * FCW) / 1e6,
+          "MHz diferença de :", (fmean / fcount - (FREF * FCW)) / 1e3, "kHz")
+
+
+    stopTime = datetime.datetime.now()
+    diftime = stopTime - starTime
+    print("Encerando a simulação em: ", stopTime.strftime("%H:%M:%S"))
+    print("Duração da simulação: ", diftime.total_seconds())
 
     plt.figure()
     plt.plot(np.arange(1, TIME, 1), freqs[1:TIME])

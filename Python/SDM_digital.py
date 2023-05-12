@@ -82,11 +82,11 @@ import matplotlib.pyplot as plt
 '''
 
 # NumberSamples=2^16;
-NumberSamples = 77
-BusSize = 21  # bits
+NumberSamples = 10000
+BusSize = 5  # bits
 Fraction = 0.3438  # usable 0 to 1
 FractionInternal = 2**BusSize * Fraction
-AccumulatorBits = 21  # bits
+AccumulatorBits = 5  # bits
 AccumulatorSize = 2**AccumulatorBits
 
 C1 = np.zeros(NumberSamples)    # Carry out of the first accumulator
@@ -141,9 +141,12 @@ ax1.set_xlim([0, NumberSamples])
 ax1.grid(True)
 
 fig2, ax2 = plt.subplots()
-# ax2.plot(Yout2, 'r')
+ax2.plot(out, 'r')
+ax2.plot(Yout3, 'b')
 # ax2.plot(C2, 'r')
-ax2.plot(out, 'b')
+# ax2.plot(C1, 'g')
+# ax2.plot(C2, 'r')
+# ax2.plot(C3, 'b')
 ax2.set_title('Yout3')
 ax2.grid(True)
 
