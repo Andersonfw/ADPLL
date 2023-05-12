@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 import datetime
-
+import decimal
 
 class LSB_BANK:
     def __init__(self, fc, nb, fr):
@@ -48,8 +48,8 @@ def Init_DCO():
           acq_bank.cmin, " LSB: ", acq_bank.lsb)
     print("TRK_I -----  fmin: ", trk_i_bank.fmin, " fmax: ", trk_i_bank.fmax, "cmax: ", trk_i_bank.cmax, " cmim: ",
           trk_i_bank.cmin, " LSB: ", trk_i_bank.lsb)
-    print("TRK_F -----  fmin: ", trk_f_bank.fmin, " fmax: ", trk_f_bank.fmax, "cmax: ", trk_f_bank.cmax, " cmim: ",
-          trk_f_bank.cmin, " LSB: ", trk_f_bank.lsb)
+    # print("TRK_F -----  fmin: ", trk_f_bank.fmin, " fmax: ", trk_f_bank.fmax, "cmax: ", trk_f_bank.cmax, " cmim: ",
+    #       trk_f_bank.cmin, " LSB: ", trk_f_bank.lsb)
     return
 
 
@@ -67,13 +67,23 @@ def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
     f	: valor de frequência [Hz]
     '''
 
-    global C0, pvt_lsb, acq_lsb, trk_i_lsb, trk_f_lsb
+    global C0, pvt_lsb, acq_lsb, trk_i_lsb, trk_f_lsb, AVG_FCKV, avg_counter, freq_array, trk_bank_calib
     pvt = (2 ** PVT_NB) - int(pvt_OTW)
     acq = (2 ** ACQ_NB) - int(acq_OTW)
     trk_i = (2 ** TRK_NB_I) - int(trk_i_OTW)
     trk_f = (2 ** TRK_NB_F) - int(trk_f_OTW)
     f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb + trk_f_lsb * trk_f)))
-    return f
+
+    freq_array[avg_counter] = f
+    avg_counter += 1
+    if avg_counter == AVG_FCKV:
+        avg_counter = 0
+    if trk_bank_calib:
+        fckv_AVG = np.mean(freq_array)
+    else:
+        fckv_AVG = f
+
+    return fckv_AVG
 
 
 def TDC(tR, t_ckv, T0_avg):
@@ -85,7 +95,42 @@ def TDC(tR, t_ckv, T0_avg):
     error = 1 - (tR_Q * TDC_res) / T0_avg
     return error
 
+def SDM(ntw_f):
+    global BusSize,U1,U2,U3,C1,C2,C3,AccumulatorSize,out,f_CKV,T0,OTW_trk
 
+    FractionInternal = 2 ** BusSize * ntw_f
+    U1[index] = FractionInternal + U1[index - 1]
+    U2[index] = U1[index - 1] + U2[index - 1]
+    U3[index] = U2[index - 1] + U3[index - 1]
+    if U1[index] > AccumulatorSize:
+        C1[index] = 1  # carry 1
+        U1[index] -= AccumulatorSize
+    if U2[index] > AccumulatorSize:
+        C2[index] = 1  # carry 2
+        U2[index] -= AccumulatorSize
+    if U3[index] > AccumulatorSize:
+        C3[index] = 1  # carry 3
+        U3[index] -= AccumulatorSize
+    out[index] = C1[index - 3] + C2[index - 2] - C2[index - 3] + C3[index - 1] - 2 * C3[index - 2] + C3[index - 3]
+    # out[index] =  C1[index] + C2[index] - C2[index-1] + C3[index] - 2*C3[index-1] + C3[index-2]
+    # NTW[k - 1] += out[index]
+    otw_prev = OTW_trk + out[index]
+    # otw_prev = OTW_trk + C3[index]
+    # OTW_trk += out[index]
+    if otw_prev > 64:
+        otw_prev = 64
+    elif otw_prev < 0:
+        otw_prev = 0
+    f_CKV = SET_DCO(OTW_pvt, OTW_acq, otw_prev, OTW_trk_f)
+    # freqfinal += f_CKV
+    # indexcount += 1
+    # fmean += f_CKV
+    # fcount += 1
+    T0 = 1 / f_CKV
+    # if indexcount >= 128:
+    #     media = freqfinal / indexcount
+    #     freqfinal = 0
+    #     indexcount = 0
 def plot_DCO_signal():
     '''
     plotar sinal de saída do DCO e comparar ao sinal de inicio
@@ -185,12 +230,14 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
         DEFINIÇÕES GERAIS
 '''
 F0 = 2045e6  # frequência central de ajuste do DCO
-FCW = 74.5321  # 76.9230  # Frequency command word
 FREF = 26e6  # Frequência de referência
-FDCO = FREF * FCW  # Frequência desajda na sáida do DCO
+F_DESIRED = 1.9e9
+# FCW = 73.07692308  # 76.9230  # Frequency command word
+FCW = F_DESIRED / FREF  # 76.9230  # Frequency command word
+FDCO = FREF * FCW  # Frequência desejada na saída do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
-
+NOISE = True
 '''
         BANK CAPACITOR
 '''
@@ -216,8 +263,9 @@ trk_f_lsb = 0  # valor do LSB em Trekking fractional mode
 '''
         TDC
 '''
-TDC_res = 15e-12
-TDC_chains = 40
+TDC_res = 15e-12    # delay of each  inverter
+TDC_chains = 40 # number of inverters
+AVG_FCKV = 128  # number of edges to average actual frequency
 
 '''
         LOOP FILTER
@@ -228,18 +276,37 @@ Kp_TRK = 2 ** -5
 Ki_TRK = 2 ** -11
 
 '''
-        RUÍDO
+        NOISE
 '''
-Wt_noise = 12e-15  # Wander noise time
-Wf_noise = 1 / Wt_noise  # Wander noise frequency
-Jt_noise = 111e-15  # jitter noise time
-Jf_noise = 1 / Jt_noise  # jitter noise frequency
+noise_floor = -150      # noise floor [dBc)
+L_j = 10 ** (noise_floor/10)    # noise level
+f_desired = F0  # desired frequency
+t_required = 1 / f_desired   # period of frequency
+Thermal_noise = -130        # Up converted Thermal noise with deltaf frequency offset [dBc]
+L_w = 10 ** (Thermal_noise/10)  # noise level
+deltaf = 3.5e6  # offset frequency
+
+j_noise = (t_required / (2*np.pi)) * np.sqrt(L_j * f_desired)   # Jitter noise standard deviation
+W_noise = deltaf / f_desired * np.sqrt(t_required) * np.sqrt(L_w)   # Wander noise standard deviation
+# Converte o número em um decimal
+j_decimal = decimal.Decimal(j_noise)
+w_decimal = decimal.Decimal(W_noise)
+# Arredonda o número com uma precisão de 15 dígitos
+j_decimal = j_decimal.quantize(decimal.Decimal('1e-15'), rounding=decimal.ROUND_HALF_EVEN)
+w_decimal = w_decimal.quantize(decimal.Decimal('1e-15'), rounding=decimal.ROUND_HALF_EVEN)
+# Converte o número arredondado de volta para notação científica
+Jt_noise = float('{:e}'.format(j_decimal))
+Wt_noise = float('{:e}'.format(w_decimal))
+# print("jitter noise",Jt_noise)
+# print("Wander noise",Wt_noise)
+# Wt_noise = 12e-15  # Wander noise time
+# Jt_noise = 111e-15  # jitter noise time
 
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 110000  # simulação de X bordas de FREF
-OVERSAMPLE = 100  # oversample de frequência para discretizar a frequência do DCO
+TIME = 80000  # simulação de X bordas de FREF
+OVERSAMPLE = 100  # over sample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 
 '''
@@ -252,6 +319,29 @@ y_IRR = np.zeros(TIME)
 IRR_coef = [2 ** -2, 2 ** -1, 2 ** -1, 2 ** -1]
 
 '''
+        SIGMA DELTA MODULATOR
+'''
+N_DIV = 4   # Ratio of division DCO clock
+count_div = 0
+NumberSamples = TIME * int(FCW/N_DIV + 1)
+BusSize = 5  # bits
+# Fraction = 21  # usable 0 to 1
+# FractionInternal = 2 ** BusSize * Fraction
+AccumulatorBits = 5  # bits
+AccumulatorSize = 2 ** AccumulatorBits
+C1 = np.zeros(NumberSamples)  # Carry out of the first accumulator
+C2 = np.zeros(NumberSamples)  # Carry out of the 2nd accumulator
+C3 = np.zeros(NumberSamples)  # Carry out of the 3nd accumulator
+U1 = np.zeros(NumberSamples)  # output of the 1st accum
+U2 = np.zeros(NumberSamples)  # output of the 2nd accum
+U3 = np.zeros(NumberSamples)  # output of the 3rd accum
+Yout1 = np.zeros(NumberSamples)  # output to the divider for 1 stage SDM
+Yout2 = np.zeros(NumberSamples)  # output to the divider for 2 stage SDM
+Yout3 = np.zeros(NumberSamples)  # output to the divider for 3 stage SDM
+out = np.zeros(NumberSamples)    # output to the SDM
+index = 2                        # index to the SDM arrays
+
+'''
         VARIÁVEIS DE CONTROLE
 '''
 RR_k = 0  # reference phase
@@ -261,9 +351,10 @@ t_CKV = [0]  # period of DCO output
 t_R = 0  # time reference
 TDEV_I = 0  # time deviation integer
 TDEV_F = 0  # time deviation fractional
-jitter = [0]
-wander = [0]
-error_fractional = np.zeros(TIME)
+jitter = [0]    # jitter noise
+wander = [0]    # wander noise
+error_fractional = np.zeros(TIME)   # fractional error from TDC
+phase_error = np.zeros(TIME)        # phase detector
 
 pvt_bank_calib = False
 acq_bank_calib = False
@@ -277,6 +368,8 @@ prev_phase = 0  # new phase difference
 count = 0  # counter of k index
 k = 1  # index k
 n = 0  # index n
+avg_counter = 0 # counter of number f_ckv edges to calculate the average
+freq_array = np.zeros(AVG_FCKV)    # array to the values of fckv
 freqs = np.zeros(TIME)  # array of different DCO output values
 NTW = np.zeros(TIME)  # normalize tuning word
 '''
@@ -298,33 +391,13 @@ if __name__ == "__main__":
     KDCO = FREQ_RES_PVT
     OTW = OTW_pvt
     F_start_DCO = f_CKV
-    phase_error = np.zeros(TIME)
 
-    div = 0
-    NumberSamples = TIME * int(FCW) + 1
-    BusSize = 5  # bits
-    # Fraction = 21  # usable 0 to 1
-    # FractionInternal = 2 ** BusSize * Fraction
-    AccumulatorBits = 5  # bits
-    AccumulatorSize = 2 ** AccumulatorBits
-
-    C1 = np.zeros(NumberSamples)  # Carry out of the first accumulator
-    C2 = np.zeros(NumberSamples)  # Carry out of the 2nd accumulator
-    C3 = np.zeros(NumberSamples)  # Carry out of the 3nd accumulator
-    U1 = np.zeros(NumberSamples)  # output of the 1st accum
-    U2 = np.zeros(NumberSamples)  # output of the 2nd accum
-    U3 = np.zeros(NumberSamples)  # output of the 3rd accum
-    Yout1 = np.zeros(NumberSamples)  # output to the divider for 1 stage SDM
-    Yout2 = np.zeros(NumberSamples)  # output to the divider for 2 stage SDM
-    Yout3 = np.zeros(NumberSamples)  # output to the divider for 3 stage SDM
-    out = np.zeros(NumberSamples)
-    index = 2
-    fmean = 0
-    freqinit = 0
-    freqfinal = 0
-    indexcount = 0
-    media = 0
-    fcount = 0
+    # fmean = 0
+    # freqinit = 0
+    # freqfinal = 0
+    # indexcount = 0
+    # media = 0
+    # fcount = 0
     for k in range(1, TIME):
         RR_k += FCW  # reference phase accumulator
         t_R = k * FREF_edge
@@ -332,8 +405,8 @@ if __name__ == "__main__":
         U2[index] = 0
         U3[index] = 0
         freqinit = f_CKV
-        indexcount = 0
-        freqfinal = 0
+        # indexcount = 0
+        # freqfinal = 0
 
         while t_CKV[n] < t_R:
             n += 1
@@ -342,51 +415,24 @@ if __name__ == "__main__":
             # delta_f = f_CKV - FDCO
             # TDEV_I = delta_f / (f_CKV * (f_CKV + delta_f))
             if trk_bank_calib:
-                div += 1
-                if div == 4:
+                count_div += 1
+                if count_div == N_DIV:
                     index += 1
-                    div = 0
+                    count_div = 0
+                    NTW_f = OTW_trk % 1 # NTW[k - 1] % 1  OTW_trk % 1  # get fractional part from NTW
+                    SDM(NTW_f)
 
-                    errorf = OTW_trk % 1# NTW[k - 1] % 1
-                    FractionInternal = 2 ** BusSize * errorf
-                    U1[index] = FractionInternal + U1[index - 1]
-                    U2[index] = U1[index - 1] + U2[index - 1]
-                    U3[index] = U2[index - 1] + U3[index - 1]
-                    if U1[index] > AccumulatorSize:
-                        C1[index] = 1  # carry 1
-                        U1[index] -= AccumulatorSize
-                    if U2[index] > AccumulatorSize:
-                        C2[index] = 1  # carry 2
-                        U2[index] -= AccumulatorSize
-                    if U3[index] > AccumulatorSize:
-                        C3[index] = 1  # carry 3
-                        U3[index] -= AccumulatorSize
-                    # out[index] = C1[index - 3] + C2[index - 2] - C2[index - 3] + C3[index - 1] - 2 * C3[index - 2] + C3[index - 3]
-                    out[index] =  C1[index] + C2[index] - C2[index-1] + C3[index] - 2*C3[index-1] + C3[index-2]
-                    # NTW[k - 1] += out[index]
-                    otw_prev = OTW_trk + out[index]
-                    # OTW_trk += out[index]
-                    if otw_prev > 64:
-                        otw_prev = 64
-                    elif otw_prev < 0:
-                        otw_prev = 0
-                    f_CKV = SET_DCO(OTW_pvt, OTW_acq, otw_prev, OTW_trk_f)
-                    freqfinal += f_CKV
-                    indexcount += 1
-                    fmean += f_CKV
-                    fcount += 1
-                    T0 = 1 / f_CKV
 
 
             jitter.append(np.random.randn() * Jt_noise)
             wander.append(np.random.randn() * Wt_noise)
-            t_CKV.append(n * T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
-        # if trk_bank_calib:
-            # media = (freqfinal - freqinit) / (indexcount)
-        meam = np.mean(out)
+            if NOISE:
+                t_CKV.append(n * T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
+            else:
+                t_CKV.append(n * T0)
         RV_k = RV_n  # variable phase accumulator
         if trk_bank_calib:
-            error_fractional[k] = TDC(t_R, t_CKV[n - 1], 1/(fmean/fcount))  # TDC
+            error_fractional[k] = TDC(t_R, t_CKV[n - 1], T0)#1/(fmean/fcount))  # TDC
         else:
             error_fractional[k] = TDC(t_R, t_CKV[n - 1], T0)  # TDC
         phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
@@ -430,18 +476,23 @@ if __name__ == "__main__":
             # OTW_trk = NTW[k]  # ajusta o novo valor de controle dos capacitores do TRK bank
         f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
         T0 = 1 / f_CKV
-        fmean += f_CKV
-        fcount += 1
+        # fmean += f_CKV
+        # fcount += 1
+        # freqfinal += f_CKV
+        # indexcount += 1
         freqs[k] = f_CKV  # insere o valor de frequência ajustado no index k
 
     print("freq ajustada: ", f_CKV / 1e6,
           "MHz E a desejada era de :", (FREF * FCW) / 1e6,
           "MHz diferença de :", (f_CKV - (FREF * FCW)) / 1e3, "kHz")
 
-    print("freq ajustada considerando a média: ", fmean / fcount / 1e6,
-          "MHz E a desejada era de :", (FREF * FCW) / 1e6,
-          "MHz diferença de :", (fmean / fcount - (FREF * FCW)) / 1e3, "kHz")
-
+    # print("freq ajustada considerando a média: ", fmean / fcount / 1e6,
+    #       "MHz E a desejada era de :", (FREF * FCW) / 1e6,
+    #       "MHz diferença de :", (fmean / fcount - (FREF * FCW)) / 1e3, "kHz")
+    #
+    # print("freq ajustada considerando a média de 128 bordas: ", media / 1e6,
+    #       "MHz E a desejada era de :", (FREF * FCW) / 1e6,
+    #       "MHz diferença de :", (media - (FREF * FCW)) / 1e3, "kHz")
 
     stopTime = datetime.datetime.now()
     diftime = stopTime - starTime
@@ -451,8 +502,9 @@ if __name__ == "__main__":
     plt.figure()
     plt.plot(np.arange(1, TIME, 1), freqs[1:TIME])
     plt.grid(visible=True)
+    plt.show()
 
-    plot_DCO_signal()
+    # plot_DCO_signal()
 
     #
     # Xdb_o, f = fun_calc_psd((x_or), fs, 1e3, 10e3)
