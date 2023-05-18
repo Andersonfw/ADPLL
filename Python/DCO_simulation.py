@@ -236,8 +236,8 @@ FCW = F_DESIRED / FREF  # 76.9230  # Frequency command word
 FDCO = FREF * FCW  # Frequência desejada na saída do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
-NOISE = True
-IRR = True
+NOISE = False
+IRR = False
 SDM = True
 
 '''
@@ -421,8 +421,8 @@ if __name__ == "__main__":
                     NTW_f = OTW_trk % 1  # NTW[k - 1] % 1  OTW_trk % 1  # get fractional part from NTW
                     if SDM:
                         SDM_modulator(NTW_f)
-                        freqmeanall.append(f_CKV)
                         freqmeanSDM.append(f_CKV)
+                    freqmeanall.append(f_CKV)
             jitter.append(np.random.randn() * Jt_noise)
             wander.append(np.random.randn() * Wt_noise)
             if NOISE:
@@ -485,13 +485,22 @@ if __name__ == "__main__":
           "MHz E a desejada era de :", (FREF * FCW) / 1e6,
           "MHz diferença de :", (f_CKV - (FREF * FCW)) / 1e3, "kHz")
 
-    print("freq ajustada considerando a média SDM: ", np.mean(freqmeanSDM) / 1e6,
-          "MHz E a desejada era de :", (FREF * FCW) / 1e6,
-          "MHz diferença de :", (np.mean(freqmeanSDM) - (FREF * FCW)) / 1e3, "kHz")
+    if SDM:
+        print("freq ajustada considerando a média SDM: ", np.mean(freqmeanSDM) / 1e6,
+              "MHz E a desejada era de :", (FREF * FCW) / 1e6,
+              "MHz diferença de :", (np.mean(freqmeanSDM) - (FREF * FCW)) / 1e3, "kHz")
 
     print("freq ajustada considerando a média total: ", np.mean(freqmeanall) / 1e6,
           "MHz E a desejada era de :", (FREF * FCW) / 1e6,
           "MHz diferença de :", (np.mean(freqmeanall) - (FREF * FCW)) / 1e3, "kHz")
+
+    period_reference = 1 / (FREF * FCW)
+    period_final = 1/f_CKV
+    angle_per_degrees = period_reference/360
+
+    angle_diff = (period_final-period_reference)/angle_per_degrees
+
+    print("Fase de erro: ", angle_diff)
 
     stopTime = datetime.datetime.now()
     diftime = stopTime - starTime
