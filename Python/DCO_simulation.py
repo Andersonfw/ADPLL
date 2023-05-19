@@ -53,6 +53,11 @@ def Init_DCO():
     #       trk_f_bank.cmin, " LSB: ", trk_f_bank.lsb)
     return
 
+def binaryValue(N_bits, OscilatorValue):
+    ret = (2 ** N_bits) - abs(int(OscilatorValue))
+    if ret < 0:
+        ret = 0
+    return ret
 
 def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
     '''
@@ -69,10 +74,14 @@ def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
     '''
 
     global C0, pvt_lsb, acq_lsb, trk_i_lsb, trk_f_lsb, AVG_FCKV, avg_counter, freq_array, trk_bank_calib
-    pvt = (2 ** PVT_NB) - int(pvt_OTW)
-    acq = (2 ** ACQ_NB) - int(acq_OTW)
-    trk_i = (2 ** TRK_NB_I) - int(trk_i_OTW)
-    trk_f = (2 ** TRK_NB_F) - int(trk_f_OTW)
+    # pvt = (2 ** PVT_NB) - int(pvt_OTW)
+    # acq = (2 ** ACQ_NB) - int(acq_OTW)
+    # trk_i = (2 ** TRK_NB_I) - int(trk_i_OTW)
+    # trk_f = (2 ** TRK_NB_F) - int(trk_f_OTW)
+    pvt = binaryValue(PVT_NB, pvt_OTW)
+    acq = binaryValue(ACQ_NB, acq_OTW)
+    trk_i = binaryValue(TRK_NB_I, trk_i_OTW)
+    trk_f = binaryValue(TRK_NB_F, trk_f_OTW)
     f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb + trk_f_lsb * trk_f)))
 
     freq_array[avg_counter] = f
@@ -90,15 +99,18 @@ def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
 
 
 def TDC(tR, t_ckv, T0_avg):
-    global TDC_res, T0, TDC_chains
+    global TDC_res, T0, TDC_chains, RV_n, RV_k, NUM_ZEROS
     tR_Q = int((tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
     tR_Q = int((t_ckv - tR) / TDC_res)
     tR_Q = abs(tR_Q)
     # delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
     # error = 1 - (tR_Q * TDC_res) / T0
-    if tR_Q > TDC_chains:
+    if  tR_Q > TDC_chains and RV_n != RV_k:
+        pass
+    if tR_Q > TDC_chains:# and RV_n == (RV_k+1):
         # tR_Q = TDC_chains
-        error = 1
+        error = 0
+        NUM_ZEROS +=1
     else:
         error = 1 - (tR_Q * TDC_res) / T0_avg
     return error
@@ -236,14 +248,14 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
 F0 = 2045e6  # frequência central de ajuste do DCO
 FREF = 26e6  # Frequência de referência
 F_DESIRED = 2e9
-# FCW = 73.07692308  # 76.9230  # Frequency command word
-FCW = F_DESIRED / FREF  # 76.9230  # Frequency command word
+FCW = 72  # 76.9230  # Frequency command word
+# FCW = F_DESIRED / FREF  # 76.9230  # Frequency command word
 FDCO = FREF * FCW  # Frequência desejada na saída do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
 NOISE = False
 IRR = False
-SDM = True
+SDM = False
 
 '''
         BANK CAPACITOR
@@ -273,7 +285,7 @@ trk_f_lsb = 0  # valor do LSB em Trekking fractional mode
 TDC_res = 15e-12  # delay of each  inverter
 TDC_chains = 40  # number of inverters
 AVG_FCKV = 128  # number of edges to average actual frequency
-
+NUM_ZEROS = 0
 '''
         LOOP FILTER
 '''
@@ -411,15 +423,18 @@ if __name__ == "__main__":
         t_R = k * FREF_edge
         # U1[index] = 0
         # U2[index] = 0
+        if k == 34920:
+            pass
         # U3[index] = 0
-        last_To = T0
+        tstart = t_CKV[n]
+        countn = 0
         while t_CKV[n] < t_R:
-
+            countn +=1
             n += 1
             RV_n = n  # variable phase accumulator
             # delta_f = f_CKV - (F_start_DCO + (KDCO * (OTW)))
-            # delta_f = f_CKV - FDCO
-            # TDEV_I = delta_f / (f_CKV * (f_CKV + delta_f))
+            delta_f = f_CKV - FDCO
+            TDEV_I = delta_f / (f_CKV * (f_CKV + delta_f))
             if trk_bank_calib:
                 count_div += 1
                 if count_div == N_DIV:
@@ -432,17 +447,33 @@ if __name__ == "__main__":
                     freqmeanall.append(f_CKV)
             jitter.append(np.random.randn() * Jt_noise)
             wander.append(np.random.randn() * Wt_noise)
-
-            if NOISE:
-                t_CKV.append(n * T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
-                # t_CKV.append(t_CKV[n-1] + T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
-            else:
-                t_CKV.append(n * T0)
-
-            if(t_CKV[n] - t_CKV[n-1]) > 600e-12:
+            prevtck = n * T0
+            lastckv = (n-1) * T0
+            ckv_minus_1 = t_CKV[n-1]
+            if n > 1:
+                time = ckv_minus_1/(n-1)
+            diff = prevtck - t_CKV[n-1]
+            if lastckv != t_CKV[n-1]:
+                pass
+            if(diff) > T0*1.001:
                 # print("erro")
                 pass
-        RV_k = RV_n  # variable phase accumulator
+            if NOISE:
+                t_CKV.append(tstart + countn * T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
+                # t_CKV.append(t_CKV[n-1] + T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
+            else:
+                t_CKV.append(t_CKV[n-1] + T0)
+                # t_CKV.append(n * T0)
+                # t = 1/FDCO
+                # t_CKV.append(n * t - TDEV_I)
+            if (lastckv != t_CKV[n-1]) and (RV_n != (RV_k+1)):
+                pass
+            if prevtck != t_CKV[n]:
+                pass
+
+        if countn < 30:
+            pass
+        difftime = t_CKV[n] - t_CKV[n-1]
         # error_fractional[k] = TDC(t_R, t_CKV[n - 1], T0)  # TDC
         timediff = t_R - t_CKV[n-1]
         if timediff > (TDC_chains * TDC_res):
@@ -454,11 +485,12 @@ if __name__ == "__main__":
             error_fractional[k] = TDC(t_R, ckv, 1/np.mean(freq_array))
         else:
             error_fractional[k] = TDC(t_R, t_CKV[n], T0)
+        RV_k = RV_n  # variable phase accumulator
+        # phase_error[k] = (FCW - countn + error_fractional[k])  # Phase detector
         phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
-
         ##################### PVT MODE #################################################
         if not pvt_bank_calib:
-            NTW[k] = OTW_pvt + (int(phase_error[k]) * Kp_PVT)  # calcula o novo valor de NTW como inteiro
+            NTW[k] = (int(phase_error[k]*255) * Kp_PVT) /255 # calcula o novo valor de NTW como inteiro
             OTW_pvt = NTW[k]  # ajusta o novo valor de controle dos capacitores do PVT bank
             if diff_freq(f_CKV) <= FREQ_RES_PVT:
                 count += 1
@@ -497,6 +529,7 @@ if __name__ == "__main__":
             elif OTW_trk < 0:
                 OTW_trk = 0
         f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
+        last_To = T0
         T0 = 1 / f_CKV
         freqs[k] = f_CKV  # insere o valor de frequência ajustado no index k
         freqmeanall.append(f_CKV)
@@ -520,6 +553,8 @@ if __name__ == "__main__":
     angle_diff = (period_final-period_reference)/angle_per_degrees
 
     print("Fase de erro: ", angle_diff)
+    print(NUM_ZEROS)
+    print(n)
 
     stopTime = datetime.datetime.now()
     diftime = stopTime - starTime
