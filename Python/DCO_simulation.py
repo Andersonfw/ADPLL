@@ -90,12 +90,17 @@ def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
 
 
 def TDC(tR, t_ckv, T0_avg):
-    global TDC_res, T0
-    tR_Q = int((
-                       tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
+    global TDC_res, T0, TDC_chains
+    tR_Q = int((tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
+    tR_Q = int((t_ckv - tR) / TDC_res)
+    tR_Q = abs(tR_Q)
     # delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
     # error = 1 - (tR_Q * TDC_res) / T0
-    error = 1 - (tR_Q * TDC_res) / T0_avg
+    if tR_Q > TDC_chains:
+        # tR_Q = TDC_chains
+        error = 1
+    else:
+        error = 1 - (tR_Q * TDC_res) / T0_avg
     return error
 
 
@@ -407,7 +412,9 @@ if __name__ == "__main__":
         # U1[index] = 0
         # U2[index] = 0
         # U3[index] = 0
+        last_To = T0
         while t_CKV[n] < t_R:
+
             n += 1
             RV_n = n  # variable phase accumulator
             # delta_f = f_CKV - (F_start_DCO + (KDCO * (OTW)))
@@ -425,16 +432,28 @@ if __name__ == "__main__":
                     freqmeanall.append(f_CKV)
             jitter.append(np.random.randn() * Jt_noise)
             wander.append(np.random.randn() * Wt_noise)
+
             if NOISE:
                 t_CKV.append(n * T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
+                # t_CKV.append(t_CKV[n-1] + T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
             else:
                 t_CKV.append(n * T0)
+
+            if(t_CKV[n] - t_CKV[n-1]) > 600e-12:
+                # print("erro")
+                pass
         RV_k = RV_n  # variable phase accumulator
         # error_fractional[k] = TDC(t_R, t_CKV[n - 1], T0)  # TDC
-        if trk_bank_calib:
-            error_fractional[k] = TDC(t_R, t_CKV[n - 1], 1/np.mean(freq_array))
+        timediff = t_R - t_CKV[n-1]
+        if timediff > (TDC_chains * TDC_res):
+            ckv = t_CKV[n]
+            timediff2 = t_CKV[n] - t_R
         else:
-            error_fractional[k] = TDC(t_R, t_CKV[n - 1], T0)
+            ckv = t_CKV[n-1]
+        if trk_bank_calib:
+            error_fractional[k] = TDC(t_R, ckv, 1/np.mean(freq_array))
+        else:
+            error_fractional[k] = TDC(t_R, t_CKV[n], T0)
         phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
 
         ##################### PVT MODE #################################################
