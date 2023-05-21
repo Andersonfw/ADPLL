@@ -101,8 +101,8 @@ def SET_DCO(pvt_OTW=255, acq_OTW=255, trk_i_OTW=64, trk_f_OTW=0):
 def TDC(tR, t_ckv, T0_avg):
     global TDC_res, T0, TDC_chains, RV_n, RV_k, NUM_ZEROS
     dif = (tR - t_ckv)
-    tR_Q = int((tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
-    # tR_Q = int((t_ckv - tR) / TDC_res)
+    # tR_Q = int((tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
+    tR_Q = int((t_ckv - tR) / TDC_res)
     # tR_Q = abs(tR_Q)
     # delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
     # error = 1 - (tR_Q * TDC_res) / T0
@@ -119,7 +119,7 @@ def TDC(tR, t_ckv, T0_avg):
 
 
 def SDM_modulator(ntw_f):
-    global BusSize, U1, U2, U3, C1, C2, C3, AccumulatorSize, out, f_CKV, T0, OTW_trk
+    global BusSize, U1, U2, U3, C1, C2, C3, AccumulatorSize, out, f_CKV, T0, OTW_trk, index
 
     FractionInternal = 2 ** BusSize * ntw_f
     U1[index] = FractionInternal + U1[index - 1]
@@ -137,8 +137,8 @@ def SDM_modulator(ntw_f):
     out[index] = C1[index - 3] + C2[index - 2] - C2[index - 3] + C3[index - 1] - 2 * C3[index - 2] + C3[index - 3]
     # out[index] =  C1[index] + C2[index] - C2[index-1] + C3[index] - 2*C3[index-1] + C3[index-2]
     # NTW[k - 1] += out[index]
-    otw_prev = OTW_trk + out[index]
-    # otw_prev = OTW_trk + C3[index]
+    # otw_prev = OTW_trk + out[index]
+    otw_prev = OTW_trk + C1[index]
     # OTW_trk += out[index]
     if otw_prev > 64:
         otw_prev = 64
@@ -256,7 +256,7 @@ FDCO = FREF * FCW  # Frequência desejada na saída do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
 NOISE = False
-IRR = True
+IRR = False
 SDM = True
 
 '''
@@ -326,7 +326,7 @@ Wt_noise = float('{:e}'.format(w_decimal))
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 80000  # simulação de X bordas de FREF
+TIME = 60000  # simulação de X bordas de FREF
 OVERSAMPLE = 100  # over sample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 
@@ -346,7 +346,7 @@ N_DIV = 4  # Ratio of division DCO clock
 count_div = 0
 NumberSamples = TIME * int(FCW / N_DIV + 1)
 BusSize = 5  # bits
-AccumulatorBits = 21  # bits
+AccumulatorBits = 5  # bits
 AccumulatorSize = 2 ** AccumulatorBits
 C1 = np.zeros(NumberSamples)  # Carry out of the first accumulator
 C2 = np.zeros(NumberSamples)  # Carry out of the 2nd accumulator
@@ -423,9 +423,9 @@ if __name__ == "__main__":
     for k in range(1, TIME):
         RR_k += FCW  # reference phase accumulator
         t_R = k * FREF_edge
-        # U1[index] = 0
-        # U2[index] = 0
-        # U3[index] = 0
+        U1[index] = 0
+        U2[index] = 0
+        U3[index] = 0
 
         countn = 0  # contador de bordas de CKV dentro da borda FREF atual
         while t_CKV[n] < t_R:
@@ -450,16 +450,22 @@ if __name__ == "__main__":
             if NOISE:
                 t_CKV.append(t_CKV[n-1] + T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
             else:
-                # t_CKV.append(t_CKV[n-1] + T0)
-                t_CKV.append(n * T0)
+                t_CKV.append(t_CKV[n-1] + T0)
+                # t_CKV.append(n * T0)
         if trk_bank_calib:
-            error_fractional[k] = TDC(t_R, t_CKV[n-1], 1/np.mean(freq_array))
-        else:
-            error_fractional[k] = TDC(t_R, t_CKV[n-1], T0)
-
+            # if(countn == FCW):
+            #     error_fractional[k] = TDC(t_R, t_CKV[n], 1/np.mean(freq_array))
+            # else:
+            #     error_fractional[k] = 0
+            error_fractional[k] = TDC(t_R, t_CKV[n], 1 / np.mean(freq_array))
+        # else:
+        #     error_fractional[k] = TDC(t_R, t_CKV[n-1], T0)
+        # teste =  TDC(t_R, t_CKV[n], T0)
         RV_k = RV_n  # variable phase accumulator
-        # phase_error[k] = (FCW - countn + error_fractional[k])  # Phase detector
-        phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
+        phase_error[k] = (FCW - countn + error_fractional[k])  # Phase detector
+        erro_esperado = f_CKV/FREF
+        erro_esperado = FCW - erro_esperado
+        # phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
         ##################### PVT MODE #################################################
         if not pvt_bank_calib:
             NTW[k] = OTW_pvt + (int(phase_error[k]) * Kp_PVT) # calcula o novo valor de NTW como inteiro
@@ -490,7 +496,7 @@ if __name__ == "__main__":
         ##################### TREKING MODE ################################################
 
         elif trk_bank_calib:
-            # NTW[k] = OTW_trk + ((int(phase_error[k])) * Kp_TRK)  # calcula o novo valor de NTW como inteiro
+            # NTW[k] = OTW_trk + ((int(phase_error[k] - phase_error[k - 1])) * Kp_TRK)  # calcula o novo valor de NTW como inteiro
             NTW[k] = (phase_error[k]) * Kp_TRK - Kp_TRK * (phase_error[k - 1]) + Ki_TRK * (phase_error[k - 1]) + NTW[k - 1]  # calcula o novo valor de NTW
             if IRR:
                 OTW_trk = IRR_filter(k, NTW[k])  # aplica o filtro IRR
@@ -524,10 +530,10 @@ if __name__ == "__main__":
 
     angle_diff = (period_final-period_reference)/angle_per_degrees
 
-    print("Fase de erro: ", angle_diff)
-    print(NUM_ZEROS)
-    print(n)
-    print(n/k)
+    print("Phase error: ", angle_diff, "º")
+    print("Overflow TDC: ",NUM_ZEROS)
+    print("number repetition of n index:", n)
+    print("ratio of n/k:", n/k)
 
     stopTime = datetime.datetime.now()
     diftime = stopTime - starTime

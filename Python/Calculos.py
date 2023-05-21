@@ -68,4 +68,7 @@ pvt = 256 - 78 #
 acq = 256 - 130 #130
 trk_i = 64 - 39 #44
 f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb)))
+f2 = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + (trk_i-3) * trk_i_lsb)))
 print("freq: ",f)
+print("freq: ",f2)
+print("freq diff: ",(1/f-1/f2))

@@ -82,11 +82,11 @@ import matplotlib.pyplot as plt
 '''
 
 # NumberSamples=2^16;
-NumberSamples = 100
-BusSize = 5  # bits
-Fraction = 0.3438  # usable 0 to 1
+NumberSamples = 19
+BusSize = 21  # bits
+Fraction = 0.0205  # usable 0 to 1
 FractionInternal = 2**BusSize * Fraction
-AccumulatorBits = 5  # bits
+AccumulatorBits = 21  # bits
 AccumulatorSize = 2**AccumulatorBits
 
 C1 = np.zeros(NumberSamples)    # Carry out of the first accumulator
@@ -122,7 +122,7 @@ for index in range(0, NumberSamples):
     Yout2[index] = C1[index] + C2[index] - C2[index-1]  # output to the divider - 2 stages
     Yout1[index] = C1[index]  # output to the divider - 1 stage
     out[index] = C1[index - 3] + C2[index - 2] - C2[index - 3] + C3[index - 1] - 2 * C3[index - 2] + C3[index - 3]
-MeanFrac = np.mean(Yout3)
+MeanFrac = np.mean(C3)
 Meanout = np.mean(out)
 print(f"\nMeanFracMASH = {MeanFrac:.4f}\n")
 print(f"\nMeanout = {Meanout:.4f}\n")
