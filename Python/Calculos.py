@@ -58,3 +58,14 @@ numero_notacao_cientifica = '{:e}'.format(numero_arredondado)
 # Imprime o número arredondado em notação científica
 print(numero_notacao_cientifica)
 
+
+L = 1e-9  # Indutor utilizado
+C0 = 4.809222646671402e-12  # valor de capacitância inicial
+pvt_lsb = 1.1923378339857862e-14  # valor do LSB em PVT mode
+acq_lsb = 2.316699747480977e-15  # valor do LSB em acquisition mode
+trk_i_lsb = 1.8511454815068396e-16  # valor do LSB em Trekking integer mode
+pvt = 256 - 78 #
+acq = 256 - 130 #130
+trk_i = 64 - 39 #44
+f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb)))
+print("freq: ",f)

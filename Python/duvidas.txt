@@ -1,2 +1,2 @@
-O valor de ângulo de phase noise é quantos graus está adiantado ?
+O valor de ângulo de phase noise é quantos graus está adiantado?
 O SDM etá correto?
