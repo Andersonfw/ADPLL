@@ -250,7 +250,7 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
 F0 = 2045e6  # frequência central de ajuste do DCO
 FREF = 26e6  # Frequência de referência
 F_DESIRED = 2e9
-FCW = 72  # 76.9230  # Frequency command word
+FCW = 76.9230  # 76.9230  # Frequency command word
 # FCW = F_DESIRED / FREF  # 76.9230  # Frequency command word
 FDCO = FREF * FCW  # Frequência desejada na saída do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
@@ -378,7 +378,7 @@ phase_error = np.zeros(TIME)  # phase detector
 pvt_bank_calib = True
 acq_bank_calib = True
 trk_bank_calib = True
-OTW_pvt = 77  # initial value of pvt bank
+OTW_pvt = 152  # initial value of pvt bank
 OTW_acq = 129  # initial value of acq bank
 OTW_trk = 32  # initial value of trk integer bank
 OTW_trk_f = 0  # initial value of trk fractional bank
