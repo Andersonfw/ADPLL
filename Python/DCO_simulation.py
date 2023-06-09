@@ -113,8 +113,8 @@ def TDC(tR, t_ckv, T0_avg):
         error = 0
         NUM_ZEROS +=1
     else:
-        # error = 1 - (tR_Q * TDC_res) / T0_avg
-        error = (tR_Q * TDC_res) / T0_avg
+        error = 1 - (tR_Q * TDC_res) / T0_avg
+        # error = (tR_Q * TDC_res) / T0_avg
     return error
 
 
@@ -256,7 +256,7 @@ FDCO = FREF * FCW  # Frequência desejada na saída do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
 NOISE = False
-IRR = False
+IRR = True
 SDM = True
 
 '''
@@ -326,7 +326,7 @@ Wt_noise = float('{:e}'.format(w_decimal))
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 60000  # simulação de X bordas de FREF
+TIME = 120000  # simulação de X bordas de FREF
 OVERSAMPLE = 100  # over sample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 
@@ -375,11 +375,11 @@ wander = [0]  # wander noise
 error_fractional = np.zeros(TIME)  # fractional error from TDC
 phase_error = np.zeros(TIME)  # phase detector
 
-pvt_bank_calib = False
-acq_bank_calib = False
-trk_bank_calib = False
-OTW_pvt = 0  # initial value of pvt bank
-OTW_acq = 128  # initial value of acq bank
+pvt_bank_calib = True
+acq_bank_calib = True
+trk_bank_calib = True
+OTW_pvt = 77  # initial value of pvt bank
+OTW_acq = 129  # initial value of acq bank
 OTW_trk = 32  # initial value of trk integer bank
 OTW_trk_f = 0  # initial value of trk fractional bank
 phase_dif = 0  # phase difference
@@ -449,6 +449,7 @@ if __name__ == "__main__":
             wander.append(np.random.randn() * Wt_noise)
             if NOISE:
                 t_CKV.append(t_CKV[n-1] + T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
+                # t_CKV.append(n * T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
             else:
                 t_CKV.append(t_CKV[n-1] + T0)
                 # t_CKV.append(n * T0)
@@ -462,10 +463,10 @@ if __name__ == "__main__":
         #     error_fractional[k] = TDC(t_R, t_CKV[n-1], T0)
         # teste =  TDC(t_R, t_CKV[n], T0)
         RV_k = RV_n  # variable phase accumulator
-        phase_error[k] = (FCW - countn + error_fractional[k])  # Phase detector
+        # phase_error[k] = (FCW - countn + error_fractional[k])  # Phase detector
         erro_esperado = f_CKV/FREF
         erro_esperado = FCW - erro_esperado
-        # phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
+        phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
         ##################### PVT MODE #################################################
         if not pvt_bank_calib:
             NTW[k] = OTW_pvt + (int(phase_error[k]) * Kp_PVT) # calcula o novo valor de NTW como inteiro
