@@ -255,7 +255,7 @@ FCW = 76.9230  # 76.9230  # Frequency command word
 FDCO = FREF * FCW  # Frequência desejada na saída do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
-NOISE = False
+NOISE = True
 IRR = True
 SDM = True
 
@@ -326,7 +326,7 @@ Wt_noise = float('{:e}'.format(w_decimal))
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 120000  # simulação de X bordas de FREF
+TIME = 600  # simulação de X bordas de FREF
 OVERSAMPLE = 100  # over sample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 
@@ -375,11 +375,11 @@ wander = [0]  # wander noise
 error_fractional = np.zeros(TIME)  # fractional error from TDC
 phase_error = np.zeros(TIME)  # phase detector
 
-pvt_bank_calib = True
-acq_bank_calib = True
-trk_bank_calib = True
-OTW_pvt = 152  # initial value of pvt bank
-OTW_acq = 129  # initial value of acq bank
+pvt_bank_calib = False
+acq_bank_calib = False
+trk_bank_calib = False
+OTW_pvt = 0  # initial value of pvt bank
+OTW_acq = 128  # initial value of acq bank
 OTW_trk = 32  # initial value of trk integer bank
 OTW_trk_f = 0  # initial value of trk fractional bank
 phase_dif = 0  # phase difference
@@ -435,6 +435,8 @@ if __name__ == "__main__":
             # delta_f = f_CKV - (F_start_DCO + (KDCO * (OTW)))
             delta_f = f_CKV - FDCO
             TDEV_I = delta_f / (f_CKV * (f_CKV + delta_f))
+            jitter.append(np.random.randn() * Jt_noise)
+            wander.append(np.random.randn() * Wt_noise)
             if trk_bank_calib:
                 count_div += 1
                 if count_div == N_DIV:
@@ -445,14 +447,15 @@ if __name__ == "__main__":
                         SDM_modulator(NTW_f)
                         freqmeanSDM.append(f_CKV)
                     freqmeanall.append(f_CKV)
-            jitter.append(np.random.randn() * Jt_noise)
-            wander.append(np.random.randn() * Wt_noise)
-            if NOISE:
-                t_CKV.append(t_CKV[n-1] + T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
-                # t_CKV.append(n * T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
+                if NOISE:
+                    t_CKV.append(t_CKV[n - 1] + T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
+                        # t_CKV.append(n * T0 + jitter[n] + wander[n] - jitter[n - 1])  # - TDEV_I
+                else:
+                    t_CKV.append(t_CKV[n - 1] + T0)
+                        # t_CKV.append(n * T0)
             else:
-                t_CKV.append(t_CKV[n-1] + T0)
-                # t_CKV.append(n * T0)
+                t_CKV.append(n * T0)
+                # t_CKV.append(t_CKV[n - 1] + T0)
         if trk_bank_calib:
             # if(countn == FCW):
             #     error_fractional[k] = TDC(t_R, t_CKV[n], 1/np.mean(freq_array))
@@ -469,7 +472,7 @@ if __name__ == "__main__":
         phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
         ##################### PVT MODE #################################################
         if not pvt_bank_calib:
-            NTW[k] = OTW_pvt + (int(phase_error[k]) * Kp_PVT) # calcula o novo valor de NTW como inteiro
+            NTW[k] = OTW_pvt + int(phase_error[k])#(int(phase_error[k]) * Kp_PVT) # calcula o novo valor de NTW como inteiro
             OTW_pvt = NTW[k]  # ajusta o novo valor de controle dos capacitores do PVT bank
             if diff_freq(f_CKV) <= FREQ_RES_PVT:
                 count += 1
@@ -481,7 +484,7 @@ if __name__ == "__main__":
                 count = 0
         ##################### ACQUISITION MODE #########################################
         elif not acq_bank_calib:
-            NTW[k] = OTW_acq + (int(phase_error[k]) * Kp_ACQ)  # calcula o novo valor de NTW como inteiro
+            NTW[k] = OTW_acq + int(phase_error[k])#(int(phase_error[k]) * Kp_ACQ)  # calcula o novo valor de NTW como inteiro
             OTW_acq = NTW[k]  # ajusta o novo valor de controle dos capacitores do ACQ bank
             if diff_freq(f_CKV) <= FREQ_RES_ACQ:
                 count += 1
@@ -490,7 +493,7 @@ if __name__ == "__main__":
                     trk_bank_calib = True
                     OTW_acq = NTW[k-1]
                     print("Frequência na saída do ACQ bank: ", f_CKV / 1e6, "MHz em ",k,"bordas de FREF e valor do banco ajustado em: ",OTW_acq)
-                    NTW[k] = 32
+                    NTW[k] = 0
             else:
                 count = 0
 
@@ -541,10 +544,11 @@ if __name__ == "__main__":
     print("Encerando a simulação em: ", stopTime.strftime("%H:%M:%S"))
     print("Duração da simulação: ", diftime.total_seconds())
 
-    # plt.figure()
-    # plt.plot(np.arange(1, TIME, 1), freqs[1:TIME])
-    # plt.grid(visible=True)
-    # plt.show()
+    plt.figure()
+    # plt.plot(np.arange(1, TIME, 1), freqs[1:TIME], '-r')
+    plt.plot(np.arange(1, TIME, 1), NTW[1:TIME], '-b')
+    plt.grid(visible=True)
+    plt.show()
 
     # plot_DCO_signal()
 
