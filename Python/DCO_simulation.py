@@ -243,7 +243,39 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
     print(f'Signal PSD peak = {XdB_sig:.2f} dB, 10log(rbw) = {10 * np.log10(rbw):.1f}')
     return XdB, f
 
+def int_to_complemento2(valor):
+    global MOD_ARITH
+    # Verificar se o valor está dentro do intervalo representável
+    limite_superior = (MOD_ARITH - 1) - 1
+    limite_inferior = -(MOD_ARITH - 1)
+    # if valor < limite_inferior or valor > limite_superior:
+    #     raise ValueError("Valor fora do intervalo representável.")
 
+    # Converter para representação binária
+    binario = bin(valor & int("1" * int(np.log2(MOD_ARITH)), 2))[2:]
+
+    # Preencher com zeros à esquerda se necessário
+    binario = binario.zfill(int(np.log2(MOD_ARITH)))
+
+    return binario
+
+
+def complemento2_to_int(binario):
+    # Verificar se o número é negativo (bit mais significativo é 1)
+    if binario[0] == "1":
+        # Aplicar complemento de 2 invertendo todos os bits
+        invertido = "".join("1" if bit == "0" else "0" for bit in binario)
+
+        # Adicionar 1 ao resultado
+        complemento2 = bin(int(invertido, 2) + 1)
+
+        # Converter para valor inteiro negativo
+        valor = int(complemento2, 2) * -1
+    else:
+        # Converter para valor inteiro positivo
+        valor = int(binario, 2)
+
+    return valor
 '''
         DEFINIÇÕES GERAIS
 '''
@@ -295,6 +327,7 @@ Kp_PVT = 2 ** -2
 Kp_ACQ = 2 ** -5
 Kp_TRK = 2 ** -5
 Ki_TRK = 2 ** -11
+MOD_ARITH = 2 ** 8
 
 '''
         NOISE
@@ -422,6 +455,8 @@ if __name__ == "__main__":
     freqmeanSDM = []
     for k in range(1, TIME):
         RR_k += FCW  # reference phase accumulator
+        if RR_k > (MOD_ARITH - 1):
+            RR_k = RR_k - (MOD_ARITH - 1)
         t_R = k * FREF_edge
         U1[index] = 0
         U2[index] = 0
@@ -432,6 +467,8 @@ if __name__ == "__main__":
             countn +=1
             n += 1
             RV_n = n  # variable phase accumulator
+            if RV_n > (MOD_ARITH - 1):
+                RV_n = RV_n - (MOD_ARITH - 1)
             # delta_f = f_CKV - (F_start_DCO + (KDCO * (OTW)))
             delta_f = f_CKV - FDCO
             TDEV_I = delta_f / (f_CKV * (f_CKV + delta_f))
@@ -454,8 +491,8 @@ if __name__ == "__main__":
                     t_CKV.append(t_CKV[n - 1] + T0)
                         # t_CKV.append(n * T0)
             else:
-                t_CKV.append(n * T0)
-                # t_CKV.append(t_CKV[n - 1] + T0)
+                # t_CKV.append(n * T0)
+                t_CKV.append(t_CKV[n - 1] + T0)
         if trk_bank_calib:
             # if(countn == FCW):
             #     error_fractional[k] = TDC(t_R, t_CKV[n], 1/np.mean(freq_array))
@@ -465,6 +502,11 @@ if __name__ == "__main__":
         # else:
         #     error_fractional[k] = TDC(t_R, t_CKV[n-1], T0)
         # teste =  TDC(t_R, t_CKV[n], T0)
+        if RV_n >= (MOD_ARITH/2 - 1):
+            RV_n =  complemento2_to_int(int_to_complemento2(RV_n))
+        if RR_k >= (MOD_ARITH / 2 - 1):
+            RR_k = complemento2_to_int(int_to_complemento2(int(RR_k)))
+
         RV_k = RV_n  # variable phase accumulator
         # phase_error[k] = (FCW - countn + error_fractional[k])  # Phase detector
         erro_esperado = f_CKV/FREF
@@ -472,7 +514,7 @@ if __name__ == "__main__":
         phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
         ##################### PVT MODE #################################################
         if not pvt_bank_calib:
-            NTW[k] = OTW_pvt + int(phase_error[k])#(int(phase_error[k]) * Kp_PVT) # calcula o novo valor de NTW como inteiro
+            NTW[k] =  (int(phase_error[k]) * Kp_PVT) # calcula o novo valor de NTW como inteiro
             OTW_pvt = NTW[k]  # ajusta o novo valor de controle dos capacitores do PVT bank
             if diff_freq(f_CKV) <= FREQ_RES_PVT:
                 count += 1
@@ -484,7 +526,7 @@ if __name__ == "__main__":
                 count = 0
         ##################### ACQUISITION MODE #########################################
         elif not acq_bank_calib:
-            NTW[k] = OTW_acq + int(phase_error[k])#(int(phase_error[k]) * Kp_ACQ)  # calcula o novo valor de NTW como inteiro
+            NTW[k] = OTW_acq + (int(phase_error[k]) * Kp_ACQ)  # calcula o novo valor de NTW como inteiro
             OTW_acq = NTW[k]  # ajusta o novo valor de controle dos capacitores do ACQ bank
             if diff_freq(f_CKV) <= FREQ_RES_ACQ:
                 count += 1

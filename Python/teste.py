@@ -1,73 +1,40 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import control
-import sympy as sp
-import warnings
-warnings.filterwarnings('ignore')
+def int_to_complemento2(valor, num_bits):
+    # Verificar se o valor está dentro do intervalo representável
+    limite_superior = 2 ** (num_bits - 1) - 1
+    limite_inferior = -2 ** (num_bits - 1)
+    # if valor < limite_inferior or valor > limite_superior:
+    #     raise ValueError("Valor fora do intervalo representável.")
 
-# Símbolo 's' para a variável de Laplace
-s = sp.symbols('s')
-K = 1
-s_num = 100 * K
-# s_den = s * (s + 36) * (s + 100)
-s_den = (1 + 100*2*np.pi)
+    # Converter para representação binária
+    binario = bin(valor & int("1" * num_bits, 2))[2:]
 
-# Função de transferecia em s
-Hs = s_num / s_den
-print(Hs)
+    # Preencher com zeros à esquerda se necessário
+    binario = binario.zfill(num_bits)
 
-# Extrair coeficientes do numerador e denominador de Hs
-num = sp.Poly(s_num, s).all_coeffs()
-den = sp.Poly(s_den, s).all_coeffs()
-print("numerador:",num)
-print("denominador:",den)
-
-# Tranforma em array para aplicar a transformada de laplace
-num_array = np.array(num, dtype=float)
-den_array = np.array(den, dtype=float)
-
-# Aplica a tranformada de laplace
-G = control.tf(num_array,den_array) # Trarnsformada de loop aberto
-# G = control.feedback(G, 1)          # Transformada de loop fechado
-print(G)
-
-'''
-Create a linear system that approximates a delay
-'''
-# (num,den) = control.pade(0.1,2)
-# Gp = control.tf(num,den)*G
-# print(Gp)
-Gp = G
-
-w = np.logspace(-1,3,100)    #  List of frequencies in rad/sec to be used for frequency response ( 10^-1 até 10^3)
-# Plotar bode da TF
-mag,phase,f = control.bode(Gp,w,Hz=True,dB=True,deg=True, margins=False)
-plt.tight_layout()
-plt.show()
+    return binario
 
 
-# ax1, ax2 = plt.gcf().axes  # get subplot axes
-# plt.sca(ax1)  # magnitude plot
-# Encontre a frequência correspondente a -3dB
-max_value = max(mag)
-print("valor maximo = ", 20*np.log10(max_value))
-max_index = np.argmax(max(mag))
-aux_vector = np.argwhere(mag <= (max_value * np.sqrt(2)/2))
-idx_3db = aux_vector[0]
-print("index = ",idx_3db, "Valor no ponto de -3dB =", 20*np.log10(mag[idx_3db]))#, "dB. frequência =",f[idx_3db],"Hz")
-# indice_x = np.argmin(np.abs(f - (max_value * np.sqrt(2)/2)))
-# print(indice_x)
-# f_index = int(idx_3db/np.sqrt(2))
-# print(f_index)
-# # Marque o ponto de -3dB no gráfico
-# ax1.axvline(x=f[idx_3db], ymin=-100, ymax=100, color='red', linestyle='--')
-# ax1.scatter(f[idx_3db], 20*np.log10(mag[idx_3db]), color='red', marker='o')
-# # Adicionar o marcador com valor e posição específicos
-# posicao_marcador = (f[idx_3db], 20*np.log10(mag[idx_3db]))
-# ax1.annotate(f'Frequência {f[idx_3db]}Hz',  # Valor do marcador
-#              xy=posicao_marcador,  # Posição do marcador
-#              # xycoords='data',  # Coordenadas em relação aos dados do gráfico
-#              xytext=(f[idx_3db - 10], mag[idx_3db - 10]),  # Posição do texto do valor do marcador
-#              textcoords='offset points',  # Coordenadas do texto em relação ao marcador
-#              arrowprops=dict(arrowstyle="->"))
-# plt.show()
+def complemento2_to_int(binario):
+    # Verificar se o número é negativo (bit mais significativo é 1)
+    if binario[0] == "1":
+        # Aplicar complemento de 2 invertendo todos os bits
+        invertido = "".join("1" if bit == "0" else "0" for bit in binario)
+
+        # Adicionar 1 ao resultado
+        complemento2 = bin(int(invertido, 2) + 1)
+
+        # Converter para valor inteiro negativo
+        valor = int(complemento2, 2) * -1
+    else:
+        # Converter para valor inteiro positivo
+        valor = int(binario, 2)
+
+    return valor
+
+
+valor = 136
+num_bits = 8
+
+complemento2 = complemento2_to_int(int_to_complemento2(valor, num_bits))
+# complemento2 = complemento2_to_int(complemento2)
+print("Valor em complemento de 2:", complemento2)
