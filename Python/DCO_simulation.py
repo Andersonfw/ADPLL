@@ -113,8 +113,8 @@ def TDC(tR, t_ckv, T0_avg):
         error = 0
         NUM_ZEROS +=1
     else:
-        error = 1 - (tR_Q * TDC_res) / T0_avg
-        # error = (tR_Q * TDC_res) / T0_avg
+        # error = 1 - (tR_Q * TDC_res) / T0_avg
+        error = (tR_Q * TDC_res) / T0_avg
     return error
 
 
@@ -289,7 +289,7 @@ FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
 NOISE = True
 IRR = True
-SDM = True
+SDM = False
 
 '''
         BANK CAPACITOR
@@ -359,7 +359,7 @@ Wt_noise = float('{:e}'.format(w_decimal))
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 600  # simulação de X bordas de FREF
+TIME = 60000  # simulação de X bordas de FREF
 OVERSAMPLE = 100  # over sample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 
@@ -424,6 +424,11 @@ avg_counter = 0  # counter of number f_ckv edges to calculate the average
 freq_array = np.zeros(AVG_FCKV)  # array to the values of fckv
 freqs = np.zeros(TIME)  # array of different DCO output values
 NTW = np.zeros(TIME)  # normalize tuning word
+OTW = np.zeros(TIME)  # oscilator tuning word
+
+
+fractional_error_trk = []
+fractional_error_trk_IRR = []
 '''
         Main
 '''
@@ -448,27 +453,32 @@ if __name__ == "__main__":
     # plot_DCO_signal()
 
     KDCO = FREQ_RES_PVT
-    OTW = OTW_pvt
+    # OTW = OTW_pvt
     F_start_DCO = f_CKV
 
     freqmeanall = []
     freqmeanSDM = []
+    V = 0
+    K = 0
     for k in range(1, TIME):
-        RR_k += FCW  # reference phase accumulator
-        if RR_k > (MOD_ARITH - 1):
-            RR_k = RR_k - (MOD_ARITH - 1)
+        K += FCW  # reference phase accumulator
+        if K > (MOD_ARITH - 1):
+            K = K - (MOD_ARITH - 1)
+        RR_k += FCW
         t_R = k * FREF_edge
         U1[index] = 0
         U2[index] = 0
         U3[index] = 0
 
+
         countn = 0  # contador de bordas de CKV dentro da borda FREF atual
         while t_CKV[n] < t_R:
-            countn +=1
+            countn += 1
             n += 1
             RV_n = n  # variable phase accumulator
-            if RV_n > (MOD_ARITH - 1):
-                RV_n = RV_n - (MOD_ARITH - 1)
+            V += 1
+            if V > (MOD_ARITH - 1):
+                V = V - (MOD_ARITH - 1)
             # delta_f = f_CKV - (F_start_DCO + (KDCO * (OTW)))
             delta_f = f_CKV - FDCO
             TDEV_I = delta_f / (f_CKV * (f_CKV + delta_f))
@@ -502,20 +512,24 @@ if __name__ == "__main__":
         # else:
         #     error_fractional[k] = TDC(t_R, t_CKV[n-1], T0)
         # teste =  TDC(t_R, t_CKV[n], T0)
-        if RV_n >= (MOD_ARITH/2 - 1):
-            RV_n =  complemento2_to_int(int_to_complemento2(RV_n))
-        if RR_k >= (MOD_ARITH / 2 - 1):
-            RR_k = complemento2_to_int(int_to_complemento2(int(RR_k)))
+        # if RV_n >= (MOD_ARITH/2 - 1):
+        # RV_n = complemento2_to_int(int_to_complemento2(V))
+        # # if RR_k >= (MOD_ARITH / 2 - 1):
+        # RR_k = complemento2_to_int(int_to_complemento2(int(K))) + K % 1
 
         RV_k = RV_n  # variable phase accumulator
         # phase_error[k] = (FCW - countn + error_fractional[k])  # Phase detector
         erro_esperado = f_CKV/FREF
         erro_esperado = FCW - erro_esperado
         phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
+        if int(phase_error[k]) < 0:
+            phase_error[k] = phase_error[k-1]
+            pass
         ##################### PVT MODE #################################################
         if not pvt_bank_calib:
-            NTW[k] =  (int(phase_error[k]) * Kp_PVT) # calcula o novo valor de NTW como inteiro
-            OTW_pvt = NTW[k]  # ajusta o novo valor de controle dos capacitores do PVT bank
+            NTW[k] = (int(phase_error[k]) * Kp_PVT) # calcula o novo valor de NTW como inteiro
+            OTW[k] = NTW[k]*(FREF/FREQ_RES_PVT)  # ajusta o novo valor de controle dos capacitores do PVT bank
+            OTW_pvt = OTW[k]
             if diff_freq(f_CKV) <= FREQ_RES_PVT:
                 count += 1
                 if count == 5:
@@ -526,16 +540,20 @@ if __name__ == "__main__":
                 count = 0
         ##################### ACQUISITION MODE #########################################
         elif not acq_bank_calib:
-            NTW[k] = OTW_acq + (int(phase_error[k]) * Kp_ACQ)  # calcula o novo valor de NTW como inteiro
-            OTW_acq = NTW[k]  # ajusta o novo valor de controle dos capacitores do ACQ bank
+            NTW[k] = (int(phase_error[k]) * Kp_ACQ)  # calcula o novo valor de NTW como inteiro
+            OTW[k] = NTW[k] * (FREF / FREQ_RES_ACQ)
+            # OTW_acq = NTW[k]  # ajusta o novo valor de controle dos capacitores do ACQ bank
+            OTW_acq = OTW[k]
             if diff_freq(f_CKV) <= FREQ_RES_ACQ:
                 count += 1
                 if count == 5:
                     acq_bank_calib = True
                     trk_bank_calib = True
-                    OTW_acq = NTW[k-1]
+                    OTW_acq = OTW[k-1]
                     print("Frequência na saída do ACQ bank: ", f_CKV / 1e6, "MHz em ",k,"bordas de FREF e valor do banco ajustado em: ",OTW_acq)
-                    NTW[k] = 0
+                    # NTW[k] = 32
+                    OTW_trk = 0
+                    offseterror = int(phase_error[k])
             else:
                 count = 0
 
@@ -543,15 +561,28 @@ if __name__ == "__main__":
 
         elif trk_bank_calib:
             # NTW[k] = OTW_trk + ((int(phase_error[k] - phase_error[k - 1])) * Kp_TRK)  # calcula o novo valor de NTW como inteiro
-            NTW[k] = (phase_error[k]) * Kp_TRK - Kp_TRK * (phase_error[k - 1]) + Ki_TRK * (phase_error[k - 1]) + NTW[k - 1]  # calcula o novo valor de NTW
-            if IRR:
-                OTW_trk = IRR_filter(k, NTW[k])  # aplica o filtro IRR
+            if phase_error[k] < (offseterror - offseterror/2):
+                pass
             else:
-                OTW_trk = NTW[k]
-            if OTW_trk > 64:
-                OTW_trk = 64
-            elif OTW_trk < 0:
-                OTW_trk = 0
+                phase_error[k] = abs(phase_error[k]) - offseterror
+            fractional_error_trk.append(phase_error[k])
+
+            if IRR:
+                phase_error[k] = IRR_filter(k, phase_error[k])
+                fractional_error_trk_IRR.append(phase_error[k])
+            NTW[k] = (phase_error[k]) * Kp_TRK - Kp_TRK * (phase_error[k - 1]) + Ki_TRK * (phase_error[k - 1]) + NTW[k - 1]  # calcula o novo valor de NTW
+            # OTW_acq = NTW[k] * (FREF / FREQ_RES_ACQ)
+            # if IRR:
+            #     irr = IRR_filter(k, NTW[k])
+            #
+            #     OTW[k] = irr * (FREF / FREQ_RES_TRK) # aplica o filtro IRR
+            # else:
+            OTW[k] = NTW[k] * (FREF / FREQ_RES_TRK)
+            if OTW[k] > 64:
+                OTW[k] = 64
+            elif OTW[k] < 0:
+                OTW[k] = 0
+            OTW_trk = OTW[k]
         f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
         last_To = T0
         T0 = 1 / f_CKV
@@ -586,11 +617,14 @@ if __name__ == "__main__":
     print("Encerando a simulação em: ", stopTime.strftime("%H:%M:%S"))
     print("Duração da simulação: ", diftime.total_seconds())
 
-    plt.figure()
-    # plt.plot(np.arange(1, TIME, 1), freqs[1:TIME], '-r')
-    plt.plot(np.arange(1, TIME, 1), NTW[1:TIME], '-b')
-    plt.grid(visible=True)
-    plt.show()
+    # plt.figure()
+    # # plt.plot(np.arange(1, TIME, 1), freqs[1:TIME], '-r')
+    # # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
+    # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
+    # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
+    # plt.grid(visible=True)
+    # plt.show()
+
 
     # plot_DCO_signal()
 

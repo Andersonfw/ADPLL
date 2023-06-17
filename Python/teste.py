@@ -32,7 +32,7 @@ def complemento2_to_int(binario):
     return valor
 
 
-valor = 136
+valor = 228
 num_bits = 8
 
 complemento2 = complemento2_to_int(int_to_complemento2(valor, num_bits))
