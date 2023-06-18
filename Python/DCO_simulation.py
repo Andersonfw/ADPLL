@@ -7,9 +7,13 @@ Created on abril 26 18:02:04 2023
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
-import datetime
 import decimal
-
+import locale
+import datetime
+import time
+import os
+import glob
+import pandas as pd
 
 class LSB_BANK:
     def __init__(self, fc, nb, fr):
@@ -102,7 +106,7 @@ def TDC(tR, t_ckv, T0_avg):
     global TDC_res, T0, TDC_chains, RV_n, RV_k, NUM_ZEROS
     dif = (tR - t_ckv)
     # tR_Q = int((tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
-    tR_Q = int((t_ckv - tR) / TDC_res)
+    tR_Q = abs(int((t_ckv - tR) / TDC_res))
     # tR_Q = abs(tR_Q)
     # delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
     # error = 1 - (tR_Q * TDC_res) / T0
@@ -114,8 +118,9 @@ def TDC(tR, t_ckv, T0_avg):
         NUM_ZEROS +=1
     else:
         # error = 1 - (tR_Q * TDC_res) / T0_avg
+        error1 = 1 - (tR_Q * TDC_res) / T0_avg
         error = (tR_Q * TDC_res) / T0_avg
-    return error
+    return error1
 
 
 def SDM_modulator(ntw_f):
@@ -276,20 +281,49 @@ def complemento2_to_int(binario):
         valor = int(binario, 2)
 
     return valor
+
+
+def saveresults(timestop, timediff, fout_n, desv_n, fout_T, desv_T, fout_SDM, desv_SDM, result,dfresult):
+    '''
+    Save results of simulation in a csv file
+    '''
+    global csvsaveresults, FCW, IRR, SDM, NOISE, TIME, FREF
+
+    # ['starttime', "stoptime", "duration", "noise enable", "IRR enable", "SDM enable", "FCW", "times FREF",
+    #  "Fout nor.", "desv nor.", "Fout total mean", "desv total mean", "Fout SDM mean", "desv SDM mean"]
+    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+    dfresult['stoptime'] = timestop
+    dfresult['duration'] = locale.format_string('%.4f', timediff)
+    dfresult['noise enable'] = "Ativado" if NOISE else "Desativado"
+    dfresult['IRR enable'] = "Ativado" if IRR else "Desativado"
+    dfresult['SDM enable'] = "Ativado" if SDM else "Desativado"
+    dfresult['FCW'] = locale.format_string('%.6f', FCW)
+    dfresult['times FREF'] = locale.format_string('%.3f', TIME)
+    dfresult['Fout required'] = locale.format_string('%.4f', (FREF*FCW)/1e6)
+    dfresult['Fout nor.'] = locale.format_string('%.4f', fout_n)
+    dfresult['desv nor.'] = locale.format_string('%.4f', desv_n)
+    dfresult['Fout total mean'] = locale.format_string('%.4f', fout_T)
+    dfresult['desv total mean'] = locale.format_string('%.4f', desv_T)
+    dfresult['Fout SDM mean'] = locale.format_string('%.4f', fout_SDM)
+    dfresult['desv SDM mean'] = locale.format_string('%.4f', desv_SDM)
+
+    testeTesting = pd.concat([result, dfresult], ignore_index=True, axis=0)
+    testeTesting.to_csv(csvsaveresults, index=False, sep=';')
 '''
         DEFINIÇÕES GERAIS
 '''
 F0 = 2045e6  # frequência central de ajuste do DCO
 FREF = 26e6  # Frequência de referência
 F_DESIRED = 2e9
-FCW = 76.9230  # 76.9230  # Frequency command word
+FCW =  76.923076927661896  # 76.9230  # Frequency command word
 # FCW = F_DESIRED / FREF  # 76.9230  # Frequency command word
 FDCO = FREF * FCW  # Frequência desejada na saída do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
 NOISE = True
 IRR = True
-SDM = False
+SDM = True
+SAVE = True
 
 '''
         BANK CAPACITOR
@@ -407,6 +441,8 @@ jitter = [0]  # jitter noise
 wander = [0]  # wander noise
 error_fractional = np.zeros(TIME)  # fractional error from TDC
 phase_error = np.zeros(TIME)  # phase detector
+fractional_error_trk = []   # fractional error to plot
+fractional_error_trk_IRR = []   # fractional error with IRR aplied to plot
 
 pvt_bank_calib = False
 acq_bank_calib = False
@@ -426,9 +462,11 @@ freqs = np.zeros(TIME)  # array of different DCO output values
 NTW = np.zeros(TIME)  # normalize tuning word
 OTW = np.zeros(TIME)  # oscilator tuning word
 
-
-fractional_error_trk = []
-fractional_error_trk_IRR = []
+'''
+        Files
+'''
+csvsaveresults = "resultssimulations.csv"
+dfresult = pd.DataFrame()
 '''
         Main
 '''
@@ -455,7 +493,13 @@ if __name__ == "__main__":
     KDCO = FREQ_RES_PVT
     # OTW = OTW_pvt
     F_start_DCO = f_CKV
-
+    if not os.path.exists(csvsaveresults):
+        columns = ['starttime', "stoptime", "duration", "noise enable", "IRR enable", "SDM enable", "FCW", 'Fout required', "times FREF",
+                   "Fout nor.", "desv nor.", "Fout total mean", "desv total mean", "Fout SDM mean", "desv SDM mean"]
+        simulationResults = pd.DataFrame(columns=columns)
+    else:
+        simulationResults = pd.read_csv(csvsaveresults, delimiter=';')
+    dfresult['starttime'] = [starTime.strftime("%H:%M:%S")]
     freqmeanall = []
     freqmeanSDM = []
     V = 0
@@ -508,7 +552,7 @@ if __name__ == "__main__":
             #     error_fractional[k] = TDC(t_R, t_CKV[n], 1/np.mean(freq_array))
             # else:
             #     error_fractional[k] = 0
-            error_fractional[k] = TDC(t_R, t_CKV[n], 1 / np.mean(freq_array))
+            error_fractional[k] = TDC(t_R, t_CKV[n-1], 1 / np.mean(freq_array))
         # else:
         #     error_fractional[k] = TDC(t_R, t_CKV[n-1], T0)
         # teste =  TDC(t_R, t_CKV[n], T0)
@@ -592,10 +636,14 @@ if __name__ == "__main__":
           "MHz E a desejada era de :", (FREF * FCW) / 1e6,
           "MHz diferença de :", (f_CKV - (FREF * FCW)) / 1e3, "kHz e valor do banco ajustado em: ",OTW_trk)
 
+    SDMfreq = 0
+    SDMDesv = 0
     if SDM:
-        print("freq ajustada considerando a média SDM: ", np.mean(freqmeanSDM) / 1e6,
+        SDMfreq = np.mean(freqmeanSDM) / 1e6
+        SDMDesv = (np.mean(freqmeanSDM) - (FREF * FCW)) / 1e3
+        print("freq ajustada considerando a média SDM: ", SDMfreq ,
               "MHz E a desejada era de :", (FREF * FCW) / 1e6,
-              "MHz diferença de :", (np.mean(freqmeanSDM) - (FREF * FCW)) / 1e3, "kHz")
+              "MHz diferença de :",SDMDesv , "kHz")
 
     print("freq ajustada considerando a média total: ", np.mean(freqmeanall) / 1e6,
           "MHz E a desejada era de :", (FREF * FCW) / 1e6,
@@ -617,10 +665,15 @@ if __name__ == "__main__":
     print("Encerando a simulação em: ", stopTime.strftime("%H:%M:%S"))
     print("Duração da simulação: ", diftime.total_seconds())
 
+    if SAVE:
+        saveresults(timestop=stopTime.strftime("%H:%M:%S"), timediff=diftime.total_seconds(), fout_n=f_CKV / 1e6, desv_n=(f_CKV - (FREF * FCW)) / 1e3,
+                    fout_T=np.mean(freqmeanall) / 1e6, desv_T=(np.mean(freqmeanall) - (FREF * FCW)) / 1e3,
+                    fout_SDM=SDMfreq, desv_SDM=SDMDesv, result=simulationResults, dfresult=dfresult)
     # plt.figure()
     # # plt.plot(np.arange(1, TIME, 1), freqs[1:TIME], '-r')
     # # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
-    # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
+    # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
+    # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
     # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
     # plt.grid(visible=True)
     # plt.show()
@@ -642,6 +695,7 @@ if __name__ == "__main__":
     # plt.xlabel('Freq (MHz)')
     # plt.ylabel('Amplitude (dB)')
     # # plt.show()
+
 '''
 For each f_ref cycle
     Accumulate FCW:
