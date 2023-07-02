@@ -669,14 +669,14 @@ if __name__ == "__main__":
         saveresults(timestop=stopTime.strftime("%H:%M:%S"), timediff=diftime.total_seconds(), fout_n=f_CKV / 1e6, desv_n=(f_CKV - (FREF * FCW)) / 1e3,
                     fout_T=np.mean(freqmeanall) / 1e6, desv_T=(np.mean(freqmeanall) - (FREF * FCW)) / 1e3,
                     fout_SDM=SDMfreq, desv_SDM=SDMDesv, result=simulationResults, dfresult=dfresult)
-    # plt.figure()
-    # # plt.plot(np.arange(1, TIME, 1), freqs[1:TIME], '-r')
-    # # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
-    # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
+    plt.figure()
+    plt.plot(np.arange(1, TIME, 1), freqs[1:TIME], '-r')
+    # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
+    # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
     # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
     # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
-    # plt.grid(visible=True)
-    # plt.show()
+    plt.grid(visible=True)
+    plt.show()
 
 
     # plot_DCO_signal()
