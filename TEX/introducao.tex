@@ -17,63 +17,16 @@ PLLs (\textit{Phase-Locked Loops}) são amplamente utilizados como sintetizador 
 
 Diante dessas considerações, o presente trabalho tem como objetivo desenvolver um ADPLL para utilização em dispositivos IoT com comunicação do tipo \textit{Bluetooth}.  Propõem-se um simulador baseado em eventos de borda utilizando a linguagem de programação Python onde, serão exploradas as características e o desempenho do ADPLL em diferentes cenários, a fim de avaliar quue atenda as especificações do \textit{Bluetooth}.
 
-%é essencial garantir que a infraestrutura de comunicação seja capaz de lidar com a demanda crescente e oferecer desempenho otimizado em termos de velocidade, confiabilidade e eficiência energética
-%
-%A revolução da internet transformou radicalmente a sociedade, alterando fundamentalmente a forma como as pessoas vivem, interagem e consomem informações. No entanto, essa revolução está longe de terminar. Com o surgimento da Internet das Coisas (IoT), espera-se uma nova onda de transformação, conectando ainda mais a vida cotidiana das pessoas à internet, segundo \cite{al2020internet} IoT será a próxima revolução industrial, com a projeção de que até 2030 o número de dispositivos conectados em todo o mundo alcance a marca impressionante de 500 bilhões, de acordo com dados da \cite{Cisco2020}.
-%
-%Dispositivos Iot são caracterizados pela ampla cobertura, baixo consumo de energia e alta eficiência energética, o que os permite uma longa vida útil operando com bateria. 
-%
-%
-%A IoT é definida como uma rede que conecta qualquer coisa à internet, permitindo a coleta e transmissão de dados por meio de protocolos e dispositivos de medição \cite{patel2016internet}. 
-%
-%Esses dispositivos IoT possuem uma ampla variedade de propósitos, desde monitoramento e rastreamento até administração e reconhecimento, sendo caracterizados pela facilidade em coletar dados e transmiti-los por redes sem fio, utilizando ondas de rádio.
-%
-%A  tecnologia de circuitos integrados (CI) que está em constante evolução e se miniaturiza é o que permite os dispositivos IoT utilizarem frequências de rádio para transmissão de dados. A tecnologia CMOS (Complementary Metal-Oxide-Semiconductor) está constantemente diminuindo de tamanho, alcançando 3 nm atualmente e com desenvolvimento em curso para 2 nm, conforme relatado pela \cite{tsmc}. Essas tecnologias nanométricas permitem uma maior densidade de componentes por unidade de área. A Lei de Moore \cite{moore1965moore}, proposta por Gordon Moore em 1965, previa que a quantidade de transistores em um circuito integrado dobraria a cada dois anos, mantendo-se coerente até a década passada.
-%
-%A redução de tamanho da tecnologia CMOS traz consigo várias vantagens, incluindo a redução do consumo de energia, um fator crucial para os dispositivos IoT, que visam maximizar sua vida útil. Por esse motivo, o projeto de todos os subsistemas que compõem o dispositivo deve ser elaborado visando o consumo mínimo, levando em consideração a manifestação de ruídos em circuitos de baixa potência \cite{fiorelli2012all}.
-%
-%Os dispositivos IoT dependem de sistemas de comunicação para a transmissão de dados, o que requer a presença de um oscilador local. Os PLLs (Phase-Locked Loops) são amplamente utilizados nesses sistemas para gerar osciladores locais a partir de uma referência fixa. No entanto, os PLLs convencionais geralmente ocupam uma área significativa devido à presença de circuitos analógicos e consomem uma quantidade considerável de energia.
-%
-%Para superar essas limitações, surgem os PLLs fracionais, como o N-PLL, que são capazes de gerar valores fracionários em relação à referência. Essa abordagem combina circuitos analógicos e digitais, o que resulta em uma redução da área ocupada. No entanto, mesmo com essa abordagem, a área ocupada pelo PLL ainda é significativa.
-%
-%Diante dessas considerações, o presente trabalho tem como objetivo desenvolver um simulador de eventos utilizando a linguagem de programação Python. Esse simulador será utilizado para analisar e compreender o comportamento de um ADPLL (All-Digital Phase-Locked Loop). Através desse simulador, serão exploradas as características e o desempenho do ADPLL em diferentes cenários, contribuindo para o avanço na área de PLLs digitais e fornecendo insights valiosos para o projeto e otimização de sistemas de comunicação sem fio mais eficientes
-
-%
-%
-%A revolução da internet transformou radicalmente a sociedade, alterando fundamentalmente a forma como as pessoas vivem, interagem e consomem informações. No entanto, essa revolução está longe de terminar. Com o surgimento da Internet das Coisas (IoT), espera-se uma nova onda de transformação, conectando ainda mais a vida cotidiana das pessoas à internet. Segundo \cite{al2020internet}, IoT será a próxima revolução industrial, com a projeção de que até 2030 o número de dispositivos conectados em todo o mundo alcance a marca impressionante de 125 bilhões, de acordo com dados da \cite{Cisco2020}. 
-%
-%IoT é definido como um tipo de rede para conectar qualquer coisa com a internet, por meio de protocolos e equipamentos para fazer medidas e transmissão dos dados \cite{patel2016internet}. 
-%
-%Um dispositivo IoT pode ter diferentes propósitos, monitoramento, rastreamento, administração, reconhecimento e muitos outros. O que os torna um diferencial é pela facilidade em coletar dados e poder transmiti-los por redes sem fio para estações moveis ou fixas utilizando ondas de radio frequência.
-%
-%A evolução e miniaturização de circuitos integrados (CI) faz com que dispositivos IoT posam utilizar frequência de RF para transmissão de dados. Atualmente a tecnologia do CMOS (\textit{Complementary Metal-Oxide-Semiconductor}) está em 3nm e em desenvolvimento a de 2nm segundo \cite{tsmc}. Estas tecnologias nanométricas permitem um agrupamento maior de componentes por unidade de área. Gordon Moore em \cite{moore1965moore} previu que a quantidade de transistores em um circuito integrado dobraria a cada dois anos, o que se manteve coerente até década passada. 
-%
-%A redução de tamanho da tecnologia CMOS traz consigo algumas vantagens, entre elas a redução do consumo energético. Este é um fator crucial para os dispositivos IoT que visam maximizar sua vida útil. Com isto, o projeto de todos os subsistemas que constituem o dispositivo deve ser elaborado de maneira a buscar o consumo mínimo, levando em conta a manifestação de ruídos em circuitos de baixa potência \cite{fiorelli2012all}.
-%
-%Dispositivos IoT utilizam de sistemas de comunicação para transmissão dos dados, para isto se faz necessário um oscilador local. Os PLLs (\textit{Phase-Locked Loops}) são amplamente utilizados nesses sistemas para gerar osciladores locais a partir de uma referência fixa. No entanto, os PLLs convencionais geralmente ocupam uma área significativa devido à presença de circuitos analógicos e consomem uma quantidade considerável de energia.
-%
-%PLL são capazes de gerar um frequência de valor multiplo da de referência, porém com novos protocolos de comunicação, e estreitamento da largura de banda dos canais este valor múltiplo não é suficiente para sintonizar a frequência do transmissor no requerido. Uma alternativa ao uso do PLL são os PLLs fracionais,  N-PLL, capazes de gerar valores fracionais a referencia. É uma alternativa promissora, combinando circuitos analógicos e digitais o que reduz um pouco da área ocupada. No entanto, mesmo com essa abordagem, a área ocupada pelo PLL ainda é significativa.
-
-%
-%A expansão massiva de dispositivos IoT traz consigo desafios significativos. À medida que mais dispositivos se conectam à rede, surge a necessidade de sistemas mais eficientes e inteligentes para gerenciar essa enorme quantidade de dados. 
-%
-%A evolução dos sistemas de comunicação sem fio e a crescente demanda por tecnologias de Internet das Coisas (IoT) têm impulsionado a necessidade de soluções que sejam eficientes em termos de consumo energético, área ocupada e custo. 
-%
-%A tecnologia CMOS (\textit{Complementary Metal-Oxide-Semiconductor}) em constante redução de tamanho também resulta em uma diminuição na alimentação VDD do circuito, o que torna o controle de um PLL convencional ainda mais desafiador. Diante desse cenário, os PLLs fracionais, como o N-PLL, surgem como uma alternativa promissora, combinando circuitos analógicos e digitais para reduzir a área ocupada. No entanto, mesmo com essa abordagem, a área ocupada pelo PLL ainda é significativa.
-%
-%É nesse contexto que o ADPLL (\textit{All-Digital Phase-Locked Loop}) desempenha um papel importante. O ADPLL é um circuito puramente digital que oferece baixo consumo de energia e ocupa uma área relativamente pequena no chip. Sua operação é baseada em algoritmos digitais que controlam diretamente os elementos do loop de fase, eliminando a necessidade de componentes analógicos. Essa abordagem inovadora torna o ADPLL uma solução atraente para sistemas de comunicação sem fio de baixo consumo e com restrições de área.
-%
-%Diante dessas considerações, o presente trabalho tem como objetivo desenvolver um simulador de eventos utilizando a linguagem de programação Python para analisar e compreender o comportamento de um ADPLL. Através desse simulador, serão exploradas as características e o desempenho do ADPLL em diferentes cenários, contribuindo para o avanço na área de PLLs digitais e fornecendo insights valiosos para o projeto e otimização de sistemas de comunicação sem fio mais eficientes.
-%
 %A monografia está organizada da seguinte forma: na seção 2, serão apresentados os conceitos fundamentais relacionados a PLLs, incluindo uma revisão sobre PLLs convencionais e PLLs fracionais. A seção 3 discutirá os princípios de funcionamento do ADPLL e as vantagens oferecidas por essa abordagem. Na seção 4, será detalhada a metodologia utilizada para o desenvolvimento do simulador de eventos. Os resultados e análises obtidos serão apresentados na seção 5, seguidos de conclusões e possíveis direções para trabalhos futuros na seção 6.
 
-Com base nessas informações, o presente trabalho busca contribuir para o avanço no campo dos PLLs digitais, proporcionando uma compreensão aprofundada do ADPLL e explorando suas aplicações em sistemas de comunicação sem fio.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{TEMA} 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Estudo comportamental e simulação de um ADPLL utilizando linguagem de programação python, considerando parâmetros da tecnologia CMOS 65nm, e analisando a contribuição de ruido com diferentes parametrizações. 
+Desenvolver o escopo de um ADPLL para comunicação \textit{Bluetooth}, e efetuar uma simulação por meio de eventos de borda utilizando linguagem de programação Python para avaliação de atendimento dos requisitos.
+%considerando parâmetros da tecnologia CMOS 65nm, e analisando a contribuição de ruido com diferentes parametrizações. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{DELIMITAÇÃO DO TEMA} 
@@ -81,8 +34,9 @@ Estudo comportamental e simulação de um ADPLL utilizando linguagem de programa
 O trabalho encontra-se delimitado por:
 
 \begin{itemize}
-	\item Faixa de frequência 2.3 a 2.5 GHz;
-	\item Utilização de 3 bancos de capacitores no DCO;
+	\item Faixa de frequência \textit{Bluetooth} 2.4 a 2.45 GHz;
+	\item Utilização de três bancos de capacitores no DCO;
+	\item Simulação baseada em bordas de transições dos \textit{clocks};
 	\item Parâmetros de transistores da tecnologia CMOS 65nm;
 \end{itemize}
 
@@ -94,15 +48,15 @@ Dispositivos IoT requer uma maximização de sua vida útil por meio da diminui�
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{OBJETIVOS}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-O objetivo é o estudo e análise comportamental dos blocos que compõem um ADPLL e então, simular um que atenda aos critérios de ruido e desvio de frequência para o protocolo \textit{Bluetooth}.
+O objetivo é o desenvolvimento de um escopo e análise comportamental dos blocos que compõem um ADPLL e então, simular para verificar que atenda aos critérios de ruido e desvio de frequência para o protocolo \textit{Bluetooth}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{OBJETIVOS ESPECÍFICOS}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{itemize}
 	\item estudar o comportamento dos blocos que compõem o ADPLL;
-	\item estudar o ruido que cada bloco causa na saída do sistema;
+	\item estudar o impacto de cada bloco causa na saída do sistema em questão de ruido;
 	\item simular um ADPLL completo por meio de simulação de eventos;
-	\item avaliar o comportamento com diferentes parametrizações.
+	\item avaliar o comportamento com diferentes parametrizações;
 \end{itemize}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
