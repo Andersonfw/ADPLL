@@ -15,13 +15,13 @@ O processo de síntese de frequência ocorre através de técnicas de geração 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{PLL}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-PLL (\textit{Phase-Locked-Lopp}) é um circuito Sintetizador de frequência comumente utilizado. PLL é composto por diversos blocos, alguns deles são: osciladores controlados por tensão VCO (\textit{Voltage-Controlled Oscillator}), divisores programáveis, comparadores de fase DFF (Detectores de Fase e Frequência), bombas de carga CP ((\textit{Charge Pump}) e Filtros Passa Baixas LPF ((\textit{Low Pass Filters}). 
+PLL (\textit{Phase-Locked-Lopp}) é um circuito Sintetizador de frequência comumente utilizado. PLL é composto por diversos blocos, alguns deles são: osciladores controlados por tensão VCO (\textit{Voltage-Controlled Oscillator}), divisores programáveis, comparadores de fase DFF (Detectores de Fase e Frequência), bombas de carga CP (\textit{Charge Pump}) e Filtros Passa Baixas LPF (\textit{Low Pass Filters}). 
 
 Os blocos que compõem um PLL são apresentados na Figura \ref{fig:pll_blocks}.
 A utilização de uma realimentação negativa no circuito permite um controle tanto de frequência como de fase para a saída.
 
 \begin{figure}[h!]
-	\caption{Blocos de um PLL.}
+	\caption{Diagrama de blocos de um PLL.}
 	\begin{center}
 		\includegraphics[scale=0.6]{img/pll_blocos.png}
 	\end{center}
@@ -51,7 +51,7 @@ A frequência de saída é definida como:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Em um \textit{fractional-N} PLL a frequência de saída pode ser ajustada como uma fração da frequência de referência. Esse ajuste fracional é necessário em sistemas de comunicação para o ajuste correto da frequência central de canal utilizado. 
 
-\textit{Fractional-N} PLL utiliza uma topologia similar ao do \textit{Integer-N} PLL, com adição de um acumulador, uma maquina de altera que o divisor entre (N e N+1) durante um estado bloqueado. Esta variação faz com que a média torne-se um valor fracional entre N e N+1, proporcionando um ajuste de frequência também fracional. 
+\textit{Fractional-N} PLL utiliza uma topologia similar ao do \textit{Integer-N} PLL, com adição de um acumulador, uma maquina de alterna o divisor entre (N e N+1) durante um estado bloqueado. Esta variação faz com que a média torne-se um valor fracional entre N e N+1, proporcionando um ajuste de frequência também fracional. 
 
 A frequência de saída é definida como:
 
@@ -64,7 +64,24 @@ Onde, $F$ é um valor entre $0$ e $1$.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{ADPLL}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+O ADPLL (All-Digital Phase-Locked Loop) é um circuito puramente digital que difere dos PLLs convencionais. Enquanto os PLLs tradicionais exigem componentes analógicos como capacitores, resistores e indutores, o ADPLL é projetado para ocupar menos área no chip, aproveitando a miniaturização da tecnologia CMOS. A evolução da tecnologia CMOS permitiu a integração de circuitos digitais em RF, proporcionando benefícios como a parametrização do \textit{Loop-Filter} para ajuste de frequência conforme necessário. Além disso, como o ADPLL é totalmente digital, não requer circuitos auxiliares para conversão entre sinais analógicos e digitais, o que é uma vantagem significativa.
 
+Um diagrama de blocos simplificado de um ADPLL é mostrado na Figura \ref{fig:adpll_block_diagram}, composto por quatro blocos principais:  \textit{Digital Controlled Oscillator} (DCO), \textit{Time to Digital Converter} (TDC), \textit{Phase Detector} (PD) e o \textit{ digital Loop Filter} (LF). Cada um desses blocos desempenha um papel crucial no funcionamento do ADPLL. Nas seções subsequentes, serão fornecidos mais detalhes sobre esses blocos e seu funcionamento.
+
+%O ADPLL \textit{All Digital Phase-Locked-Loop} ao contrário dos PLLs convencionais é um circuito puramente digital. Em um PLL tradicional o \textit{Loop-Filter} ocupa mais de 50\% da área do chip, enquanto que no ADPLL por ser um circuito digital não necessita de grandes componentes, capacitores, resistores e indutores, reduzindo em grande parte a área ocupada.
+%
+%A utilização de circuito digital se da devido a miniaturização da tecnologia CMOS, permitindo maiores velocidades, maiores frequências, e assim, propiciando o uso de \textit{design} de circuitos digitais em RF. Seu uso traz inúmeros benefícios, entre elas a possibilidade de parametrização do \textit{Loop-Filter} para ajuste de frequência conforme desejado, e sendo o ADPLL totalmente digital não necessita circuitos auxiliar de conversão do sinal digital para analógico ou vice-versa, sendo uma grande vantagem.
+%
+%A Figura \ref{fig:adpll_block_diagram} mostra um diagrama de blocos simplificado de um ADPLL. è composto de 4 blocos principais,  \textit{Digital Controlled Oscillator} (DCO), \textit{Time to Digital Converter} (TDC), \textit{Phase Detector} (PD) e o \textit{ digital Loop Filter} (LF). Nas seções seguintes serão apresentados com mais detalhes cada um deles. 
+
+\begin{figure}[h!]
+	\caption{Diagrama de blocos de um ADPLL.}
+	\begin{center}
+		\includegraphics[scale=0.6]{img/adpll_block_diagram.png}
+	\end{center}
+	\fonte{\citeonline{staszewski2006all}}
+	\label{fig:adpll_block_diagram}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\textit{Energy Harvesting} 
