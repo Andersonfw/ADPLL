@@ -65,35 +65,44 @@ Onde, $F$ é $0$ ou $1$.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{ADPLL}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-O ADPLL \textit{All Digital Phase-Locked-Loop} é um circuito Sintetizador de frequência que ao contrário dos PLLs convencionais é um puramente digital. Em um PLL tradicional o \textit{Loop-Filter} ocupa mais de 50\% da área do chip, enquanto que no ADPLL por ser um circuito digital não necessita de grandes componentes, capacitores, resistores e indutores, reduzindo em grande parte a área ocupada.
+%O ADPLL \textit{All Digital Phase-Locked-Loop} é um circuito Sintetizador de frequência que ao contrário dos PLLs convencionais é um puramente digital. Em um PLL tradicional o \textit{Loop-Filter} ocupa mais de 50\% da área do chip, enquanto que no ADPLL por ser um circuito digital não necessita de grandes componentes, capacitores, resistores e indutores, reduzindo em grande parte a área ocupada.
+%
+%A utilização de circuito digital se da devido a miniaturização da tecnologia CMOS, permitindo maiores velocidades, maiores frequências, e assim, propiciando o uso de \textit{design} de circuitos digitais em RF. Seu uso traz inúmeros benefícios, entre elas a possibilidade de parametrização do \textit{Loop-Filter} para ajuste de frequência conforme desejado, e sendo o ADPLL totalmente digital não necessita circuitos auxiliar de conversão do sinal digital para analógico ou vice-versa, sendo uma grande vantagem.
 
-A utilização de circuito digital se da devido a miniaturização da tecnologia CMOS, permitindo maiores velocidades, maiores frequências, e assim, propiciando o uso de \textit{design} de circuitos digitais em RF. Seu uso traz inúmeros benefícios, entre elas a possibilidade de parametrização do \textit{Loop-Filter} para ajuste de frequência conforme desejado, e sendo o ADPLL totalmente digital não necessita circuitos auxiliar de conversão do sinal digital para analógico ou vice-versa, sendo uma grande vantagem.
 
-Tanto uma onda sinusoidal quanto uma onda retangular podem ser utilizadas como a frequência de referência do circuito. No entanto, devido ao fato de o circuito ser digital ser controlado pelas transições do \textit{clock}, é comum utilizar uma onda retangular para análise. 
-%Neste trabalho, optou-se por realizar uma análise focada nas transições do \textit{clock} para estudo e desenvolvimento. 
+O ADPLL (\textit{All Digital Phase-Locked-Loop}) é um sintetizador de frequência que se diferencia dos PLLs convencionais por ser um circuito puramente digital. Enquanto um PLL tradicional requer componentes analógicos, como capacitores, resistores e indutores, o ADPLL aproveita os benefícios da miniaturização da tecnologia CMOS, permitindo maiores velocidades e frequências, além de reduzir significativamente a área ocupada no chip.
 
-A Figura \ref{fig:adpll_block_diagram} mostra um diagrama de blocos de um ADPLL baseado em transições de \textit{clock}, baseado no estudo de \cite{andersson2010modeling} com algumas modificações. O ADPLL é composto de 4 blocos principais,  \textit{Digital Controlled Oscillator} (DCO), \textit{Time to Digital Converter} (TDC), \textit{Phase Detector} (PD) e o \textit{ digital Loop Filter} (LF). 
-%Nas subseções seguintes serão apresentados com mais detalhes cada um deles. 
+Para \cite{staszewski2006all} a tecnologia nanométrica do CMOS traz um novo paradigma, a resolução do domínio do tempo de uma transição de borda de sinal digital é superior à resolução de tensão de sinais analógicos. Desta forma o ADPLL pode ser analisado apenas pelas transições dos sinais digitais.
+
+A natureza digital do ADPLL oferece vantagens adicionais, como a parametrização do \textit{Loop-Filter} para ajuste de frequência conforme necessário. Além disso, não são necessários circuitos auxiliares para conversão entre sinais digitais e analógicos, o que representa uma economia de recursos e simplificação do projeto.
+
+%Tanto uma onda sinusoidal quanto uma onda retangular podem ser utilizadas como a frequência de referência do circuito. No entanto, é comum usar uma onda retangular para análise, visto que o circuito é sincronizado e controlado pelas transições do \textit{clock} de referência (FREF), proporcionando uma análise rápida e precisa do comportamento do ADPLL.
+
+A Figura \ref{fig:adpll_block_diagram} mostra o diagrama de blocos de um ADPLL no domínio do tempo, ou seja considerando as transições dos sinais de (FREF) e saída do circuito (DCO). O ADPLL é composto de 4 blocos principais,  \textit{Digital Controlled Oscillator} (DCO), \textit{Time to Digital Converter} (TDC), \textit{Phase Detector} (PD) e o \textit{ digital Loop Filter} (LF). Nas subseções seguintes serão apresentados com mais detalhes cada um dos sub-blocos. 
 
 \begin{figure}[h!]
 	\caption{Diagrama de blocos de um ADPLL.}
 	\begin{center}
-		\includegraphics[scale=0.6]{img/blocos_ADPLL.pdf}
+		\includegraphics[scale=1]{img/blocos_ADPLL.png}
 	\end{center}
 %	\fonte{\citeonline{staszewski2006all}}
 	\label{fig:adpll_block_diagram}
 \end{figure}
 
-O circuito do DCO é responsável por gerar o sinal de saída do sintetizador. Ele consiste em um indutor fixo e um conjunto de capacitores programáveis que formam um circuito ressonante LC. A frequência de saída é definida pelo FCW (\textit{Frequency Command Word}), que é um valor múltiplo da frequência de referência, conforme expresso na Equação \ref{eq:fvco_adpll}, podendo FCW ser um valor fracional.
+O circuito do DCO é responsável por gerar o sinal de saída do sintetizador. Ele consiste em um indutor fixo e um conjunto de capacitores programáveis que formam um circuito ressonante LC. A frequência de saída é definida pelo FCW (\textit{Frequency Command Word}), pode ser um valor fracionado ou inteiro da frequência de referência, conforme expresso na Equação \ref{eq:fvco_adpll}.
 
 \begin{equation}
 	F_{VCO} = FCW \cdot F_{ref}
 	\label{eq:fvco_adpll}
 \end{equation}
 
-Por outro lado, o TDC realiza a medição da diferença de tempo entre as bordas de \textit{clock} do sinal do DCO e uma borda de referência. Esse valor é acumulado da mesma forma que o FCW, a cada borda de \textit{clock}. O detector de fase compara as diferenças entre os acumuladores, que é então utilizado pelo\textit{Loop Filter} para controlar os capacitores do DCO. Essa ação de controle resulta no ajuste da frequência do sinal de saída, permitindo aumentá-la ou reduzi-la conforme necessário.
+Por outro lado, o TDC realiza a medição da diferença de tempo entre as bordas de \textit{clock} do sinal do DCO e uma borda de referência, , acumulando esse valor a cada transição do\textit{clock}, da mesma forma que FCW. O detector de fase compara as diferenças entre os acumuladores, que é então utilizado pelo\textit{Loop Filter} para controlar os capacitores do DCO. Essa ação de controle resulta no ajuste da frequência do sinal de saída, permitindo aumentá-la ou reduzi-la conforme necessário.
 
 
+
+%É comumente utilizado uma onda retangular para análise, na Figura \ref{fig:adpll_block_diagram}  o circuito é sincronizado e controlado pelas transições do \textit{clock} de referência (FREF), o que permite uma análise rápida e precisa do comportamento.
+
+%Neste trabalho, optou-se por realizar uma análise focada nas transições do \textit{clock} para estudo e desenvolvimento. 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -103,8 +112,24 @@ Por outro lado, o TDC realiza a medição da diferença de tempo entre as bordas
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{DCO}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+O DCO é o elemento principal do ADPLL, converte o \textit{Oscilator Tunning Word}, (OTW), em um sinal periódico onde a frequência $f$ é em função de sua entrada.
+\begin{equation}
+	f = f(OTW)
+	\label{eq:f_OTW}
+\end{equation}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+O DCO é formado por um circuito tanque LC, um indutor fixo e um banco de capacitores programáveis, em ressonância a frequência é definida de acordo com a equação \ref{eq:f_LC} onde $C_{tot}$ é a soma de todos capacitores ativos.
+
+\begin{equation}
+	f_{out} = \frac{1}{2 \pi \sqrt{L \cdot C_{tot}}}
+	\label{eq:f_LC}
+\end{equation}
+
+O DCO deve ser capaz de gerar um range de frequências e um espaçamento entre elas que atenda as especificações de modulação que será utilizado no transceptor. Para o \textit{Bluetooth } que possui um range de frequências entre $2.402GHz$ e $2.480GHz$, se utilizar 8 bits, conjunto de 256 capacitores programáveis, o passo de frequência seria $(2,480GHz - 2,402GHz)/2^8 = 304,67kHz$, o que é muito grosso para aplicações sem fio. Por outro lado se considerar um passo de frequência de $1kHz$ para a banda toda do \textit{Bluetooth }, seriam necessário 17 bits, sendo inviável de fabricação pela extrema dificuldade de casamento dos inúmeros capacitores no \textit{layout}.
+
+
+A alternativa é a divisão do banco de capacitores em três partes, sendo apenas uma acionada por vez. Os modos são chamados de modo de Processo-Tensão-Temperatura  (PVT), modo de aquisição (ACQ) e modo de caminhada (TRK). Para uma boa relação entre tamanho físico e o menor passo de frequência\cite{staszewski2006all} sugere que cada banco possua 8 bits em modo PVT, 8 bits no modo ACQ e 6 bits em TRK.  O modo PVT é o primeiro ser setado, compensando as variações de processo, temperatura e tensão, centralizando o oscilador mais perto da frequência desejada, mas não exata, com variações entre $1$ a $2MHz$. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Loop Filter}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
