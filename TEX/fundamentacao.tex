@@ -113,7 +113,7 @@ Por outro lado, o TDC realiza a medição da diferença de tempo entre as bordas
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{DCO}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-O DCO é o elemento principal do ADPLL, converte o \textit{Oscilator Tunning Word}, (OTW), em um sinal periódico onde a frequência $f$ é definida em função de sua entrada.
+O DCO é o elemento principal do ADPLL, converte o \textit{Oscilator Tunning Word}, ($OTW$), em um sinal periódico onde a frequência $f$ é definida em função de sua entrada.
 \begin{equation}
 	f = f(OTW)
 	\label{eq:f_OTW}
@@ -151,18 +151,14 @@ Para superar essa limitação, a solução adotada é dividir o banco de capacit
 
 %A solução adotada é dividir o banco de capacitores em três partes, ativando apenas uma delas por vez. Esses modos são conhecidos como modo de Processo-Tensão-Temperatura (PVT), modo de aquisição (ACQ) e modo de caminhada (TRK). Para alcançar um equilíbrio adequado entre tamanho físico e menor passo de frequência, de acordo com \cite{staszewski2006all}, sugere-se que cada banco possua 8 bits no modo PVT, 8 bits no modo ACQ e 6 bits no modo TRK.
 
-O modo PVT é o primeiro a ser configurado, permitindo a compensação de variações de processo, temperatura e tensão, centralizando o oscilador mais próximo da frequência desejada, porém com variações entre $1$ a $2MHz$. O segundo modo, ACQ, ajusta a frequência para dentro da banda de interesse, com uma resolução de $\pm 500kHz$ usando os 8 bits desse banco de capacitores. Por fim, o modo TRK oferece a menor resolução para ajustar a frequência exata utilizada na modulação do sinal dentro do canal designado.
 
-Cada modo possui um range de frequência de operação, e a mudança de uma unidade no OTW define o menor passo de frequência possível em cada modo . Este passo pode ser calculado para cada modo conforme a equação \ref{eq:step_freq_mode}, considerando o range de frequência e o numero de bits em cada um. 
 
+
+Na Figura \ref{fig:bank_modos} é apresentado o fluxo de operação dos modos do DCO. Cada modo possui um range de frequência de operação, e a mudança de uma unidade no $OTW$ define o menor passo de frequência,  $\Delta f$ possível em cada modo . Este passo pode ser calculado para cada modo conforme a equação \ref{eq:step_freq_mode}, considerando o range de frequência e o numero de bits em cada um. 
 \begin{equation}
 	\Delta f_{LSB_{mode}} = \frac{F.R_{mode}}{2^{b_{mode}}}
 	\label{eq:step_freq_mode}
 \end{equation}
-
-
-Na Figura \ref{fig:bank_modos} é demostrado o fluxo de operação dos modos do DCO. Na inicialização do DCO,  o modo PVT é iniciado no centro do range, ou seja, $OTW=127$. $OTW=0$ corresponde a menor frequência possível e $OTW=255$ a mais alta, a mudança de uma unidade representa um passo de frequência $\Delta f_P$ conforme mostrada em \ref{eq:step_freq_mode}.
-
 
 \begin{figure}[h!]
 	\caption{Fluxo de operação dos modos do DCO }
@@ -172,6 +168,70 @@ Na Figura \ref{fig:bank_modos} é demostrado o fluxo de operação dos modos do 
 	\fonte{Adaptado de \citeonline{staszewski2006all}.}
 	\label{fig:bank_modos}
 \end{figure}
+
+%
+%Ao iniciar o DCO, o modo PVT é ativado e inicia no centro do range de ajuste com um valor de $OTW=127$, quando o valor é configurado em $0$ corresponde a menor frequência possível e $255$ a mais alta. Ele  executa a compensação de variações de processo, temperatura e tensão, centralizando a frequência do oscilador de forma mais grosseira com variações entre $1$ a $2MHz$.
+%
+%No segundo modo, ACQ, a frequência é ajustada para dentro da banda de interesse, com um passo de frequência médio $\Delta f_A$ com uma resolução de $\pm 500kHz$ variando $OTW$ entre 0 à 255.
+%
+%Por fim, o modo TRK possui a melhor resolução de ajuste, o que permite ajustar com precisão a frequência de saída do oscilador necessária para a modulação do sinal. Para permitir ajustes muito finos como $\pm 1kHz$, $OTW$ pode ser um valor fracionário neste modo. Para isto é utilizado uma topologia similar a do \textit{Fractional-N PLL}, permitindo uma melhor resolução com a implementação de um modulador Sigma Delta (SDM). SDMs são muito utilizados em conversores ADs, analógico para digital, por meio de um modulador com sobre amostragem seguido por um filtro digital/decimador que juntos produzem um sinal de alta resolução \cite{sdmtexas}.
+Ao iniciar o DCO, todos os modos são iniciados no centro do range de ajuste, com um valor de $OTW=127$ para PVT e ACQ e $OTW=33$ para TRK. Configurar $OTW$ como $0$ corresponde à menor frequência possível, enquanto $255$ representa a frequência mais alta. O modo PVT é o primeiro a ser ajustado fazendo a compensação de variações de processo, temperatura e tensão, centralizando a frequência do oscilador de forma mais grosseira, apresentando variações entre $1$ a $2MHz$.
+
+No segundo modo, ACQ, a frequência é ajustada para dentro da banda de interesse com um passo de frequência médio $\Delta f_A$, fornecendo uma resolução de $\pm 500kHz$ ao variar $OTW$ entre 0 e 255.
+
+Por fim, o modo TRK possui a melhor resolução de ajuste, permitindo ajustar com precisão a frequência de saída do oscilador necessária para a modulação do sinal. Para permitir ajustes muito finos, como $\pm 1kHz$, $OTW$ pode ser um valor fracionário nesse modo. Para isso, é utilizada uma topologia semelhante à do \textit{Fractional-N PLL}, permitindo uma melhor resolução com a implementação de um modulador Sigma-Delta (SDM). Os SDMs são amplamente utilizados em conversores ADs (analógico para digital) por meio de um modulador com sobre-amostragem, seguido por um filtro digital/decimador, que juntos produzem um sinal de alta resolução \cite{sdmtexas}. Essa técnica de modulação é empregada para alcançar um ajuste preciso e refinado da frequência do DCO, garantindo a adequada modulação do sinal dentro do canal designado.
+
+
+A Figura \ref{fig:lc_bank_capacitor} apresenta o tanque LC de um DCO projetado para aplicação \textit{Bluetooth}, com a implementação dos três bancos de capacitores. Nos bancos PVT e ACQ cada capacitor representado por um bit possui um mesmo valor conforme o banco que ele pertence, sendo a soma deles que define a frequência.
+
+\begin{equation}
+	C_{max} = \frac{1}{L} \big( \frac{1}{2 \pi f_{min}} \big)^2
+	\label{eq:cmax}
+\end{equation}
+
+\begin{equation}
+	C_{min} = \frac{1}{L} \big( \frac{1}{2 \pi f_{max}} \big)^2
+	\label{eq:cmin}
+\end{equation}
+
+\begin{equation}
+	\Delta C^{banco} = \frac{	C_{max} - C_{min}}{2}
+	\label{eq:c_delta}
+\end{equation}
+
+
+\begin{equation}
+	C^P = C_0 + C^A_{half} + C^T_{half} + \sum_{k=0}^{7} \bar{d}_k \cdot 2^k * 	\Delta C^P
+	\label{eq:c_P_total}
+\end{equation}
+
+\begin{equation}
+	C^A = C_P - C^A_{half} + C^T_{half} + \sum_{k=0}^{7} \bar{d}_k \cdot 2^k * 	\Delta C^A
+	\label{eq:c_A_total}
+\end{equation}
+
+\begin{figure}[h!]
+	\caption{Tanque LC com banco de capacitores para aplicação \textit{Bluetooth} }
+	\begin{center}
+		\includegraphics[scale=0.6]{img/lc_bank_capacitor.png}
+	\end{center}
+	\fonte{Adaptado de \citeonline{staszewski2006all}.}
+	\label{fig:lc_bank_capacitor}
+\end{figure}
+
+
+
+No modo TRK os capacitores são rearranjados de forma diferente. Utilizando peso binário quando $OTW$ mudar de 31 para 32 fara com que 6 capacitores sejam alterados, causando bordas de ruído no sinal de saída, o que não é desejável visto que neste modo é importante manter a estabilidade para garantir a comunicação.   Desta forma no modo TRK cada capacitor possui valor unitário, ou seja a mudança de $OTW$ fara com que apenas um capacitor seja alterado, evitando ruídos indesejados. 
+
+\begin{equation}
+	C_\mu = \frac{	C_{max} - C_{min}}{2^{bTRK}}
+	\label{eq:c_unit_TRK}
+\end{equation}
+
+\begin{equation}
+	C^T = C_A -  C^T_{half} + (2^{bTRK} - OTW) \cdot 	C_\mu
+	\label{eq:c_T_total}
+\end{equation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Loop Filter}
