@@ -25,7 +25,7 @@ A utilização de uma realimentação negativa no circuito permite um controle t
 	\begin{center}
 		\includegraphics[scale=0.6]{img/pll_blocos.png}
 	\end{center}
-	\fonte{\citeonline{barrett_1999_fractionalintegern}}
+	\fonte{\citeonline{barrett_1999_fractionalintegern}.}
 	\label{fig:pll_blocks}
 \end{figure}
 
@@ -86,6 +86,7 @@ A Figura \ref{fig:adpll_block_diagram} mostra o diagrama de blocos de um ADPLL n
 		\includegraphics[scale=1]{img/blocos_ADPLL.png}
 	\end{center}
 %	\fonte{\citeonline{staszewski2006all}}
+\fonte{Adaptado de \citeonline{andersson2010modeling}.}
 	\label{fig:adpll_block_diagram}
 \end{figure}
 
@@ -112,23 +113,66 @@ Por outro lado, o TDC realiza a medição da diferença de tempo entre as bordas
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{DCO}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-O DCO é o elemento principal do ADPLL, converte o \textit{Oscilator Tunning Word}, (OTW), em um sinal periódico onde a frequência $f$ é em função de sua entrada.
+O DCO é o elemento principal do ADPLL, converte o \textit{Oscilator Tunning Word}, (OTW), em um sinal periódico onde a frequência $f$ é definida em função de sua entrada.
 \begin{equation}
 	f = f(OTW)
 	\label{eq:f_OTW}
 \end{equation}
 
-O DCO é formado por um circuito tanque LC, um indutor fixo e um banco de capacitores programáveis, em ressonância a frequência é definida de acordo com a equação \ref{eq:f_LC} onde $C_{tot}$ é a soma de todos capacitores ativos.
+O DCO é formado por um circuito tanque LC, um indutor fixo e capacitores programáveis, em ressonância a frequência é definida de acordo com a equação \ref{eq:f_LC} onde $C_{tot}$ é a soma de todas capacitâncias.
 
 \begin{equation}
 	f_{out} = \frac{1}{2 \pi \sqrt{L \cdot C_{tot}}}
 	\label{eq:f_LC}
 \end{equation}
 
-O DCO deve ser capaz de gerar um range de frequências e um espaçamento entre elas que atenda as especificações de modulação que será utilizado no transceptor. Para o \textit{Bluetooth } que possui um range de frequências entre $2.402GHz$ e $2.480GHz$, se utilizar 8 bits, conjunto de 256 capacitores programáveis, o passo de frequência seria $(2,480GHz - 2,402GHz)/2^8 = 304,67kHz$, o que é muito grosso para aplicações sem fio. Por outro lado se considerar um passo de frequência de $1kHz$ para a banda toda do \textit{Bluetooth }, seriam necessário 17 bits, sendo inviável de fabricação pela extrema dificuldade de casamento dos inúmeros capacitores no \textit{layout}.
+Transistores em modo varactor são utilizado como capacitores programáveis, pois possuem um ajuste muito pequeno de frequência em relação a varactores de diodo. Quanto menor o valor da capacitância menor é o  passo de frequência de ajuste do DCO, permitindo um ajuste mais fino e melhor performance. 
+
+Transistores do tipo PMOS são comumente utilizados como varactores devido a suas propriedades de isolação do poço. Com os terminais dreno, fonte e corpo (D=S=B) interligados permite que a capacitância seja controlada pelo nível de tensão $VG$ conforme região de operação do transistor, limitada pela capacitância do óxido $(COX)$. A Figura \ref{fig:curva_COX_vbg} mostra a curva de capacitância
+
+\begin{figure}[h!]
+	\caption{Curva de resposta do varactor D=S=B em relação a $VG$ }
+	\begin{center}
+		\includegraphics[scale=0.6]{img/curva_COX_vbg.png}
+	\end{center}
+	\fonte{\citeonline{lucasvco2022}.}
+	\label{fig:curva_COX_vbg}
+\end{figure}
+
+O DCO deve ser capaz de gerar um range de frequências com ajuste fino para atender às necessidades de modulação do transceptor. Por exemplo, para o \textit{Bluetooth}, que possui um range de frequências entre $2.402GHz$ e $2.480GHz$, usar apenas 8 bits, um conjunto de 256 capacitores programáveis, resultaria em um passo de frequência muito grosso de aproximadamente $304,67kHz$, o que não é viável para aplicações sem fio e tipos de modulações utilizadas.
+
+Para superar essa limitação, a solução adotada é dividir o banco de capacitores em três partes: modo de Processo-Tensão-Temperatura (PVT), modo de aquisição (ACQ) e modo de caminhada (TRK). Esses modos permitem ajustar o DCO de maneira mais precisa. De acordo com \cite{staszewski2006all}, uma boa relação entre tamanho físico e menor passo de frequência é alcançada atribuindo 8 bits para o modo PVT, 8 bits para o modo ACQ e 6 bits para o modo TRK.
+
+%
+%O DCO deve ser capaz de gerar um range de frequências e um espaçamento entre elas que atenda as especificações de modulação que será utilizado no transceptor. Para o \textit{Bluetooth } que possui um range de frequências entre $2.402GHz$ e $2.480GHz$, se utilizar 8 bits, conjunto de 256 capacitores programáveis, o passo de frequência seria $(2,480GHz - 2,402GHz)/2^8 = 304,67kHz$, o que é muito grosso para aplicações sem fio. Por outro lado se considerar um passo de frequência de $1kHz$ para a banda toda do \textit{Bluetooth }, seriam necessário 17 bits, sendo inviável de fabricação pela extrema dificuldade de casamento dos inúmeros capacitores no \textit{layout}.
+%
+%
+%A alternativa é a divisão do banco de capacitores em três partes, sendo apenas uma acionada por vez. Os modos são chamados de modo de Processo-Tensão-Temperatura  (PVT), modo de aquisição (ACQ) e modo de caminhada (TRK). Para uma boa relação entre tamanho físico e o menor passo de frequência\cite{staszewski2006all} sugere que cada banco possua 8 bits em modo PVT, 8 bits no modo ACQ e 6 bits em TRK.  O modo PVT é o primeiro ser setado, compensando as variações de processo, temperatura e tensão, centralizando o oscilador mais perto da frequência desejada, mas não exata, com variações entre $1$ a $2MHz$. O segundo modo é o ACQ, ajustando a frequência para dentro da banda de interesse, com uma resolução de $\pm 500kHz$ utilizando 8 bits neste banco de capacitores. Por fim o modo TRK é a menor resolução para ajustar a frequência exata utilizada na modulação do sinal dentro do canal utilizado.
+
+%A solução adotada é dividir o banco de capacitores em três partes, ativando apenas uma delas por vez. Esses modos são conhecidos como modo de Processo-Tensão-Temperatura (PVT), modo de aquisição (ACQ) e modo de caminhada (TRK). Para alcançar um equilíbrio adequado entre tamanho físico e menor passo de frequência, de acordo com \cite{staszewski2006all}, sugere-se que cada banco possua 8 bits no modo PVT, 8 bits no modo ACQ e 6 bits no modo TRK.
+
+O modo PVT é o primeiro a ser configurado, permitindo a compensação de variações de processo, temperatura e tensão, centralizando o oscilador mais próximo da frequência desejada, porém com variações entre $1$ a $2MHz$. O segundo modo, ACQ, ajusta a frequência para dentro da banda de interesse, com uma resolução de $\pm 500kHz$ usando os 8 bits desse banco de capacitores. Por fim, o modo TRK oferece a menor resolução para ajustar a frequência exata utilizada na modulação do sinal dentro do canal designado.
+
+Cada modo possui um range de frequência de operação, e a mudança de uma unidade no OTW define o menor passo de frequência possível em cada modo . Este passo pode ser calculado para cada modo conforme a equação \ref{eq:step_freq_mode}, considerando o range de frequência e o numero de bits em cada um. 
+
+\begin{equation}
+	\Delta f_{LSB_{mode}} = \frac{F.R_{mode}}{2^{b_{mode}}}
+	\label{eq:step_freq_mode}
+\end{equation}
 
 
-A alternativa é a divisão do banco de capacitores em três partes, sendo apenas uma acionada por vez. Os modos são chamados de modo de Processo-Tensão-Temperatura  (PVT), modo de aquisição (ACQ) e modo de caminhada (TRK). Para uma boa relação entre tamanho físico e o menor passo de frequência\cite{staszewski2006all} sugere que cada banco possua 8 bits em modo PVT, 8 bits no modo ACQ e 6 bits em TRK.  O modo PVT é o primeiro ser setado, compensando as variações de processo, temperatura e tensão, centralizando o oscilador mais perto da frequência desejada, mas não exata, com variações entre $1$ a $2MHz$. 
+Na Figura \ref{fig:bank_modos} é demostrado o fluxo de operação dos modos do DCO. Na inicialização do DCO,  o modo PVT é iniciado no centro do range, ou seja, $OTW=127$. $OTW=0$ corresponde a menor frequência possível e $OTW=255$ a mais alta, a mudança de uma unidade representa um passo de frequência $\Delta f_P$ conforme mostrada em \ref{eq:step_freq_mode}.
+
+
+\begin{figure}[h!]
+	\caption{Fluxo de operação dos modos do DCO }
+	\begin{center}
+		\includegraphics[scale=0.6]{img/bank_modos.png}
+	\end{center}
+	\fonte{Adaptado de \citeonline{staszewski2006all}.}
+	\label{fig:bank_modos}
+\end{figure}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Loop Filter}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
