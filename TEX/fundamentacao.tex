@@ -1,6 +1,83 @@
 \chapter{Fundamentação teórica}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Neste capitulo, apresentamos uma síntese da revisão bibliográfica realizada para embasar a metodologia adotada no desenvolvimento e simulação do ADPLL. São abordados os conceitos básicos de um sintetizador de frequência, o protocolo de comunicação \textit{Bluetooth} e a importância dos circuitos e dispositivos CMOS. Esses tópicos são fundamentais para compreender o funcionamento do ADPLL e sua aplicação em sistemas de comunicação sem fio. A revisão bibliográfica oferece uma base sólida para o desenvolvimento do projeto, fornecendo os conhecimentos necessários para explorar as características, desempenho e aplicações do ADPLL.
+Neste capitulo, apresentamos uma síntese da revisão bibliográfica realizada para embasar a metodologia adotada no desenvolvimento e simulação do ADPLL. São abordados os conceitos básicos de um sintetizador de frequência, o protocolo de comunicação \textit{Bluetooth} e a importância dos circuitos e dispositivos CMOS, e alguns conceitos de comunicações sem fio. Esses tópicos são fundamentais para compreender o funcionamento do ADPLL e sua aplicação em sistemas de comunicação sem fio. A revisão bibliográfica oferece uma base sólida para o desenvolvimento do projeto, fornecendo os conhecimentos necessários para explorar as características, desempenho e aplicações do ADPLL.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Sistemas de Comunicação sem fio}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Sistemas de comunicação sem fio, são capazes de transportar informações sem a necessidade de conexões físicas. Comunicações sem fio (do inglês, \textit{Wirelless}), são ondas eletromagnéticas em um range entre $3kHz$ à $300GHz$, que se propagam na velocidade da luz sem a necessidade de ar para se locomover.
+%
+%Desde as primeiras transmissões de voz por radio na década de 1920 até os dias atuais houve muitas evoluções, estando hoje comunicações em fio presentes em tudo no dia a dia, desde televisão, rádio, celulares, internet (WIFI) e muito mais \cite{dowla2003handbook}. 
+%
+%Uma informação é transmitida por rádio frequência (RF), por meio de uma técnica chamada modulação. \cite{engtadeu2011} define que "Modulação é um processo que consiste em se alterar uma característica da onda portadora, proporcionalmente ao sinal modulante".  De forma básica consiste em empacotar a informação( sinal modulante), (áudio ou dados digitais), que é de baixa frequência , em uma onda de alta frequência (onda Portadora), tendo como resultado um sinal modulado,  e então, através de uma antena transmitir pelo ar. Existem inúmeros modelos de modulação que podem ser utilizados, cada um com características diferentes que visam aumentar alcance, imunidade a ruido, evitar colisão entre outros.
+%
+%Um dispositivo de comunicação sem fio é composto de dois circuitos, um receptor, para receber e demodular a informação e outro transmissor para enviar a informação modulada. Um dispositivo pode ser composto apenas de um transmissor ou receptor conforme a aplicação, e nos casos que possui ambos também é chamado de transceptor. A Figura \ref{fig:tranceiver_structure} apresenta a estrutura básica de um transceptor onde cada bloco tem uma função especifica.
+
+
+Os sistemas de comunicação sem fio proporcionam a transferência de informações sem a necessidade de conexões físicas. Essas comunicações, conhecidas como \textit{wireless}, utilizam ondas eletromagnéticas em um amplo espectro de frequências, variando de $3kHz$ a $300GHz$, propagando-se na velocidade da luz pelo espaço sem depender de um meio físico específico.
+
+Desde as primeiras transmissões de voz por rádio na década de 1920 até os dias atuais, houve significativas evoluções nesse campo, com as comunicações sem fio se tornando uma parte integrante do cotidiano, presente em tecnologias como televisão, rádio, celulares, internet (Wi-Fi) e muito mais \cite{dowla2003handbook}.
+
+A transmissão de informações por rádio frequência (RF) é realizada por meio de uma técnica chamada modulação. De maneira geral, a modulação envolve alterar uma característica da onda portadora de acordo com o sinal modulante, que carrega a informação a ser transmitida, seja áudio ou dados digitais \cite{engtadeu2011}. Essa técnica empacota a informação de baixa frequência em uma onda de alta frequência, resultando em um sinal modulado que pode ser transmitido pelo ar através de uma antena. Existem inúmeros modelos de modulação, cada um com características específicas que visam aumentar o alcance, a imunidade a ruídos, evitar colisões entre sinais, entre outros aspectos.
+
+Um dispositivo de comunicação sem fio é composto por dois circuitos principais: um receptor, responsável por receber e demodular a informação, e um transmissor, encarregado de enviar a informação modulada. Dependendo da aplicação, um dispositivo pode ser composto apenas por um transmissor ou receptor, enquanto em outros casos, que envolvem ambas as funções, ele é denominado transceptor. A Figura \ref{fig:tranceiver_structure} apresenta a estrutura básica de um transceptor, onde cada bloco desempenha uma função específica.
+\begin{figure}[h!]
+	\caption{Estrutura de um transceptor.}
+	\begin{center}
+		\includegraphics[scale=0.6]{img/tranceiver_structure.png}
+	\end{center}
+	\fonte{\citeonline{srakar_tranceiver_2023}.}
+	\label{fig:tranceiver_structure}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{CMOS}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+CMOS (\textit{Complementary Metal-Oxide-Semiconductor}) é um processo de fabricação que utiliza silício para criar transistores de efeito de campo (MOSFETs) do tipo p e do tipo n, chamados de PMOS e NMOS, respectivamente. Amplamente utilizado na produção de chips de circuitos integrados, como microprocessadores, microcontroladores e chips de memória, o CMOS também é empregado em circuitos analógicos, como sensores de imagem e dispositivos de comunicação com e sem fio. Sua característica distintiva é o baixo consumo de energia, tornando-o especialmente adequado para dispositivos IoT.
+
+Além disso, o CMOS oferece vantagens em relação a outras tecnologias, como operação em baixas tensões e uma evolução avançada que permite maior densidade de transistores por unidade de área . O tamanho dos transistores é determinado pelos valores de comprimento (L) e largura (W) Figura \ref{fig:nmos_structure}, permitindo um controle mais preciso da corrente que circula por eles\cite{designcmosrazavi2016}. Atualmente, circuitos integrados podem ser fabricados em escala de $3nm$ de acordo com \cite{tsmc}.
+
+\begin{figure}[h!]
+	\caption{Estrutura de um NMOS}
+	\begin{center}
+		\includegraphics[scale=0.6]{img/nmos_structure.png}
+	\end{center}
+	\fonte{\citeonline{designcmosrazavi2016}.}
+	\label{fig:nmos_structure}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Bluetooth}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+O \textit{Bluetooth} é um padrão de tecnologia sem fio de curto alcance, amplamente utilizado para a troca de dados entre dispositivos fixos e móveis em distâncias curtas. 
+
+Atualmente, milhões de pessoas em todo o mundo utilizam dispositivos \textit{Bluetooth} para transferir dados, como música, fotos e vídeos, no dia a dia. Além disso, o \textit{Bluetooth} tem sido cada vez mais empregado em dispositivos IoT, especialmente com a implementação do BLE (\textit{Bluetooth Low Energy}), que oferece maior alcance e menor consumo de energia em relação ao \textit{Bluetooth} padrão. Estima-se que em 2027 existirão cerca de 7,6 bilhões de dispositivos \textit{Bluetooth} ativos em todo o mundo \cite{BluetoothSite}.
+
+
+Gerenciado pelo \textit{Bluetooth Special Interest Group} (SIG), o padrão opera no espectro de frequência $2,4GHz$. Na Tabela \ref{tab:bluetooth_specification} é apresentado algumas definições de comunicação \textit{Bluetooth} clássico e do BLE.
+
+\begin{table}[h!]
+	\caption{Definições de \textit{Bluetooth} clássico e BLE}
+	
+	\label{tab:bluetooth_specification}
+	\resizebox{\columnwidth}{!}{%
+		\begin{tabular}{lll}
+			\hline
+			& \textbf{\textit{Bluetooth} Low Energy (BLE)}      & \textbf{\textit{Bluetooth} Clássico}               \\ \hline
+			\textbf{Banda de frequência} & 2.4 GHz Banda ISM  (2.402 – 2.480 GHz)    & 2.4 GHz Banda ISM  (2.402 – 2.480 GHz)    \\ \hline
+			\textbf{Canais}              & 40 canais com 2 MHz de espaçamento        & 79 canais com 1 MHz de espaçamento       \\ \hline
+			\textbf{Modulação}           & GFSK                                     & GFSK, $\pi$/4 DQPSK, 8DPSK                   \\ \hline
+			\textbf{Uso do Canal}        & \textit{Frequency-Hopping Spread Spectrum} (FHSS) & \textit{Frequency-Hopping Spread Spectrum} (FHSS) \\ \hline
+			\textbf{Data Rate (DR)}      & Até 2 Mb/s                                & Até 3 Mb/s                                \\ \hline
+			\textbf{Sensibilidade (RX)}  & -82dBm com DR=120 kb/s                    & -70 dBm                                  \\ \hline
+			\textbf{Topologia de comunicação} & \begin{tabular}[c]{@{}l@{}}Ponto a ponto\\ \textit{Broadcast}\\ \textit{Mesh}\end{tabular} & Ponto a ponto  \\ \hline
+		\end{tabular}%		
+	}
+	\fonte{Adaptado de \citeonline{BluetoothSite}.}
+\end{table}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Sintetizador de frequência}
@@ -182,8 +259,21 @@ No segundo modo, ACQ, a frequência é ajustada para dentro da banda de interess
 Por fim, o modo TRK possui a melhor resolução de ajuste, permitindo ajustar com precisão a frequência de saída do oscilador necessária para a modulação do sinal. Para permitir ajustes muito finos, como $\pm 1kHz$, $OTW$ pode ser um valor fracionário nesse modo. Para isso, é utilizada uma topologia semelhante à do \textit{Fractional-N PLL}, permitindo uma melhor resolução com a implementação de um modulador Sigma-Delta (SDM). Os SDMs são amplamente utilizados em conversores ADs (analógico para digital) por meio de um modulador com sobre-amostragem, seguido por um filtro digital/decimador, que juntos produzem um sinal de alta resolução \cite{sdmtexas}. Essa técnica de modulação é empregada para alcançar um ajuste preciso e refinado da frequência do DCO, garantindo a adequada modulação do sinal dentro do canal designado.
 
 
-A Figura \ref{fig:lc_bank_capacitor} apresenta o tanque LC de um DCO projetado para aplicação \textit{Bluetooth}, com a implementação dos três bancos de capacitores. Nos bancos PVT e ACQ cada capacitor representado por um bit possui um mesmo valor conforme o banco que ele pertence, sendo a soma deles que define a frequência.
+A Figura \ref{fig:lc_bank_capacitor} apresenta o tanque LC de um DCO projetado para aplicação \textit{Bluetooth}, com a implementação dos três bancos de capacitores. Nos bancos PVT e ACQ cada capacitor representado por um bit possui um mesmo valor conforme o banco que ele pertence, a soma deles em conjunto com o capacitor $C_0$ definirá a frequência. 
+%$C_0$ é um capacitor de valor fixo que defini a máxima frequência do oscilador
 
+
+\begin{figure}[h!]
+	\caption{Tanque LC com banco de capacitores para aplicação \textit{Bluetooth} }
+	\begin{center}
+		\includegraphics[scale=0.6]{img/lc_bank_capacitor.png}
+	\end{center}
+	\fonte{Adaptado de \citeonline{staszewski2006all}.}
+	\label{fig:lc_bank_capacitor}
+\end{figure}
+
+
+Nos bancos de capacitores PVT e ACQ o valor individual de cada capacitor é definido pela equação \ref{eq:c_delta}, na qual leva em consideração a frequência minima e máxima de operação de cada banco. O valor de $C_0$ é igual ao valor de $C_{min}$ do banco PVT, ou seja a máxima frequência do oscilador.
 \begin{equation}
 	C_{max} = \frac{1}{L} \big( \frac{1}{2 \pi f_{min}} \big)^2
 	\label{eq:cmax}
@@ -199,35 +289,28 @@ A Figura \ref{fig:lc_bank_capacitor} apresenta o tanque LC de um DCO projetado p
 	\label{eq:c_delta}
 \end{equation}
 
+Após o ajuste do banco PVT a capacitância total é obtida pela equação \ref{eq:c_A_total}, considerando o número de capacitores acionados considerando seus valores e a metade dos capacitores dos bancos ACQ e TRK acionados.
 
 \begin{equation}
 	C^P = C_0 + C^A_{half} + C^T_{half} + \sum_{k=0}^{7} \bar{d}_k \cdot 2^k * 	\Delta C^P
 	\label{eq:c_P_total}
 \end{equation}
 
+Da mesma forma após o ajuste do banco ACQ a capacitância total é obtida pela equação \ref{eq:c_A_total} considerando o valor do banco PVT já ajustado.
 \begin{equation}
 	C^A = C_P - C^A_{half} + C^T_{half} + \sum_{k=0}^{7} \bar{d}_k \cdot 2^k * 	\Delta C^A
 	\label{eq:c_A_total}
 \end{equation}
 
-\begin{figure}[h!]
-	\caption{Tanque LC com banco de capacitores para aplicação \textit{Bluetooth} }
-	\begin{center}
-		\includegraphics[scale=0.6]{img/lc_bank_capacitor.png}
-	\end{center}
-	\fonte{Adaptado de \citeonline{staszewski2006all}.}
-	\label{fig:lc_bank_capacitor}
-\end{figure}
 
-
-
-No modo TRK os capacitores são rearranjados de forma diferente. Utilizando peso binário quando $OTW$ mudar de 31 para 32 fara com que 6 capacitores sejam alterados, causando bordas de ruído no sinal de saída, o que não é desejável visto que neste modo é importante manter a estabilidade para garantir a comunicação.   Desta forma no modo TRK cada capacitor possui valor unitário, ou seja a mudança de $OTW$ fara com que apenas um capacitor seja alterado, evitando ruídos indesejados. 
+No modo TRK os capacitores são rearranjados de forma diferente. Utilizando peso binário quando $OTW$ mudar de 31 para 32 fara com que 6 capacitores sejam alterados, causando bordas de ruído no sinal de saída, o que não é desejável visto que neste modo é importante manter a estabilidade para garantir a comunicação.   Desta forma no modo TRK cada capacitor possui valor unitário, ou seja a mudança de $OTW$ fara com que apenas um capacitor seja alterado, evitando ruídos indesejados. O valor de cada capacitor é calculado conforme a equação \ref{eq:c_unit_TRK}, considerando o range de frequência necessário e o número de bits utilizado no modo. 
 
 \begin{equation}
 	C_\mu = \frac{	C_{max} - C_{min}}{2^{bTRK}}
 	\label{eq:c_unit_TRK}
 \end{equation}
 
+Por fim a capacitância total do tanque LC pode ser obtida pela equação \ref{eq:c_T_total} ao final do ajuste do banco TRK, sendo a soma das capacitâncias dos bancos anteriores com o atual. Desta forma $C^T = C_{tot}$ e pode ser utilizada a equação \ref{eq:f_LC} para estimar a frequência de saída do oscilador.
 \begin{equation}
 	C^T = C_A -  C^T_{half} + (2^{bTRK} - OTW) \cdot 	C_\mu
 	\label{eq:c_T_total}
@@ -242,7 +325,7 @@ No modo TRK os capacitores são rearranjados de forma diferente. Utilizando peso
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Ruído de Fase}
+\section{Ruído de Fase}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
