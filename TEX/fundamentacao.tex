@@ -37,7 +37,7 @@ Um dispositivo de comunicação sem fio é composto por dois circuitos principai
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 CMOS (\textit{Complementary Metal-Oxide-Semiconductor}) é um processo de fabricação que utiliza silício para criar transistores de efeito de campo (MOSFETs) do tipo p e do tipo n, chamados de PMOS e NMOS, respectivamente. Amplamente utilizado na produção de chips de circuitos integrados, como microprocessadores, microcontroladores e chips de memória, o CMOS também é empregado em circuitos analógicos, como sensores de imagem e dispositivos de comunicação com e sem fio. Sua característica distintiva é o baixo consumo de energia, tornando-o especialmente adequado para dispositivos IoT.
 
-Além disso, o CMOS oferece vantagens em relação a outras tecnologias, como operação em baixas tensões e uma evolução avançada que permite maior densidade de transistores por unidade de área . O tamanho dos transistores é determinado pelos valores de comprimento (L) e largura (W) Figura \ref{fig:nmos_structure}, permitindo um controle mais preciso da corrente que circula por eles\cite{designcmosrazavi2016}. Atualmente, circuitos integrados podem ser fabricados em escala de $3nm$ de acordo com \cite{tsmc}.
+Além disso, o CMOS oferece vantagens em relação a outras tecnologias, como operação em baixas tensões e uma evolução avançada que permite maior densidade de transistores por unidade de área . O tamanho dos transistores é determinado pelos valores de comprimento (L) e largura (W) Figura \ref{fig:nmos_structure}, permitindo um controle mais preciso da corrente que circula por eles \cite{designcmosrazavi2016}. Atualmente, circuitos integrados podem ser fabricados em escala de $3nm$ de acordo com dados da \textit{foundry} \cite{tsmc}.
 
 \begin{figure}[h!]
 	\caption{Estrutura de um NMOS}
@@ -106,7 +106,7 @@ A utilização de uma realimentação negativa no circuito permite um controle t
 	\label{fig:pll_blocks}
 \end{figure}
 
-O PLL utiliza o VCO como elemento central. O sinal de saída do VCO, dividido por um fator N, é comparado com a frequência de referência do TXCO, dividida por R, pelo  \textit{Phase-Detector}. Após a comparação, o sinal resultante passa pelo\textit{Loop filter}, responsável por eliminar ruídos e interferências. A saída do \textit{Loop filter} é uma tensão que controla a tensão aplicada ao VCO, permitindo ajustar e manter a frequência de saída em sincronia com a frequência de referência \cite{barrett_1999_fractionalintegern}.
+O PLL utiliza o VCO como elemento central. O sinal de saída do VCO, dividido por um fator N, é comparado com a frequência de referência do TXCO, dividida por R, pelo  \textit{Phase-Detector}. Após a comparação, o sinal resultante passa pelo \textit{Loop filter}, responsável por eliminar ruídos e interferências. A saída do \textit{Loop filter} é uma tensão que controla a tensão aplicada ao VCO, permitindo ajustar e manter a frequência de saída em sincronia com a frequência de referência \cite{barrett_1999_fractionalintegern}.
 
 Em condições normais, um PLL fornece uma frequência com extrema precisão, no entanto, o tempo de aquisição pode ser longo devido ao processo do detector de fase e frequência em avaliar e gerar sinais com base nas diferenças em relação à referência. Esse tempo de aquisição é especialmente crucial em aplicações de comunicações sem fio que envolvem técnicas como salto de canal (\textit{frequency hopping}), como é o caso do protocolo \textit{Bluetooth}. Nessas situações, a capacidade do PLL de se sincronizar rapidamente com frequências variáveis é essencial para garantir uma transição suave entre os canais e evitar perdas de dados ou conexão.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -142,18 +142,12 @@ Onde, $F$ é $0$ ou $1$.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{ADPLL}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%O ADPLL \textit{All Digital Phase-Locked-Loop} é um circuito Sintetizador de frequência que ao contrário dos PLLs convencionais é um puramente digital. Em um PLL tradicional o \textit{Loop-Filter} ocupa mais de 50\% da área do chip, enquanto que no ADPLL por ser um circuito digital não necessita de grandes componentes, capacitores, resistores e indutores, reduzindo em grande parte a área ocupada.
-%
-%A utilização de circuito digital se da devido a miniaturização da tecnologia CMOS, permitindo maiores velocidades, maiores frequências, e assim, propiciando o uso de \textit{design} de circuitos digitais em RF. Seu uso traz inúmeros benefícios, entre elas a possibilidade de parametrização do \textit{Loop-Filter} para ajuste de frequência conforme desejado, e sendo o ADPLL totalmente digital não necessita circuitos auxiliar de conversão do sinal digital para analógico ou vice-versa, sendo uma grande vantagem.
-
 
 O ADPLL (\textit{All Digital Phase-Locked-Loop}) é um sintetizador de frequência que se diferencia dos PLLs convencionais por ser um circuito puramente digital. Enquanto um PLL tradicional requer componentes analógicos, como capacitores, resistores e indutores, o ADPLL aproveita os benefícios da miniaturização da tecnologia CMOS, permitindo maiores velocidades e frequências, além de reduzir significativamente a área ocupada no chip.
 
 Para \cite{staszewski2006all} a tecnologia nanométrica do CMOS traz um novo paradigma, a resolução do domínio do tempo de uma transição de borda de sinal digital é superior à resolução de tensão de sinais analógicos. Desta forma o ADPLL pode ser analisado apenas pelas transições dos sinais digitais.
 
 A natureza digital do ADPLL oferece vantagens adicionais, como a parametrização do \textit{Loop-Filter} para ajuste de frequência conforme necessário. Além disso, não são necessários circuitos auxiliares para conversão entre sinais digitais e analógicos, o que representa uma economia de recursos e simplificação do projeto.
-
-%Tanto uma onda sinusoidal quanto uma onda retangular podem ser utilizadas como a frequência de referência do circuito. No entanto, é comum usar uma onda retangular para análise, visto que o circuito é sincronizado e controlado pelas transições do \textit{clock} de referência (FREF), proporcionando uma análise rápida e precisa do comportamento do ADPLL.
 
 A Figura \ref{fig:adpll_block_diagram} mostra o diagrama de blocos de um ADPLL no domínio do tempo, ou seja considerando as transições dos sinais de (FREF) e saída do circuito (DCO). O ADPLL é composto de 4 blocos principais,  \textit{Digital Controlled Oscillator} (DCO), \textit{Time to Digital Converter} (TDC), \textit{Phase Detector} (PD) e o \textit{ digital Loop Filter} (LF). Nas subseções seguintes serão apresentados com mais detalhes cada um dos sub-blocos. 
 
@@ -174,18 +168,7 @@ O circuito do DCO é responsável por gerar o sinal de saída do sintetizador. E
 	\label{eq:fvco_adpll}
 \end{equation}
 
-Por outro lado, o TDC realiza a medição da diferença de tempo entre as bordas de \textit{clock} do sinal do DCO e uma borda de referência, , acumulando esse valor a cada transição do\textit{clock}, da mesma forma que FCW. O detector de fase compara as diferenças entre os acumuladores, que é então utilizado pelo\textit{Loop Filter} para controlar os capacitores do DCO. Essa ação de controle resulta no ajuste da frequência do sinal de saída, permitindo aumentá-la ou reduzi-la conforme necessário.
-
-
-
-%É comumente utilizado uma onda retangular para análise, na Figura \ref{fig:adpll_block_diagram}  o circuito é sincronizado e controlado pelas transições do \textit{clock} de referência (FREF), o que permite uma análise rápida e precisa do comportamento.
-
-%Neste trabalho, optou-se por realizar uma análise focada nas transições do \textit{clock} para estudo e desenvolvimento. 
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\textit{Energy Harvesting} 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Por outro lado, o TDC realiza a medição da diferença de tempo entre as bordas de \textit{clock} do sinal do DCO e uma borda de referência, , acumulando esse valor a cada transição do \textit{clock}, da mesma forma que FCW. O detector de fase compara as diferenças entre os acumuladores, que é então utilizado pelo \textit{Loop Filter} para controlar os capacitores do DCO. Essa ação de controle resulta no ajuste da frequência do sinal de saída, permitindo aumentá-la ou reduzi-la conforme necessário.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{DCO}
@@ -205,7 +188,7 @@ O DCO é formado por um circuito tanque LC, um indutor fixo e capacitores progra
 
 Transistores em modo varactor são utilizado como capacitores programáveis, pois possuem um ajuste muito pequeno de frequência em relação a varactores de diodo. Quanto menor o valor da capacitância menor é o  passo de frequência de ajuste do DCO, permitindo um ajuste mais fino e melhor performance. 
 
-Transistores do tipo PMOS são comumente utilizados como varactores devido a suas propriedades de isolação do poço. Com os terminais dreno, fonte e corpo (D=S=B) interligados permite que a capacitância seja controlada pelo nível de tensão $VG$ conforme região de operação do transistor, limitada pela capacitância do óxido $(COX)$. A Figura \ref{fig:curva_COX_vbg} mostra a curva de capacitância
+Transistores do tipo PMOS são comumente utilizados como varactores devido a suas propriedades de isolação do poço. Com os terminais dreno, fonte e corpo (D=S=B) interligados permite que a capacitância seja controlada pelo nível de tensão $VG$ conforme a região de operação do transistor, limitada pela capacitância do óxido $(C_{OX})$. A Figura \ref{fig:curva_COX_vbg} mostra a curva de capacitância em relação a tensão aplicada ao terminal gate.
 
 \begin{figure}[h!]
 	\caption{Curva de resposta do varactor D=S=B em relação a $VG$ }
@@ -219,17 +202,6 @@ Transistores do tipo PMOS são comumente utilizados como varactores devido a sua
 O DCO deve ser capaz de gerar um range de frequências com ajuste fino para atender às necessidades de modulação do transceptor. Por exemplo, para o \textit{Bluetooth}, que possui um range de frequências entre $2.402GHz$ e $2.480GHz$, usar apenas 8 bits, um conjunto de 256 capacitores programáveis, resultaria em um passo de frequência muito grosso de aproximadamente $304,67kHz$, o que não é viável para aplicações sem fio e tipos de modulações utilizadas.
 
 Para superar essa limitação, a solução adotada é dividir o banco de capacitores em três partes: modo de Processo-Tensão-Temperatura (PVT), modo de aquisição (ACQ) e modo de caminhada (TRK). Esses modos permitem ajustar o DCO de maneira mais precisa. De acordo com \cite{staszewski2006all}, uma boa relação entre tamanho físico e menor passo de frequência é alcançada atribuindo 8 bits para o modo PVT, 8 bits para o modo ACQ e 6 bits para o modo TRK.
-
-%
-%O DCO deve ser capaz de gerar um range de frequências e um espaçamento entre elas que atenda as especificações de modulação que será utilizado no transceptor. Para o \textit{Bluetooth } que possui um range de frequências entre $2.402GHz$ e $2.480GHz$, se utilizar 8 bits, conjunto de 256 capacitores programáveis, o passo de frequência seria $(2,480GHz - 2,402GHz)/2^8 = 304,67kHz$, o que é muito grosso para aplicações sem fio. Por outro lado se considerar um passo de frequência de $1kHz$ para a banda toda do \textit{Bluetooth }, seriam necessário 17 bits, sendo inviável de fabricação pela extrema dificuldade de casamento dos inúmeros capacitores no \textit{layout}.
-%
-%
-%A alternativa é a divisão do banco de capacitores em três partes, sendo apenas uma acionada por vez. Os modos são chamados de modo de Processo-Tensão-Temperatura  (PVT), modo de aquisição (ACQ) e modo de caminhada (TRK). Para uma boa relação entre tamanho físico e o menor passo de frequência\cite{staszewski2006all} sugere que cada banco possua 8 bits em modo PVT, 8 bits no modo ACQ e 6 bits em TRK.  O modo PVT é o primeiro ser setado, compensando as variações de processo, temperatura e tensão, centralizando o oscilador mais perto da frequência desejada, mas não exata, com variações entre $1$ a $2MHz$. O segundo modo é o ACQ, ajustando a frequência para dentro da banda de interesse, com uma resolução de $\pm 500kHz$ utilizando 8 bits neste banco de capacitores. Por fim o modo TRK é a menor resolução para ajustar a frequência exata utilizada na modulação do sinal dentro do canal utilizado.
-
-%A solução adotada é dividir o banco de capacitores em três partes, ativando apenas uma delas por vez. Esses modos são conhecidos como modo de Processo-Tensão-Temperatura (PVT), modo de aquisição (ACQ) e modo de caminhada (TRK). Para alcançar um equilíbrio adequado entre tamanho físico e menor passo de frequência, de acordo com \cite{staszewski2006all}, sugere-se que cada banco possua 8 bits no modo PVT, 8 bits no modo ACQ e 6 bits no modo TRK.
-
-
-
 
 Na Figura \ref{fig:bank_modos} é apresentado o fluxo de operação dos modos do DCO. Cada modo possui um range de frequência de operação, e a mudança de uma unidade no $OTW$ define o menor passo de frequência,  $\Delta f$ possível em cada modo . Este passo pode ser calculado para cada modo conforme a equação \ref{eq:step_freq_mode}, considerando o range de frequência e o numero de bits em cada um. 
 \begin{equation}
@@ -246,12 +218,6 @@ Na Figura \ref{fig:bank_modos} é apresentado o fluxo de operação dos modos do
 	\label{fig:bank_modos}
 \end{figure}
 
-%
-%Ao iniciar o DCO, o modo PVT é ativado e inicia no centro do range de ajuste com um valor de $OTW=127$, quando o valor é configurado em $0$ corresponde a menor frequência possível e $255$ a mais alta. Ele  executa a compensação de variações de processo, temperatura e tensão, centralizando a frequência do oscilador de forma mais grosseira com variações entre $1$ a $2MHz$.
-%
-%No segundo modo, ACQ, a frequência é ajustada para dentro da banda de interesse, com um passo de frequência médio $\Delta f_A$ com uma resolução de $\pm 500kHz$ variando $OTW$ entre 0 à 255.
-%
-%Por fim, o modo TRK possui a melhor resolução de ajuste, o que permite ajustar com precisão a frequência de saída do oscilador necessária para a modulação do sinal. Para permitir ajustes muito finos como $\pm 1kHz$, $OTW$ pode ser um valor fracionário neste modo. Para isto é utilizado uma topologia similar a do \textit{Fractional-N PLL}, permitindo uma melhor resolução com a implementação de um modulador Sigma Delta (SDM). SDMs são muito utilizados em conversores ADs, analógico para digital, por meio de um modulador com sobre amostragem seguido por um filtro digital/decimador que juntos produzem um sinal de alta resolução \cite{sdmtexas}.
 Ao iniciar o DCO, todos os modos são iniciados no centro do range de ajuste, com um valor de $OTW=127$ para PVT e ACQ e $OTW=33$ para TRK. Configurar $OTW$ como $0$ corresponde à menor frequência possível, enquanto $255$ representa a frequência mais alta. O modo PVT é o primeiro a ser ajustado fazendo a compensação de variações de processo, temperatura e tensão, centralizando a frequência do oscilador de forma mais grosseira, apresentando variações entre $1$ a $2MHz$.
 
 No segundo modo, ACQ, a frequência é ajustada para dentro da banda de interesse com um passo de frequência médio $\Delta f_A$, fornecendo uma resolução de $\pm 500kHz$ ao variar $OTW$ entre 0 e 255.
@@ -260,20 +226,18 @@ Por fim, o modo TRK possui a melhor resolução de ajuste, permitindo ajustar co
 
 
 A Figura \ref{fig:lc_bank_capacitor} apresenta o tanque LC de um DCO projetado para aplicação \textit{Bluetooth}, com a implementação dos três bancos de capacitores. Nos bancos PVT e ACQ cada capacitor representado por um bit possui um mesmo valor conforme o banco que ele pertence, a soma deles em conjunto com o capacitor $C_0$ definirá a frequência. 
-%$C_0$ é um capacitor de valor fixo que defini a máxima frequência do oscilador
-
 
 \begin{figure}[h!]
 	\caption{Tanque LC com banco de capacitores para aplicação \textit{Bluetooth} }
 	\begin{center}
-		\includegraphics[scale=0.6]{img/lc_bank_capacitor.png}
+		\includegraphics[scale=0.8]{img/lc_bank_capacitor.png}
 	\end{center}
 	\fonte{Adaptado de \citeonline{staszewski2006all}.}
 	\label{fig:lc_bank_capacitor}
 \end{figure}
 
 
-Nos bancos de capacitores PVT e ACQ o valor individual de cada capacitor é definido pela equação \ref{eq:c_delta}, na qual leva em consideração a frequência minima e máxima de operação de cada banco. O valor de $C_0$ é igual ao valor de $C_{min}$ do banco PVT, ou seja a máxima frequência do oscilador.
+Nos bancos de capacitores PVT e ACQ o valor individual de cada capacitor é definido pela equação \ref{eq:c_delta}, na qual leva em consideração a frequência minima e máxima de operação de cada banco. O valor de $C_0$ é igual ao valor de $C_{min}$ do banco PVT, ou seja é a máxima frequência do oscilador.
 \begin{equation}
 	C_{max} = \frac{1}{L} \big( \frac{1}{2 \pi f_{min}} \big)^2
 	\label{eq:cmax}
@@ -289,7 +253,7 @@ Nos bancos de capacitores PVT e ACQ o valor individual de cada capacitor é defi
 	\label{eq:c_delta}
 \end{equation}
 
-Após o ajuste do banco PVT a capacitância total é obtida pela equação \ref{eq:c_A_total}, considerando o número de capacitores acionados considerando seus valores e a metade dos capacitores dos bancos ACQ e TRK acionados.
+Após o ajuste do banco PVT a capacitância total é obtida pela equação \ref{eq:c_A_total}, considerando o número de capacitores acionados considerando o valor de cada um e também a metade dos capacitores dos bancos ACQ e TRK acionados.
 
 \begin{equation}
 	C^P = C_0 + C^A_{half} + C^T_{half} + \sum_{k=0}^{7} \bar{d}_k \cdot 2^k * 	\Delta C^P
