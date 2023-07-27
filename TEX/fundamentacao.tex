@@ -280,6 +280,54 @@ Por fim a capacitância total do tanque LC pode ser obtida pela equação \ref{e
 	\label{eq:c_T_total}
 \end{equation}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Ganho Normalizado}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+A frequência de saída do DCO é definida em função da entrada ($OTW$), sendo $f_{out} = f(OTW)$. Essa função não é linear, mas pode ser aproximada a uma função linear considerando um pequeno range de operação. Neste caso $f(OTW)$ é um simples ganho $K_{DCO}$, podendo ser escrito como:
+
+\begin{equation}
+	f_{out} = f_0 + \Delta f_v = f_o + K_{DCO} \cdot OTW
+	\label{eq:deltaf_ndco}
+\end{equation}
+
+Onde $\Delta f$ é um desvio da frequência central $f_0$. o ganho$K_{DCO}$ é definido como o desvio de frequência em resposta a mudança de 1 bit, LSB, em $OTW$. 
+
+Cada um dos três modos de operação do DCO possui um range de frequência diferente, , o que resulta em diferentes valores de ganho.  O cálculo do ganho é efetuado pela equação \ref{eq:kdco_mode} considerando o range de frequência e o numero de bits utilizado em cada modo.
+
+
+
+
+\begin{equation}
+	K_{DCO_{mode}}= \frac{F \ cdot R_{mode}}{2^{b_{mode}}}
+	\label{eq:kdco_mode}
+\end{equation}
+
+A Figura \ref{fig:ndco} mostra o bloco de um ganho normalizado, onde  NTW (\textit{Normalized Tunning Word}) é normalizado em OTW pela frequência de referência($f_{ref}$) dividida pelo ganho($	K_{DCO}$).
+
+\begin{figure}[h!]
+	\caption{Diagrama de blocos do ganho normalizado }
+	\begin{center}
+		\includegraphics[scale=0.8]{img/ndco.png}
+	\end{center}
+	\fonte{ \citeonline{StaszewskinDCO}.}
+	\label{fig:ndco}
+\end{figure}
+
+Devido ao fato do ganho sofrer por variações variações de processo e de fatores ambientais, não se pode definir com precisão seu valor.Para minimizar isto é utilizado uma estimativa de ganho conforme a equação \ref{eq:kdco_est}. Se  $K_{DCOest}$ for corretamente estimado, o ganho torna-se igual a $f_{ref}$, e as alterações em \textit{NTW} acarretam em alteração da frequência na mesma magnitude, multiplicada por $f_{ref}$.
+
+\begin{equation}
+	K_{nDCO}=  f_{ref}\frac{K_{DCO}}{K_{DCOest}}
+	\label{eq:kdco_est}
+\end{equation}
+
+
+É fundamental obter um valor preciso para o ganho $K_{DCO}$ a fim de garantir a acurácia do sintetizador, especialmente no modo TRK, onde é necessária a maior precisão.
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Loop Filter}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
