@@ -326,15 +326,149 @@ Devido ao fato do ganho sofrer por variações variações de processo e de fato
 
 É fundamental obter um valor preciso para o ganho $K_{DCO}$ a fim de garantir a acurácia do sintetizador, especialmente no modo TRK, onde é necessária a maior precisão.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Phase detector}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\textit{Phase detector } mede a diferença de fase entre o sinal de referência e a saída do sintetizador a cada borda de \textit{clock} da referência. A Figura \ref{fig:phase_detector_block} demonstra o diagrama de blocos do \textit{Phase detector}.
 
+\begin{figure}[h!]
+	\caption{Phase detector}
+	\begin{center}
+		\includegraphics[scale=0.8]{img/phase_detector_block.png}
+	\end{center}
+	\fonte{Elaborado pelo autor(2023).}
+	\label{fig:phase_detector_block}
+\end{figure}
 
+O valor de FCW que define a frequência de saída do circuito de acordo com a equação \ref{eq:fvco_adpll}, possui uma parte inteira $W_i$ e uma parte fracional $W_f$. 
+ A cada borda de \textit{clock} de $f_{ref}$, índice $k$, o valor de FCW é acumulado $R_R[k] = R_R[k-1] + FCW$, representando a fase de referência. A fase variável $R_V[k]$ acumulada o número de bordas CKV, e o erro fracional é obtido pelo TDC que será apresentado na seção seguinte.
+
+A saída do \textit{Phase detector } é o erro de fase $\phi$ entre os sinais calculada conforme a equação \ref{eq:phase_detector}.Quando o ADPLL converge para a fase e frequência desejada a saída $\phi$ será uma constante.
+
+ \begin{equation}
+	\phi [k]= R_R[k] - ( R_V[k] - \epsilon[k]) =  (R_{R_{Int}}[k] - R_V[k]) + ( R_{R_{Frac}}[k] - \epsilon[k])
+	\label{eq:phase_detector}
+\end{equation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Loop Filter}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+O \textit{Loop Filter} é um sistema de controle do tipo PI (proporcional e integral) responsável por regular o NTW (\textit{Normalized Tunning Word}). Ele recebe como entrada a diferença de fase entre a referência e a saída do DCO, e sua saída é aplicada ao bloco do ganho normalizado, que controla o DCO. O \textit{Loop Filter} é responsável pela estabilidade e precisão do ADPLL, garantindo que a frequência e fase de saída do DCO seja mantida próxima à frequência de referência.
+
+Na Figura \ref{fig:loop_filter_PI}, é apresentada a estrutura básica de um sistema de controle PI, enquanto a Figura \ref{fig:loop_filter_typeII} ilustra sua análise no domínio Z. O parâmetro $K_p$ representa o ganho proporcional e determina a velocidade do sistema, ou seja, quão rapidamente ocorre a mudança na saída dada uma variação na entrada. Já $K_i$ atua como um integrador, ajudando a eliminar erros estacionários, garantindo a estabilidade do sistema e reduzindo o impacto de perturbações externas.
+
+\begin{figure}[h!]
+	\caption{\textit{Loop Filter} }
+	\begin{center}
+		\subfloat[Controlador PI convencional]{	\includegraphics[scale=0.7]{img/loop_filter_PI.png}
+	\label{fig:loop_filter_PI}}
+	\hfil
+	\subfloat[\textit{Loop Filter} no domínio Z]{\includegraphics[scale=0.7]{img/loop_filter_typeII.png}
+		\label{fig:loop_filter_typeII}}
+	\end{center}
+	\fonte{Adaptado de \citeonline{andersson2010modeling}.}
+	\label{fig:loop_filter_structure}
+\end{figure}
+
+ O \textit{Loop Filter} mostrado na Figura \ref{fig:loop_filter_typeII} é classificado  como ADPLL Tipo II, pois incorpora  o ganho proporcional (P) e o integrador (I). Sua expressão de tempo discreto que descreve seu comportamento é mostrado em \ref{eq:ntw_type2}. Por outro lado, o ADPLL Tipo I é definido quando contém apenas o ganho proporcional,  reduzindo a expressão para uma simples multiplicação, como mostrado em \ref{eq:ntw_type1}.
+ 
+ \begin{equation}
+ 	NTW[k]= K_p \cdot \phi [k] - K_p \cdot \phi [k -1] + K_I \cdot \phi [k-1] + NTW[k-1]
+ 	\label{eq:ntw_type2}
+ \end{equation}
+ 
+ \begin{equation}
+ 	NTW[k]= K_p \cdot \phi [k] 
+ 	\label{eq:ntw_type1}
+ \end{equation}
+ 
+ 
+ 
+ O \textit{Loop Filter} é dividido em três blocos, um para controlar cada um dos modos do DCO  permitindo a utilização independente do ADPLL Tipo I ou Tipo II em cada modo. Nos modos PVT e ACQ, o ADPLL Tipo I utilizado para reduzir o tempo de convergência do sistema, pois nesses modos o ajuste de frequência é mais grosseiro. No modo TRK, o ADPLL Tipo II é utilizado para obter a melhor precisão, onde o integrador é inserido para reduzir o erro e o valor do ganho proporcional é reduzido.
+ 
+ Um filtro IIR passa-baixa \textit{Infinite Impulse  Response} pode ser conectado em cascata antes do \textit{Loop Filter} caso seja necessário  atenuar ruídos de fase e espúrios indesejados em altas frequências. É importante dimensioná-lo de forma que a frequência de corte seja maior que a do \textit{Loop Filter}, para não afetar seu desempenho.
+ 
+ 
+Filtro IRR de ordem simples é incondicionalmente estável, porém possui uma pequena atenuação. Para obter maiores atenuações pode ser necessário filtro de ordem superior
+mas isso pode torná-los facilmente instáveis. filtros de ordem simples em cascata podem ser utilizados, como mostrado na Figura \ref{fig:filter_IRR}. Essa configuração proporciona maior atenuação de ruídos indesejados sem comprometer a estabilidade do sistema.
+
+\begin{figure}[h!]
+	\caption{\textit{Loop Filter} com filtro IIR em cascata}
+	\begin{center}
+		\includegraphics[scale=0.8]{img/filter_IRR.png}
+	\end{center}
+	\fonte{ \citeonline{StaszewskinDCO}.}
+	\label{fig:filter_IRR}
+\end{figure}
+
+O Filtro IRR pode ser analisado no domínio do tempo de acordo com a Figura \ref{fig:filter_IRR_time_domain}.
+
+\begin{figure}[h!]
+	\caption{Filtro IRR de polo simples}
+	\begin{center}
+		\includegraphics[scale=0.8]{img/filter_IRR_time_domain.png}
+	\end{center}
+	\fonte{ \citeonline{andersson2010modeling}.}
+	\label{fig:filter_IRR_time_domain}
+\end{figure}
+
+A expressão no tempo do IRR de polo simples é mostrada na equação \ref{eq:irr_simple_pole}, o que resulta na função de transferência no domínio Z conforme a equação \ref{eq:irr_tranfer_function}.
+
+ \begin{equation}
+	y[k]= (1 - \lambda) y[k-1] + \lambda x[k]
+	\label{eq:irr_simple_pole}
+\end{equation}
+
+ \begin{equation}
+	H_{IIR}(z)= \frac{z \lambda}{z -1 + \lambda}
+	\label{eq:irr_tranfer_function}
+\end{equation}
+
+
+O termo $\lambda$ determina características importantes do filtro, como atenuação fora da banda de passagem e frequência de corte. Estes valores podem ser obtidos de acordo com a equação \ref{eq:iir_fbw}.
+
+
+ \begin{equation}
+	f_{BW_{IIR}}= \frac{\lambda}{2 \pi} f_{ref}
+	\label{eq:iir_fbw}
+\end{equation}
+
+A função de transferência de um conjunto de filtros IRR de polo simples é obtida pelo produto de cada estágio como demonstrada na equação \ref{eq:filter_ir_prod}.
+
+ \begin{equation}
+	H_{IIR_{tot}}(z)= \prod 	H_{IIR_{simgle}}(z)
+	\label{eq:filter_ir_prod}
+\end{equation}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{TDC}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+O TDC (\textit{Time To Digital Converter}) usado no \textit{Phase Detector} mede a diferença de tempo entre a borda de \textit{clock} de referência com a imediatamente anterior da saída com grande precisão. 
+
+\cite{ferreira2020review} apresenta diferentes topologias de circuito de implementação de um TDC baseado em cadeia de inversores, chamados de \textit{delays}. Em tecnologias existentes atualmente de processo CMOS consegue-se facilmente \textit{delays} com $10 ps$ ou menos.
+
+A medida de tempo ocorre pelo numero de inversores $\Delta t_r$ entre a diferença de bordas do sinal de referência e de saída conforme mostrado na figura \ref{fig:tdc_tr_tf}.
+
+\begin{figure}[h!]
+	\caption{Diferença de tempo medida pelo número de inversores \textit{delays}}
+	\begin{center}
+		\includegraphics[scale=0.8]{img/tdc_tr_tf.png}
+	\end{center}
+	\fonte{ \citeonline{andersson2010modeling}.}
+	\label{fig:tdc_tr_tf}
+\end{figure}
+
+A resolução do TDC é definida pelo valor do inversor \textit{delay} utilizado, desta forma, um erro de quantização $\Delta t_{r_Q}$ está associada a medida que deve ser contabilizado mostrado na Figura \ref{fig:tdc_erros_qtd}.
+
+\begin{figure}[h!]
+	\caption{Quantização do TDC}
+	\begin{center}
+		\includegraphics[scale=0.8]{img/tdc_erros_qtd.png}
+	\end{center}
+	\fonte{ \citeonline{andersson2010modeling}.}
+	\label{fig:tdc_erros_qtd}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Ruído de Fase}
