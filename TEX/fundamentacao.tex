@@ -173,6 +173,7 @@ Por outro lado, o TDC realiza a medição da diferença de tempo entre as bordas
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{DCO}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 O DCO é o elemento principal do ADPLL, converte o \textit{Oscilator Tunning Word}, ($OTW$), em um sinal periódico onde a frequência $f$ é definida em função de sua entrada.
 \begin{equation}
 	f = f(OTW)
@@ -326,6 +327,11 @@ Devido ao fato do ganho sofrer por variações variações de processo e de fato
 
 É fundamental obter um valor preciso para o ganho $K_{DCO}$ a fim de garantir a acurácia do sintetizador, especialmente no modo TRK, onde é necessária a maior precisão.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\subsection{Modulador Sigma Delta}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Phase detector}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -444,35 +450,184 @@ A função de transferência de um conjunto de filtros IRR de polo simples é ob
 \subsection{TDC}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-O TDC (\textit{Time To Digital Converter}) usado no \textit{Phase Detector} mede a diferença de tempo entre a borda de \textit{clock} de referência com a imediatamente anterior da saída com grande precisão. 
+O TDC (Time to Digital Converter) utilizado no\textit{ Phase Detector} é responsável por medir com grande precisão a diferença de tempo entre a borda de clock de referência e a borda imediatamente anterior da saída do sintetizador. Esta diferença de tempo é a diferença de fase fracional entre os sinais em análise no domínio da frequência. 
 
-\cite{ferreira2020review} apresenta diferentes topologias de circuito de implementação de um TDC baseado em cadeia de inversores, chamados de \textit{delays}. Em tecnologias existentes atualmente de processo CMOS consegue-se facilmente \textit{delays} com $10 ps$ ou menos.
+Existem diferentes topologias de circuitos para implementar um TDC, sendo algumas delas baseadas em cadeias de inversores, conhecidas como "\textit{delays}". Em tecnologias de processo CMOS atuais, é possível obter \textit{delays} com precisão de até $10 ps$ ou menos. \cite{ferreira2020review} apresenta diferentes topologias de circuito para implementação de um TDC baseado em cascata de inversores.
 
-A medida de tempo ocorre pelo numero de inversores $\Delta t_r$ entre a diferença de bordas do sinal de referência e de saída conforme mostrado na figura \ref{fig:tdc_tr_tf}.
+A medição de tempo é realizada pelo diferença de tempo $\Delta t_r$ medida em múltiplos inteiros de \textit{delays} simples $\Delta t_{res}$ em segundos conforme apresentado na Figura \ref{fig:tdc_chain_delayed}. O número de estágios do TDC é definido pelo número de inversores necessários para cobrir todo o período do \textit{clock} CKV. Dado que a resolução o TDC é limitada a $\Delta t_{res}$ somente múltiplos deste valor podem ser obtidos, desta forma, a medida é quantizada em $\Delta t_r\_Q$ conforme mostrada na Figura \ref{fig:tdc_quantization}.
+
+
+% entre as bordas do sinal de referência e de saída, como mostrado na . Essa informação é fundamental para calcular o erro de fase $\phi$, necessário para sincronizar a saída do sintetizador com a frequência de referência.
+%
+%A resolução do TDC é definida pelo valor do atraso de um único inversor "\textit{delay}" utilizado, desta forma 
+%
+%Portanto, um erro de quantização $\Delta t_{r_Q}$ está associado à medida realizada como mostrado na Figura \ref{fig:tdc_erros_qtd}. O erro de quantização representa a menor diferença de tempo que o TDC pode medir com precisão. O
+
+%Por exemplo, se o atraso de um inversor for de $10 ps$, o TDC só poderá medir diferenças de tempo múltiplas desse valor, como $10 ps$, $20 ps$, $30 ps$, e assim por diante. Qualquer diferença de tempo menor do que $10 ps$ será arredondada para o valor mais próximo múltiplo de $10 ps$, introduzindo o erro de quantização. Esse erro deve ser levado em consideração na análise do desempenho do sistema ADPLL perincipalmente na questão de ruido de fase.
+
+
+%\begin{figure}[h!]
+%	\caption{Diferença de tempo medida pelo número de inversores \textit{delays}}
+%	\begin{center}
+%		\includegraphics[scale=0.8]{img/tdc_tr_tf.png}
+%	\end{center}
+%	\fonte{ \citeonline{andersson2010modeling}.}
+%	\label{fig:tdc_tr_tf}
+%\end{figure}
+
 
 \begin{figure}[h!]
-	\caption{Diferença de tempo medida pelo número de inversores \textit{delays}}
+	\caption{TDC }
 	\begin{center}
-		\includegraphics[scale=0.8]{img/tdc_tr_tf.png}
+		\subfloat[Impelemntação em Hardware]{	\includegraphics[scale=0.7]{img/tdc_chain_delayed.png}
+			\label{fig:tdc_chain_delayed}}
+		\hfil
+		\subfloat[Modelo comportamental]{\includegraphics[scale=0.7]{img/tdc_quantization.png}
+			\label{fig:tdc_quantization}}
 	\end{center}
-	\fonte{ \citeonline{andersson2010modeling}.}
-	\label{fig:tdc_tr_tf}
+	\fonte{\citeonline{syllaios2008time}.}
+	\label{fig:tdc_harware}
 \end{figure}
 
-A resolução do TDC é definida pelo valor do inversor \textit{delay} utilizado, desta forma, um erro de quantização $\Delta t_{r_Q}$ está associada a medida que deve ser contabilizado mostrado na Figura \ref{fig:tdc_erros_qtd}.
 
-\begin{figure}[h!]
-	\caption{Quantização do TDC}
-	\begin{center}
-		\includegraphics[scale=0.8]{img/tdc_erros_qtd.png}
-	\end{center}
-	\fonte{ \citeonline{andersson2010modeling}.}
-	\label{fig:tdc_erros_qtd}
-\end{figure}
+A diferença de fase fracional que é a saída do TDC é obtida conforme a equação \ref{eq:tdc_error_quanti}, onde $\Delta t_r\_Q$ é normalizado em relação ao período de CKV.
+
+%\begin{figure}[h!]
+%	\caption{Quantização do TDC}
+%	\begin{center}
+%		\includegraphics[scale=0.8]{img/tdc_erros_qtd.png}
+%	\end{center}
+%	\fonte{ \citeonline{andersson2010modeling}.}
+%	\label{fig:tdc_erros_qtd}
+%\end{figure}
+
+ \begin{equation}
+	\epsilon [k]= 1 - \frac{1}{\bar T_{CKV}} \cdot \Delta t_{res} \cdot \Bigg ( \frac{\Delta t_r [k]}{ \Delta t_{res}} \Bigg )  = 1 - \frac{\Delta t_r\_Q[k]}{\bar{T}_{CKV}}
+	\label{eq:tdc_error_quanti}
+\end{equation}
+
+Onde $\bar T_{CKV}$ é obtido pela média de CKV em um determinado período de tempo conforme mostrado na equação \ref{eq:tdc_tckv_avg}.
+
+ \begin{equation}
+\bar T_{CKV}= \frac{1}{N_{avg}} \cdot \sum_{l=1}^{N_{avg}} ( t_{CKV}[l] - t_{CKV}[l-1])
+	\label{eq:tdc_tckv_avg}
+\end{equation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Ruído de Fase}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Em um oscilador ideal operando na frequência $\omega_c$ toda potência é concentrada em $\omega_c$, já em um oscilador prático a a potência se espalha perto de $\omega_c$ como mostrado na Figura \ref{fig:phase_noise_ideal_practical}, sendo este espalhamento chamado de ruido de fase. Nos transmissores o ruido de fase pode interferir em canais adjacentes, enquanto no receptor afeta a seletividade do mesmo.
+
+O ruido de fase é quantizado considerando uma largura de banda de $1Hz$ distante a $\Delta \omega$ da frequência central $\omega_c$, sendo a unidade de medida dada em (dBc/Hz), onde "c" do "dBc" é convencionado como uma medida em relação a portadora (\textit{carrier}).
+
+\begin{figure}[h!]
+	\caption{Espectro de saída de um oscilador ideal e um oscilador prático}
+	\begin{center}
+			\includegraphics[scale=0.8]{img/phase_noise_ideal_practical.png}
+		\end{center}
+	\fonte{ \citeonline{staszewski2006all}.}
+	\label{fig:phase_noise_ideal_practical}
+\end{figure}
+
+Ruido de fase pode ser analisado no domínio da frequência expressando a saída como $v(t) = A cos(\omega_c t + \phi)$, onde A é a amplitude, $\omega_c$ a frequência e $\phi$ é um deslocamento de fase. Tanto amplitude como $\phi$ podem sofrer variações, a amplitude é facilmente removida com um circuito limitador, porém a fase causa variações no período do sinal sendo o ruido de fase.
+
+
+A Figura \ref{fig:phase_noise_spectrum} mostra o espetro \textit{single side}  tipico de ruido de fase um oscilador. O gráfico em escala logarítmica normalizado em dBc/Hz é exibido com um deslocamento $\Delta \omega$ da portadora $\omega_c$. 
+
+\begin{figure}[h!]
+	\caption{Espectro de ruido de fase de um oscilador}
+	\begin{center}
+		\includegraphics[scale=0.8]{img/phase_noise_spectrum.png}
+	\end{center}
+	\fonte{ \citeonline{staszewski2006all}.}
+	\label{fig:phase_noise_spectrum}
+\end{figure}
+
+A região $\/\omega^2$ é conhecida como região de ruido térmico (\textit{thermal noise}) ou \textit{wander noise}, causado por ruido branco ou não correlacionado flutuações no período do oscilador. É o ruido dominante no DCO de acordo com \cite{staszewski2006all}.
+
+A região plana $1/\omega ^0$ é definida como \textit{jitter noise} causando pequenas flutuações a cada período do oscilador.
+
+A região $1/\omega ^3$ é resultado do \textit{up-converted} $1/f$ \textit{noise}, conhecido como ruido de \textit{flicker} que afeta todos dispositivos eletrônicos. Ele é dominante em baixas frequências sendo não tão presente no DCO que opera em altas frequências, mas que pode impactar no receptor gerando problemas de intermodulação.
+
+No ADPLL os blocos mais críticos como geradores de ruido são o DCO, e o TDC. O DCO pela sua complexidade de utilização de bancos de capacitores e ruido térmico, e o TDC além do ruido térmico pelo erro de quantização causando variações de tempo. Esse ruido do TDC pode ser calculado conforme a equação \ref{eq:tdc_noise}.
+
+
+ \begin{equation}
+	\mathcal{L} = \frac{(2 \pi)^2}{12} \bigg (  \frac{\Delta t_{res}}{\bar{T}_{CKV}}\bigg)^2 \frac{1}{f_{ref}}
+	\label{eq:tdc_noise}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Modelo no domínio S}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Conversão de domínio S para Z}
+
+O operador $Z$ e definido como $Z^{j\theta}$, sendo $\theta = \omega t_0$, $\omega = 2 \pi f$ é a frequência angular e $t_0$ o período de amostragem, no caso $t_0 = 1/f_R$. Assim:
+
+\[Z^{j\theta} = Z^{j\omega /f_R}\]
+Para valores onde $\omega << f_R$ pode ser simplificado como:
+
+\[Z^{j\omega /f_R} = cos(\omega /f_R) + jsen(\omega /f_R) = \]
+Pela propriedade que $sen(x)$, para x muito pequeno é o próprio valor de X. Assim:
+
+\[Z^{j\theta} = 1 + j\theta = 1 + \frac{j\omega}{f_R} \]
+\[s = f_R(z - 1)\]
+
+
+%\subsection{ADPLL type II}
+
+\begin{figure}[h!]
+	\caption{Modelo no dominio S de um ADPLL Tipo II com fontes de ruido incluídas}
+	\begin{center}
+		\includegraphics[scale=0.6]{img/adpll_type_II_s_domain.png}
+	\end{center}
+	\fonte{ \citeonline{staszewski2006all}.}
+	\label{fig:adpll_type_II_s_domain}
+\end{figure}
+
+No ADPLL type II assumindo que $K_{DCO}$ está corretamente estimado obtém-se a função de transferência de loop aberto como:
+\[H_{ol}(s) = \big( \alpha + \frac{\rho f_R}{s} \big) \frac{f_R}{s}  \]
+\[H_{ol}(s) = \frac{\rho f_R^2}{s} \cdot \frac{1 + s/(\rho f_R / \alpha)}{s}\]
+
+Dois polos na origem $\omega_p1 = \omega_p2 = 0$, e um zero complexo em $\omega_z = j(\rho f_R / \alpha) $
+
+Closed-loop 
+
+\[H_{cl}(s) = N\frac{ ( \alpha + \rho f_R/s)(f_R/s)}{1 + (\alpha + \rho f_R/s) (f_R/s)}\]
+\[H_{cl}(s) = N\frac{ \alpha f_R s + \rho f_R^2}{s^2 + \alpha f_R s + \rho f_R^2}\]
+
+
+No domino Z têm-se
+
+\[H_{ol}(z) = \frac{ \alpha (z - 1) + \rho}{ (z - 1)^2}\]
+\[H_{cl}(z) = N \frac{ \alpha (z - 1) + \rho}{ (z - 1)^2 + \alpha^2 (z - 1) + \rho}\]
+
+
+%\subsection{Filtro IRR}
+
+
+\[y[k] = (1 - \lambda)y[k - 1] + \lambda x[k]   \]
+
+\textbf{Domínio Z}
+\[H_{iir}(z) = \frac{ \lambda z}{ z - ( 1 - \lambda}\]
+
+\textbf{Domínio S}
+\[H_{iir}(s) = \frac{ 1 + s/f_R}{ 1 + s/\lambda f_R}\]
+
+
+Assim:
+
+\[H_{ol}(s) = \big( \alpha + \frac{\rho f_R}{s} \big) \cdot \frac{f_R}{s} \frac{ 1 + s/f_R}{ 1 + s/\lambda f_R} \]
+
+\[H_{ol}(s) = \frac{\rho f_R^2}{s} \cdot \frac{1 + s/(\rho f_R / \alpha)}{s} \cdot \frac{f_R}{s} \frac{ 1 + s/f_R}{ 1 + s/\lambda f_R}\]
+
+Dois polos na origem $\omega_p1 = \omega_p2 = 0$, um polo em $\omega_p3 = j\lambda f_R$ e dois zeros em $\omega_z 1 = j(\rho f_R / \alpha)$ e $\omega_z 2 = jf_R$.
+
+Com mais de um estágio e valores de $\lambda$ diferentes em cada:
+
+\[H_{ol}(s) = \frac{\rho f_R^2}{s} \cdot \frac{1 + s/(\rho f_R / \alpha)}{s} \cdot \prod_{i=1}^{n} \frac{f_R}{s} \frac{ 1 + s/f_R}{ 1 + s/\lambda_i f_R}\]
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
