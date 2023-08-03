@@ -149,7 +149,7 @@ Para \cite{staszewski2006all} a tecnologia nanométrica do CMOS traz um novo par
 
 A natureza digital do ADPLL oferece vantagens adicionais, como a parametrização do \textit{Loop-Filter} para ajuste de frequência conforme necessário. Além disso, não são necessários circuitos auxiliares para conversão entre sinais digitais e analógicos, o que representa uma economia de recursos e simplificação do projeto.
 
-A Figura \ref{fig:adpll_block_diagram} mostra o diagrama de blocos de um ADPLL no domínio do tempo, ou seja considerando as transições dos sinais de (FREF) e saída do circuito (DCO). O ADPLL é composto de 4 blocos principais,  \textit{Digital Controlled Oscillator} (DCO), \textit{Time to Digital Converter} (TDC), \textit{Phase Detector} (PD) e o \textit{ digital Loop Filter} (LF). Nas subseções seguintes serão apresentados com mais detalhes cada um dos sub-blocos. 
+A Figura \ref{fig:adpll_block_diagram} mostra o diagrama de blocos de um ADPLL no domínio do tempo discreto, ou seja considerando as transições dos sinais de (FREF) e saída do circuito (DCO). O ADPLL é composto de 4 blocos principais,  \textit{Digital Controlled Oscillator} (DCO), \textit{Time to Digital Converter} (TDC), \textit{Phase Detector} (PD) e o \textit{ digital Loop Filter} (LF). Nas subseções seguintes serão apresentados com mais detalhes cada um dos sub-blocos. 
 
 \begin{figure}[h!]
 	\caption{Diagrama de blocos de um ADPLL.}
@@ -358,6 +358,7 @@ A saída do \textit{Phase detector } é o erro de fase $\phi$ entre os sinais ca
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Loop Filter}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{sec:loop_filter}
 
 O \textit{Loop Filter} é um sistema de controle do tipo PI (proporcional e integral) responsável por regular o NTW (\textit{Normalized Tunning Word}). Ele recebe como entrada a diferença de fase entre a referência e a saída do DCO, e sua saída é aplicada ao bloco do ganho normalizado, que controla o DCO. O \textit{Loop Filter} é responsável pela estabilidade e precisão do ADPLL, garantindo que a frequência e fase de saída do DCO seja mantida próxima à frequência de referência.
 
@@ -407,7 +408,7 @@ mas isso pode torná-los facilmente instáveis. filtros de ordem simples em casc
 	\label{fig:filter_IRR}
 \end{figure}
 
-O Filtro IRR pode ser analisado no domínio do tempo de acordo com a Figura \ref{fig:filter_IRR_time_domain}.
+O Filtro IRR pode ser analisado no domínio do tempo discreto de acordo com a Figura \ref{fig:filter_IRR_time_domain}.
 
 \begin{figure}[h!]
 	\caption{Filtro IRR de polo simples}
@@ -418,7 +419,7 @@ O Filtro IRR pode ser analisado no domínio do tempo de acordo com a Figura \ref
 	\label{fig:filter_IRR_time_domain}
 \end{figure}
 
-A expressão no tempo do IRR de polo simples é mostrada na equação \ref{eq:irr_simple_pole}, o que resulta na função de transferência no domínio Z conforme a equação \ref{eq:irr_tranfer_function}.
+A expressão no tempo discreto do IRR de polo simples é mostrada na equação \ref{eq:irr_simple_pole}, o que resulta na função de transferência no domínio Z conforme a equação \ref{eq:irr_tranfer_function}.
 
  \begin{equation}
 	y[k]= (1 - \lambda) y[k-1] + \lambda x[k]
@@ -450,7 +451,7 @@ A função de transferência de um conjunto de filtros IRR de polo simples é ob
 \subsection{TDC}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-O TDC (Time to Digital Converter) utilizado no\textit{ Phase Detector} é responsável por medir com grande precisão a diferença de tempo entre a borda de clock de referência e a borda imediatamente anterior da saída do sintetizador. Esta diferença de tempo é a diferença de fase fracional entre os sinais em análise no domínio da frequência. 
+O TDC (Time to Digital Converter) utilizado no\textit{ Phase Detector} é responsável por medir com grande precisão a diferença de tempo entre a borda de clock de referência e a borda imediatamente anterior da saída do sintetizador. Esta diferença de tempo é a diferença de fase fracional entre os sinais na frequência. 
 
 Existem diferentes topologias de circuitos para implementar um TDC, sendo algumas delas baseadas em cadeias de inversores, conhecidas como "\textit{delays}". Em tecnologias de processo CMOS atuais, é possível obter \textit{delays} com precisão de até $10 ps$ ou menos. \cite{ferreira2020review} apresenta diferentes topologias de circuito para implementação de um TDC baseado em cascata de inversores.
 
@@ -559,24 +560,11 @@ No ADPLL os blocos mais críticos como geradores de ruido são o DCO, e o TDC. O
 \end{equation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Modelo no domínio S}
+%\section{Modelo no domínio S}
+\section{Resposta em frequência do ADPLL}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Conversão de domínio S para Z}
-
-O operador $Z$ e definido como $Z^{j\theta}$, sendo $\theta = \omega t_0$, $\omega = 2 \pi f$ é a frequência angular e $t_0$ o período de amostragem, no caso $t_0 = 1/f_R$. Assim:
-
-\[Z^{j\theta} = Z^{j\omega /f_R}\]
-Para valores onde $\omega << f_R$ pode ser simplificado como:
-
-\[Z^{j\omega /f_R} = cos(\omega /f_R) + jsen(\omega /f_R) = \]
-Pela propriedade que $sen(x)$, para x muito pequeno é o próprio valor de X. Assim:
-
-\[Z^{j\theta} = 1 + j\theta = 1 + \frac{j\omega}{f_R} \]
-\[s = f_R(z - 1)\]
-
-
-%\subsection{ADPLL type II}
+O estudo da resposta em frequência do ADPLL é necessária para analisar o comportamento do sistema, como estabilidade, tempo de acomodação (\textit{settling time}), e largura de banda do \textit{loop}. Para isto o sistema é modelado no domínio de frequência S verificando os polos e zeros do sistema. A Figura \ref{fig:adpll_type_II_s_domain} mostra o equivalente de um ADPLL Tipo II em análise no domínio S inserido fontes de ruido. 
 
 \begin{figure}[h!]
 	\caption{Modelo no dominio S de um ADPLL Tipo II com fontes de ruido incluídas}
@@ -587,53 +575,148 @@ Pela propriedade que $sen(x)$, para x muito pequeno é o próprio valor de X. As
 	\label{fig:adpll_type_II_s_domain}
 \end{figure}
 
-No ADPLL type II assumindo que $K_{DCO}$ está corretamente estimado obtém-se a função de transferência de loop aberto como:
-\[H_{ol}(s) = \big( \alpha + \frac{\rho f_R}{s} \big) \frac{f_R}{s}  \]
-\[H_{ol}(s) = \frac{\rho f_R^2}{s} \cdot \frac{1 + s/(\rho f_R / \alpha)}{s}\]
+As siglas da figura representam:
 
-Dois polos na origem $\omega_p1 = \omega_p2 = 0$, e um zero complexo em $\omega_z = j(\rho f_R / \alpha) $
+\begin{itemize}
+	\item $\phi_{R}$ = Fase de referência
+	\item $N$ = FCW
+	\item $\phi_{n,TDC}$ = Fonte de ruido do TDC
+	\item $\alpha$ = $K_P$ ganho proporcional
+	\item $\rho$ = $K_I$ ganho do integrador
+	\item $\phi_{n,DCO}$ = Fonte de ruido do DCO
+\end{itemize}
 
-Closed-loop 
+Assumindo que $K_{DCO}$ está corretamente estimado e desconsiderando as fontes de ruido, obtém-se a função de transferência de \textit{loop} aberto como mostra a equação \ref{eq:hol_s_adpll_tipe_II}.
 
-\[H_{cl}(s) = N\frac{ ( \alpha + \rho f_R/s)(f_R/s)}{1 + (\alpha + \rho f_R/s) (f_R/s)}\]
-\[H_{cl}(s) = N\frac{ \alpha f_R s + \rho f_R^2}{s^2 + \alpha f_R s + \rho f_R^2}\]
+	\begin{equation}
+	H_{ol}(s) = \big( \alpha + \frac{\rho f_R}{s} \big) \frac{f_R}{s} = \frac{\rho f_R^2}{s} \cdot \frac{1 + s/(\rho f_R / \alpha)}{s}
+	\label{eq:hol_s_adpll_tipe_II}
+	\end{equation}
+Disto obtêm-se dois polos na origem $\omega_p1 = \omega_p2 = 0$, e um zero complexo em $\omega_z = j(\rho f_R / \alpha) $
+
+A função de transferência em \textit{loop} fechado para o sinal de referencia como estrada é mostrada na equação \ref{eq:hol_s_adpll_tipe_II}, ela comporta-se como um filtro passa-baixa com ganho dado pelo valor de N.
+
+	\begin{equation}
+	H_{REF}(s) = N\frac{ ( \alpha + \rho f_R/s)(f_R/s)}{1 + (\alpha + \rho f_R/s) (f_R/s)} =  N\frac{ \alpha f_R s + \rho f_R^2}{s^2 + \alpha f_R s + \rho f_R^2}
+	\label{eq:hcl_s_adpll_tipe_II}
+	\end{equation}
+
+Fazendo a mesma análise considerando as fontes de ruido do TDC ( $\phi_{n,TDC}$) e do DCO ( $\phi_{n,DCO}$) obtém-se:
+
+	\begin{equation}
+	H_{TDC}(s) =\frac{ \alpha f_R s + \rho f_R^2}{s^2 + \alpha f_R s + \rho f_R^2}
+	\label{eq:tdc_s_adpll_tipe_II}
+	\end{equation}
+	
+	\begin{equation}
+	H_{DCO}(s) = \frac{s^2}{s^2 + \alpha f_R s + \rho f_R^2}
+	\label{eq:dco_s_adpll_tipe_II}
+	\end{equation}
+
+Nota-se nque todas as funções de transferência de \textit{loop} fechado contém o mesmo denominador, sendo igual a $ 1 + H_{ol}(s)$, assim pode-se fazer uma simplificação como mostrado na equação \ref{eq:hcl_simplification}.
 
 
-No domino Z têm-se
+	\begin{equation}
+	H_{REF}(s) =  \frac{1}{1 + H_{ol}(s)} \hspace{1cm}
+	H_{TDC}(s) =  \frac{ H_{ol}(s)}{1 + H_{ol}(s)} \hspace{1cm}
+	H_{DCO}(s) =  \frac{N \cdot H_{ol}(s)}{1 + H_{ol}(s)} \hspace{1cm}
+	\label{eq:hcl_simplification}
+\end{equation}
 
-\[H_{ol}(z) = \frac{ \alpha (z - 1) + \rho}{ (z - 1)^2}\]
-\[H_{cl}(z) = N \frac{ \alpha (z - 1) + \rho}{ (z - 1)^2 + \alpha^2 (z - 1) + \rho}\]
+A função de \textit{loop} fechado pode ser comparada a função de transferência tradicional de um sistema de duplo polo mostrada na equação  
+
+	\begin{equation}
+	H_{REF}(s) =   N\frac{ 2 \zeta \omega_n s +  \omega_n^2}{s^2 + \zeta  \omega_n s + \ \omega_n^2}
+	\label{eq:classical_two_pole}
+	\end{equation}
+
+onde $\zeta$ é o fator de amortecimento, e $\omega_n$ a frequência natural, tendo um zero em $\omega_z = - \omega_n / 2 \zeta$. Assim:
 
 
-%\subsection{Filtro IRR}
+	\begin{equation}
+	\omega_n = \sqrt{\rho} f_r
+	\label{eq:omena_n}
+	\end{equation}	
+	
+	\begin{equation}
+		\zeta =   \frac{\alpha f_r}{2 \zeta \omega_n} = \frac{1}{2} \big (  \frac{\alpha}{\sqrt{\rho}}\big )
+		\label{eq:qsi}
+	\end{equation}
+
+A transformada de Laplace utilizada no domínio S é para sistemas de tempo continuo, enquanto para sistemas discretos como é o caso do ADPLL é correto utilizar o domínio discreto Z. Domínio S facilita na análise do sistema facilmente podendo ser encontrado os polos e zeros e verificar parâmetros importantes em um sistema, porém, o tempo discreto pode ser aproximado ao domínio S se a frequência de amostragem for muito maior que a de interesse. 
+
+O operador $Z$ é definido como $Z^{j\theta}$, sendo $\theta = \omega t_0$, $\omega = 2 \pi f$ a frequência angular e $t_0$ o período de amostragem, no caso $t_0 = 1/f_R$. Assim o operador Z é definido conforme a equação \ref{eq:z_operator}.
 
 
-\[y[k] = (1 - \lambda)y[k - 1] + \lambda x[k]   \]
-
-\textbf{Domínio Z}
-\[H_{iir}(z) = \frac{ \lambda z}{ z - ( 1 - \lambda}\]
-
-\textbf{Domínio S}
-\[H_{iir}(s) = \frac{ 1 + s/f_R}{ 1 + s/\lambda f_R}\]
+	\begin{equation}
+	Z^{j\theta} = Z^{j\omega /f_R}
+	\label{eq:z_operator}
+	\end{equation}
 
 
-Assim:
+Sendo $\omega << f_R$ e aplicando algumas propriedades trigonométricas chega-se que a conversão de S para Z é dada pela equação \ref{eq:s_to_z}.
 
-\[H_{ol}(s) = \big( \alpha + \frac{\rho f_R}{s} \big) \cdot \frac{f_R}{s} \frac{ 1 + s/f_R}{ 1 + s/\lambda f_R} \]
+	\begin{equation}
+	s = f_R(z - 1)
+	\label{eq:s_to_z}
+	\end{equation}
 
-\[H_{ol}(s) = \frac{\rho f_R^2}{s} \cdot \frac{1 + s/(\rho f_R / \alpha)}{s} \cdot \frac{f_R}{s} \frac{ 1 + s/f_R}{ 1 + s/\lambda f_R}\]
 
-Dois polos na origem $\omega_p1 = \omega_p2 = 0$, um polo em $\omega_p3 = j\lambda f_R$ e dois zeros em $\omega_z 1 = j(\rho f_R / \alpha)$ e $\omega_z 2 = jf_R$.
+Aplicando a conversão nas equações \ref{eq:hol_s_adpll_tipe_II} e \ref{eq:hcl_s_adpll_tipe_II} obtêm-se as equações mostradas em \ref{eq:hol_z_adpll_tipe_II} e \ref{eq:hcl_z_adpll_tipe_II} respectivamente.
 
-Com mais de um estágio e valores de $\lambda$ diferentes em cada:
+	\begin{equation}
+	H_{ol}(z) = \frac{ \alpha (z - 1) + \rho}{ (z - 1)^2}
+	\label{eq:hol_z_adpll_tipe_II}
+	\end{equation}
 
-\[H_{ol}(s) = \frac{\rho f_R^2}{s} \cdot \frac{1 + s/(\rho f_R / \alpha)}{s} \cdot \prod_{i=1}^{n} \frac{f_R}{s} \frac{ 1 + s/f_R}{ 1 + s/\lambda_i f_R}\]
+	\begin{equation}
+	H_{cl}(z) = N \frac{ \alpha (z - 1) + \rho}{ (z - 1)^2 + \alpha (z - 1) + \rho}
+	\label{eq:hcl_z_adpll_tipe_II}
+	\end{equation}
+
+
+Quando utilizado filtro IRR como visto na seção \ref{sec:loop_filter} no \textit{lopp filter}, as funções de transferência do sistema devem considerar seus impactos.
+
+Da equação \ref{eq:irr_tranfer_function} de um filtro IRR de polo simples a função de transferência no domínio S é mostrada na equação \ref{eq:irr_s_domain}.
+
+	\begin{equation}
+	[H_{iir}(s) = \frac{ 1 + s/f_R}{ 1 + s/\lambda f_R}
+	\label{eq:irr_s_domain}
+	\end{equation}
+	
+Assim a função de transferência de \textit{loop} aberto é alterada para:
+
+
+\begin{equation}
+	H_{ol}(s) = \frac{\rho f_R^2}{s} \cdot \frac{1 + s/(\rho f_R / \alpha)}{s} \cdot \frac{f_R}{s} \frac{ 1 + s/f_R}{ 1 + s/\lambda f_R}
+	\label{eq:hol_irr_simgle}
+\end{equation}
+
+
+Sendo o filtro IRR com mais de um estágio e valores de $\lambda$ diferentes em cada $H_{ol}(s)$ resume-se a:
+
+\begin{equation}
+H_{ol}(s) = \frac{\rho f_R^2}{s} \cdot \frac{1 + s/(\rho f_R / \alpha)}{s} \cdot \prod_{i=1}^{n} \frac{f_R}{s} \frac{ 1 + s/f_R}{ 1 + s/\lambda_i f_R}
+	\label{eq:hol_irr_cascade}
+\end{equation}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Trabalhos correlatos}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Nesta seção, serão apresentados alguns trabalhos relacionados ao tema deste estudo, que envolve o desenvolvimento e simulação de um ADPLL em tecnologia CMOS. Esses trabalhos servirão como base e referência para o desenvolvimento neste trabalho.
+
+O trabalho de Ioannis L. Syllaios em \cite{syllaios2008time} fornece um modelo de domínio do tempo para um ADPLL com aplicação em RF. Através deste modelo, o autor realiza uma análise detalhada do comportamento do circuito, abordando aspectos de projeto, desempenho e estabilidade. A simulação feita utilizando Matlab, e análise propostas nesse trabalho serão utilizadas como referência para a simulação do ADPLL desenvolvido neste estudo.
+
+Em \cite{staszewski2006all} Robert Bogdan Staszewski  apresenta um sintetizador de frequência totalmente digital implementado em tecnologia CMOS. O autor apresenta detalhadamente toda a estrutura de um ADPLL, e todas suas peculiaridades, discute=indo os desafios de implementação do ADPLL em tecnologias avançadas e destaca as vantagens do uso de uma abordagem totalmente digital em relação às soluções analógicas tradicionais. Essas informações são de grande importância para o dimensionamento do ADPLL principalmente quanto a analise de frequência e ruido de fase.
 
 
+O trabalho de Andersson Fredrik em \cite{andersson2010modeling} aborda a modelagem e caracterização de um ADPLL totalmente digital para uma aplicação WCDMA. A simulação feita em Matlab possibilita a análise do desempenho em diferentes condições de operação. A modelagem e análise pelo autor elaborada auxiliam no desenvolvimento deste trabalho.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Considerações Finais}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+A Revisão Bibliográfica apresentou alguns conceitos e descrição comportamental do ADPLL em blocos. Tais informações são importantes para que se possa ser implementado na Metodologia.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
