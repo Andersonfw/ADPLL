@@ -1,6 +1,6 @@
 \chapter{Fundamentação teórica}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Neste capitulo, apresentamos uma síntese da revisão bibliográfica realizada para embasar a metodologia adotada no desenvolvimento e simulação do ADPLL. São abordados os conceitos básicos de um sintetizador de frequência, o protocolo de comunicação \textit{Bluetooth} e a importância dos circuitos e dispositivos CMOS, e alguns conceitos de comunicações sem fio. Esses tópicos são fundamentais para compreender o funcionamento do ADPLL e sua aplicação em sistemas de comunicação sem fio. A revisão bibliográfica oferece uma base sólida para o desenvolvimento do projeto, fornecendo os conhecimentos necessários para explorar as características, desempenho e aplicações do ADPLL.
+Neste capitulo, apresentamos uma síntese da revisão bibliográfica realizada para embasar a metodologia adotada no desenvolvimento e simulação do ADPLL. São abordados os conceitos básicos de um sintetizador de frequência, o protocolo de comunicação \textit{Bluetooth}, a importância dos circuitos e dispositivos CMOS, e alguns conceitos de comunicações sem fio. Esses tópicos são fundamentais para compreender o funcionamento do ADPLL e sua aplicação em sistemas de comunicação sem fio. A revisão bibliográfica oferece uma base sólida para o desenvolvimento do projeto, fornecendo os conhecimentos necessários para explorar as características, desempenho e aplicações do ADPLL.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -19,7 +19,7 @@ Os sistemas de comunicação sem fio proporcionam a transferência de informaç�
 
 Desde as primeiras transmissões de voz por rádio na década de 1920 até os dias atuais, houve significativas evoluções nesse campo, com as comunicações sem fio se tornando uma parte integrante do cotidiano, presente em tecnologias como televisão, rádio, celulares, internet (Wi-Fi) e muito mais \cite{dowla2003handbook}.
 
-A transmissão de informações por rádio frequência (RF) é realizada por meio de uma técnica chamada modulação. De maneira geral, a modulação envolve alterar uma característica da onda portadora de acordo com o sinal modulante, que carrega a informação a ser transmitida, seja áudio ou dados digitais \cite{engtadeu2011}. Essa técnica empacota a informação de baixa frequência em uma onda de alta frequência, resultando em um sinal modulado que pode ser transmitido pelo ar através de uma antena. Existem inúmeros modelos de modulação, cada um com características específicas que visam aumentar o alcance, a imunidade a ruídos, evitar colisões entre sinais, entre outros aspectos.
+A transmissão de informações por rádio frequência (RF) é realizada por meio de uma técnica chamada modulação. De maneira geral, a modulação envolve alterar uma característica da onda portadora de acordo com o sinal modulante, que carrega a informação a ser transmitida, seja áudio ou dados digitais \cite{engtadeu2011}. Essa técnica empacota a informação de baixa frequência em uma onda de alta frequência, resultando em um sinal modulado que pode ser transmitido pelo ar através de uma antena. Existem inúmeros técnicas de modulação, cada um com características específicas que visam aumentar o alcance, a imunidade a ruídos, evitar colisões entre sinais, entre outros aspectos.
 
 Um dispositivo de comunicação sem fio é composto por dois circuitos principais: um receptor, responsável por receber e demodular a informação, e um transmissor, encarregado de enviar a informação modulada. Dependendo da aplicação, um dispositivo pode ser composto apenas por um transmissor ou receptor, enquanto em outros casos, que envolvem ambas as funções, ele é denominado transceptor. A Figura \ref{fig:tranceiver_structure} apresenta a estrutura básica de um transceptor, onde cada bloco desempenha uma função específica.
 \begin{figure}[h!]
@@ -35,9 +35,9 @@ Um dispositivo de comunicação sem fio é composto por dois circuitos principai
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{CMOS}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-CMOS (\textit{Complementary Metal-Oxide-Semiconductor}) é um processo de fabricação que utiliza silício para criar transistores de efeito de campo (MOSFETs) do tipo p e do tipo n, chamados de PMOS e NMOS, respectivamente. Amplamente utilizado na produção de chips de circuitos integrados, como microprocessadores, microcontroladores e chips de memória, o CMOS também é empregado em circuitos analógicos, como sensores de imagem e dispositivos de comunicação com e sem fio. Sua característica distintiva é o baixo consumo de energia, tornando-o especialmente adequado para dispositivos IoT.
+CMOS (\textit{Complementary Metal-Oxide-Semiconductor}) é um processo de fabricação que utiliza silício para criar transistores de efeito de campo (MOSFETs) do tipo p e do tipo n, chamados de PMOS e NMOS, respectivamente. É amplamente utilizado na produção de chips de circuitos integrados, como microprocessadores, microcontroladores e chips de memória, o CMOS também é empregado em circuitos analógicos, como sensores de imagem e dispositivos de comunicação com e sem fio. Sua característica distintiva é o baixo consumo de energia, tornando-o especialmente adequado para dispositivos IoT.
 
-Além disso, o CMOS oferece vantagens em relação a outras tecnologias, como operação em baixas tensões e uma evolução avançada que permite maior densidade de transistores por unidade de área . O tamanho dos transistores é determinado pelos valores de comprimento (L) e largura (W) Figura \ref{fig:nmos_structure}, permitindo um controle mais preciso da corrente que circula por eles \cite{designcmosrazavi2016}. Atualmente, circuitos integrados podem ser fabricados em escala de $3nm$ de acordo com dados da \textit{foundry} \cite{tsmc}.
+Além disso, o CMOS oferece vantagens em relação a outras tecnologias, como operação em baixas tensões e os constantes avanços tecnológicos permite maior densidade de transistores por unidade de área . O tamanho dos transistores é determinado pelos valores de comprimento (L) e largura (W) Figura \ref{fig:nmos_structure}, permitindo um controle mais preciso da corrente que circula por eles \cite{designcmosrazavi2016}. Atualmente, circuitos integrados podem ser fabricados em escala de $3nm$ de acordo com dados da \textit{foundry} \cite{tsmc}.
 
 \begin{figure}[h!]
 	\caption{Estrutura de um NMOS}
@@ -108,7 +108,7 @@ A utilização de uma realimentação negativa no circuito permite um controle t
 
 O PLL utiliza o VCO como elemento central. O sinal de saída do VCO, dividido por um fator N, é comparado com a frequência de referência do TXCO, dividida por R, pelo  \textit{Phase-Detector}. Após a comparação, o sinal resultante passa pelo \textit{Loop filter}, responsável por eliminar ruídos e interferências. A saída do \textit{Loop filter} é uma tensão que controla a tensão aplicada ao VCO, permitindo ajustar e manter a frequência de saída em sincronia com a frequência de referência \cite{barrett_1999_fractionalintegern}.
 
-Em condições normais, um PLL fornece uma frequência com extrema precisão, no entanto, o tempo de aquisição pode ser longo devido ao processo do detector de fase e frequência em avaliar e gerar sinais com base nas diferenças em relação à referência. Esse tempo de aquisição é especialmente crucial em aplicações de comunicações sem fio que envolvem técnicas como salto de canal (\textit{frequency hopping}), como é o caso do protocolo \textit{Bluetooth}. Nessas situações, a capacidade do PLL de se sincronizar rapidamente com frequências variáveis é essencial para garantir uma transição suave entre os canais e evitar perdas de dados ou conexão.
+Em condições normais, um PLL fornece uma frequência com extrema precisão, no entanto, o tempo de aquisição pode ser longo devido ao processo do detector de fase e frequência que avalia e gera sinais com base nas diferenças em relação à referência. Esse tempo de aquisição é especialmente crucial em aplicações de comunicações sem fio que envolvem técnicas como salto de canal (\textit{frequency hopping}), como é o caso do protocolo \textit{Bluetooth}. Nessas situações, a capacidade do PLL de se sincronizar rapidamente com frequências variáveis é essencial para garantir uma transição suave entre os canais e evitar perdas de dados ou conexão.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Integer-N PLL}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -149,19 +149,19 @@ Para \cite{staszewski2006all} a tecnologia nanométrica do CMOS traz um novo par
 
 A natureza digital do ADPLL oferece vantagens adicionais, como a parametrização do \textit{Loop-Filter} para ajuste de frequência conforme necessário. Além disso, não são necessários circuitos auxiliares para conversão entre sinais digitais e analógicos, o que representa uma economia de recursos e simplificação do projeto.
 
-A Figura \ref{fig:adpll_block_diagram} mostra o diagrama de blocos de um ADPLL no domínio do tempo discreto, ou seja considerando as transições dos sinais de (FREF) e saída do circuito (DCO). O ADPLL é composto de 4 blocos principais,  \textit{Digital Controlled Oscillator} (DCO), \textit{Time to Digital Converter} (TDC), \textit{Phase Detector} (PD) e o \textit{ digital Loop Filter} (LF). Nas subseções seguintes serão apresentados com mais detalhes cada um dos sub-blocos. 
+A Figura \ref{fig:adpll_block_diagram} mostra o diagrama de blocos de um ADPLL no domínio do tempo discreto, analisando as transições dos sinais de (FREF) e saída do circuito (DCO). O ADPLL é composto de 4 blocos principais,  \textit{Digital Controlled Oscillator} (DCO), \textit{Time to Digital Converter} (TDC), \textit{Phase Detector} (PD) e o \textit{ digital Loop Filter} (LF). Nas subseções seguintes serão apresentados com mais detalhes cada um dos sub-blocos. 
 
 \begin{figure}[h!]
 	\caption{Diagrama de blocos de um ADPLL.}
 	\begin{center}
-		\includegraphics[scale=1]{img/blocos_ADPLL.png}
+		\includegraphics[scale=1.3]{img/blocos_ADPLL.png}
 	\end{center}
 %	\fonte{\citeonline{staszewski2006all}}
 \fonte{Adaptado de \citeonline{andersson2010modeling}.}
 	\label{fig:adpll_block_diagram}
 \end{figure}
 
-O circuito do DCO é responsável por gerar o sinal de saída do sintetizador. Ele consiste em um indutor fixo e um conjunto de capacitores programáveis que formam um circuito ressonante LC. A frequência de saída é definida pelo FCW (\textit{Frequency Command Word}), pode ser um valor fracionado ou inteiro da frequência de referência, conforme expresso na Equação \ref{eq:fvco_adpll}.
+O circuito do DCO é responsável por gerar o sinal de saída do sintetizador. Ele consiste em um indutor fixo e um conjunto de capacitores programáveis que formam um circuito ressonante LC. A frequência de saída é definida pelo FCW (\textit{Frequency Command Word}), podendo ser um valor fracionado não somente inteiro da frequência de referência, conforme expresso na Equação \ref{eq:fvco_adpll}.
 
 \begin{equation}
 	F_{VCO} = FCW \cdot F_{ref}
@@ -226,7 +226,7 @@ No segundo modo, ACQ, a frequência é ajustada para dentro da banda de interess
 Por fim, o modo TRK possui a melhor resolução de ajuste, permitindo ajustar com precisão a frequência de saída do oscilador necessária para a modulação do sinal. Para permitir ajustes muito finos, como $\pm 1kHz$, $OTW$ pode ser um valor fracionário nesse modo. Para isso, é utilizada uma topologia semelhante à do \textit{Fractional-N PLL}, permitindo uma melhor resolução com a implementação de um modulador Sigma-Delta (SDM). Os SDMs são amplamente utilizados em conversores ADs (analógico para digital) por meio de um modulador com sobre-amostragem, seguido por um filtro digital/decimador, que juntos produzem um sinal de alta resolução \cite{sdmtexas}. Essa técnica de modulação é empregada para alcançar um ajuste preciso e refinado da frequência do DCO, garantindo a adequada modulação do sinal dentro do canal designado.
 
 
-A Figura \ref{fig:lc_bank_capacitor} apresenta o tanque LC de um DCO projetado para aplicação \textit{Bluetooth}, com a implementação dos três bancos de capacitores. Nos bancos PVT e ACQ cada capacitor representado por um bit possui um mesmo valor conforme o banco que ele pertence, a soma deles em conjunto com o capacitor $C_0$ definirá a frequência. 
+A Figura \ref{fig:lc_bank_capacitor} apresenta o tanque LC de um DCO projetado para aplicação \textit{Bluetooth}, com a implementação dos três bancos de capacitores. Em cada banco banco os capacitores representados por um bit possui um valor de acordo com o banco que ele pertence, a soma deles em conjunto com o capacitor $C_0$ definirá a frequência. 
 
 \begin{figure}[h!]
 	\caption{Tanque LC com banco de capacitores para aplicação \textit{Bluetooth} }
@@ -302,11 +302,11 @@ Cada um dos três modos de operação do DCO possui um range de frequência dife
 
 
 \begin{equation}
-	K_{DCO_{mode}}= \frac{F \ cdot R_{mode}}{2^{b_{mode}}}
+	K_{DCO_{mode}}= \frac{F \cdot R_{mode}}{2^{b_{mode}}}
 	\label{eq:kdco_mode}
 \end{equation}
 
-A Figura \ref{fig:ndco} mostra o bloco de um ganho normalizado, onde  NTW (\textit{Normalized Tunning Word}) é normalizado em OTW pela frequência de referência($f_{ref}$) dividida pelo ganho($	K_{DCO}$).
+A Figura \ref{fig:ndco} mostra o bloco do ganho normalizado, onde  NTW (\textit{Normalized Tunning Word}) é normalizado em OTW pela frequência de referência($f_{ref}$) dividida pelo ganho($	K_{DCO}$).
 
 \begin{figure}[h!]
 	\caption{Diagrama de blocos do ganho normalizado }
@@ -317,7 +317,7 @@ A Figura \ref{fig:ndco} mostra o bloco de um ganho normalizado, onde  NTW (\text
 	\label{fig:ndco}
 \end{figure}
 
-Devido ao fato do ganho sofrer por variações variações de processo e de fatores ambientais, não se pode definir com precisão seu valor.Para minimizar isto é utilizado uma estimativa de ganho conforme a equação \ref{eq:kdco_est}. Se  $K_{DCOest}$ for corretamente estimado, o ganho torna-se igual a $f_{ref}$, e as alterações em \textit{NTW} acarretam em alteração da frequência na mesma magnitude, multiplicada por $f_{ref}$.
+Devido ao fato do ganho sofrer por variações de processo e de fatores ambientais, não se pode definir com precisão seu valor.Para minimizar isto é utilizado uma estimativa de ganho conforme a equação \ref{eq:kdco_est}. Se  $K_{DCOest}$ for corretamente estimado, o ganho torna-se igual a $f_{ref}$, e as alterações em \textit{NTW} acarretam em alteração da frequência na mesma magnitude, multiplicada por $f_{ref}$.
 
 \begin{equation}
 	K_{nDCO}=  f_{ref}\frac{K_{DCO}}{K_{DCOest}}
@@ -349,7 +349,7 @@ Devido ao fato do ganho sofrer por variações variações de processo e de fato
 O valor de FCW que define a frequência de saída do circuito de acordo com a equação \ref{eq:fvco_adpll}, possui uma parte inteira $W_i$ e uma parte fracional $W_f$. 
  A cada borda de \textit{clock} de $f_{ref}$, índice $k$, o valor de FCW é acumulado $R_R[k] = R_R[k-1] + FCW$, representando a fase de referência. A fase variável $R_V[k]$ acumulada o número de bordas CKV, e o erro fracional é obtido pelo TDC que será apresentado na seção seguinte.
 
-A saída do \textit{Phase detector } é o erro de fase $\phi$ entre os sinais calculada conforme a equação \ref{eq:phase_detector}.Quando o ADPLL converge para a fase e frequência desejada a saída $\phi$ será uma constante.
+A saída do \textit{Phase detector } é o erro de fase $\phi$ entre os sinais obtido pela equação \ref{eq:phase_detector}. Quando o ADPLL converge para a fase e frequência desejada a saída $\phi$ será uma constante.
 
  \begin{equation}
 	\phi [k]= R_R[k] - ( R_V[k] - \epsilon[k]) =  (R_{R_{Int}}[k] - R_V[k]) + ( R_{R_{Frac}}[k] - \epsilon[k])
@@ -360,9 +360,9 @@ A saída do \textit{Phase detector } é o erro de fase $\phi$ entre os sinais ca
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \label{sec:loop_filter}
 
-O \textit{Loop Filter} é um sistema de controle do tipo PI (proporcional e integral) responsável por regular o NTW (\textit{Normalized Tunning Word}). Ele recebe como entrada a diferença de fase entre a referência e a saída do DCO, e sua saída é aplicada ao bloco do ganho normalizado, que controla o DCO. O \textit{Loop Filter} é responsável pela estabilidade e precisão do ADPLL, garantindo que a frequência e fase de saída do DCO seja mantida próxima à frequência de referência.
+O \textit{Loop Filter} é um sistema de controle do tipo PI (proporcional e integral) responsável por regular o NTW (\textit{Normalized Tunning Word}). Ele recebe como entrada a diferença de fase entre a referência e a saída do DCO, e sua saída é aplicada ao bloco do ganho normalizado, que controla o DCO. O \textit{Loop Filter} é responsável pela estabilidade e precisão do ADPLL, garantindo que a fase de saída do DCO seja mantida próxima à da de referência, e a frequência desejada seja obtida.
 
-Na Figura \ref{fig:loop_filter_PI}, é apresentada a estrutura básica de um sistema de controle PI, enquanto a Figura \ref{fig:loop_filter_typeII} ilustra sua análise no domínio Z. O parâmetro $K_p$ representa o ganho proporcional e determina a velocidade do sistema, ou seja, quão rapidamente ocorre a mudança na saída dada uma variação na entrada. Já $K_i$ atua como um integrador, ajudando a eliminar erros estacionários, garantindo a estabilidade do sistema e reduzindo o impacto de perturbações externas.
+Na Figura \ref{fig:loop_filter_PI}, é apresentada a estrutura básica de um sistema de controle PI, enquanto a Figura \ref{fig:loop_filter_typeII} ilustra sua análise no domínio discreto Z. O parâmetro $K_p$ representa o ganho proporcional e determina a velocidade do sistema, ou seja, quão rapidamente ocorre a mudança na saída dada uma variação na entrada. Já $K_i$ atua como um integrador, ajudando a eliminar erros estacionários, garantindo a estabilidade do sistema e reduzindo o impacto de perturbações externas.
 
 \begin{figure}[h!]
 	\caption{\textit{Loop Filter} }
@@ -388,17 +388,14 @@ Na Figura \ref{fig:loop_filter_PI}, é apresentada a estrutura básica de um sis
  	NTW[k]= K_p \cdot \phi [k] 
  	\label{eq:ntw_type1}
  \end{equation}
- 
- 
- 
- O \textit{Loop Filter} é dividido em três blocos, um para controlar cada um dos modos do DCO  permitindo a utilização independente do ADPLL Tipo I ou Tipo II em cada modo. Nos modos PVT e ACQ, o ADPLL Tipo I utilizado para reduzir o tempo de convergência do sistema, pois nesses modos o ajuste de frequência é mais grosseiro. No modo TRK, o ADPLL Tipo II é utilizado para obter a melhor precisão, onde o integrador é inserido para reduzir o erro e o valor do ganho proporcional é reduzido.
- 
- Um filtro IIR passa-baixa \textit{Infinite Impulse  Response} pode ser conectado em cascata antes do \textit{Loop Filter} caso seja necessário  atenuar ruídos de fase e espúrios indesejados em altas frequências. É importante dimensioná-lo de forma que a frequência de corte seja maior que a do \textit{Loop Filter}, para não afetar seu desempenho.
- 
- 
-Filtro IRR de ordem simples é incondicionalmente estável, porém possui uma pequena atenuação. Para obter maiores atenuações pode ser necessário filtro de ordem superior
-mas isso pode torná-los facilmente instáveis. filtros de ordem simples em cascata podem ser utilizados, como mostrado na Figura \ref{fig:filter_IRR}. Essa configuração proporciona maior atenuação de ruídos indesejados sem comprometer a estabilidade do sistema.
 
+
+O \textit{Loop Filter} é dividido em três blocos, um para controlar cada um dos modos do DCO,  permitindo a utilização independente do ADPLL Tipo I ou Tipo II em cada modo. Nos modos PVT e ACQ, o ADPLL Tipo I é utilizado para reduzir o tempo de convergência do sistema, pois nesses modos o ajuste de frequência é mais grosseiro. No modo TRK, o ADPLL Tipo II é utilizado para obter a melhor precisão, onde o integrador é inserido para reduzir o erro e o valor do ganho proporcional é reduzido.
+ 
+Para atenuar ruídos de fase e espúrios indesejados em altas frequências, é possível conectar um filtro IIR passa-baixa \textit{Infinite Impulse Response} em cascata antes do \textit{Loop Filter}. É fundamental dimensioná-lo de forma que a frequência de corte seja maior do que a do \textit{Loop Filter}, a fim de não afetar o sistema.
+
+Um Filtro IIR de ordem simples é incondicionalmente estável, mas apresenta uma pequena atenuação. Se for necessário obter maiores atenuações, pode ser preciso utilizar filtros de ordem superior, no entanto, isso pode torná-los facilmente instáveis. Uma alternativa é utilizar filtros de ordem simples em cascata, como mostrado na Figura \ref{fig:filter_IRR}, proporcionando maior atenuação de ruídos indesejados sem comprometer a estabilidade do sistema.
+ 
 \begin{figure}[h!]
 	\caption{\textit{Loop Filter} com filtro IIR em cascata}
 	\begin{center}
@@ -408,7 +405,7 @@ mas isso pode torná-los facilmente instáveis. filtros de ordem simples em casc
 	\label{fig:filter_IRR}
 \end{figure}
 
-O Filtro IRR pode ser analisado no domínio do tempo discreto de acordo com a Figura \ref{fig:filter_IRR_time_domain}.
+ O Filtro IIR de polo simples pode ser analisado no domínio do tempo discreto, conforme ilustrado na Figura \ref{fig:filter_IRR_time_domain}, resultando na expressão apresentada na equação \ref{eq:irr_simple_pole}, que permite obter a função de transferência no domínio Z, como mostrado na equação \ref{eq:irr_tranfer_function}.
 
 \begin{figure}[h!]
 	\caption{Filtro IRR de polo simples}
@@ -419,7 +416,6 @@ O Filtro IRR pode ser analisado no domínio do tempo discreto de acordo com a Fi
 	\label{fig:filter_IRR_time_domain}
 \end{figure}
 
-A expressão no tempo discreto do IRR de polo simples é mostrada na equação \ref{eq:irr_simple_pole}, o que resulta na função de transferência no domínio Z conforme a equação \ref{eq:irr_tranfer_function}.
 
  \begin{equation}
 	y[k]= (1 - \lambda) y[k-1] + \lambda x[k]
@@ -440,7 +436,7 @@ O termo $\lambda$ determina características importantes do filtro, como atenua�
 	\label{eq:iir_fbw}
 \end{equation}
 
-A função de transferência de um conjunto de filtros IRR de polo simples é obtida pelo produto de cada estágio como demonstrada na equação \ref{eq:filter_ir_prod}.
+A utilização de vários estágios simples do filtro IIR resulta que a função de transferência é o produto de cada estágio como demonstrada na equação \ref{eq:filter_ir_prod}.
 
  \begin{equation}
 	H_{IIR_{tot}}(z)= \prod 	H_{IIR_{simgle}}(z)
@@ -450,12 +446,18 @@ A função de transferência de um conjunto de filtros IRR de polo simples é ob
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{TDC}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+O TDC (Time to Digital Converter) utilizado no \textit{Phase Detector} é responsável por medir com grande precisão a diferença de tempo entre a borda de clock de referência e a borda imediatamente anterior da saída do sintetizador. Essa diferença de tempo corresponde à diferença de fase fracional entre os sinais na frequência.
 
-O TDC (Time to Digital Converter) utilizado no\textit{ Phase Detector} é responsável por medir com grande precisão a diferença de tempo entre a borda de clock de referência e a borda imediatamente anterior da saída do sintetizador. Esta diferença de tempo é a diferença de fase fracional entre os sinais na frequência. 
+Existem diferentes topologias de circuitos para implementar um TDC, sendo algumas delas baseadas em cadeias de inversores, conhecidas como "\textit{delays}". Em tecnologias de processo CMOS atuais, é possível obter \textit{delays} com precisão de $10$ picossegundos ($10$ ps) ou menos. \cite{ferreira2020review} apresenta várias topologias de circuito para a implementação do TDC baseado em cascata de inversores.
 
-Existem diferentes topologias de circuitos para implementar um TDC, sendo algumas delas baseadas em cadeias de inversores, conhecidas como "\textit{delays}". Em tecnologias de processo CMOS atuais, é possível obter \textit{delays} com precisão de até $10 ps$ ou menos. \cite{ferreira2020review} apresenta diferentes topologias de circuito para implementação de um TDC baseado em cascata de inversores.
+A medição de tempo é realizada pela diferença de tempo $\Delta t_r$ em relação a múltiplos inteiros do \textit{delay} simples $\Delta t_{res}$ em segundos, conforme apresentado na Figura \ref{fig:tdc_chain_delayed}. O número de estágios do TDC é definido pelo número de inversores necessários para cobrir todo o período do \textit{clock} CKV. Como a resolução do TDC é limitada a $\Delta t_{res}$, somente múltiplos desse valor podem ser obtidos, o que resulta em uma quantização da medida em $\Delta t_r\_Q$, conforme mostrado na Figura \ref{fig:tdc_quantization}.
 
-A medição de tempo é realizada pelo diferença de tempo $\Delta t_r$ medida em múltiplos inteiros de \textit{delays} simples $\Delta t_{res}$ em segundos conforme apresentado na Figura \ref{fig:tdc_chain_delayed}. O número de estágios do TDC é definido pelo número de inversores necessários para cobrir todo o período do \textit{clock} CKV. Dado que a resolução o TDC é limitada a $\Delta t_{res}$ somente múltiplos deste valor podem ser obtidos, desta forma, a medida é quantizada em $\Delta t_r\_Q$ conforme mostrada na Figura \ref{fig:tdc_quantization}.
+%################################################
+%O TDC (Time to Digital Converter) utilizado no\textit{ Phase Detector} é responsável por medir com grande precisão a diferença de tempo entre a borda de clock de referência e a borda imediatamente anterior da saída do sintetizador. Esta diferença de tempo é a diferença de fase fracional entre os sinais na frequência. 
+%
+%Existem diferentes topologias de circuitos para implementar um TDC, sendo algumas delas baseadas em cadeias de inversores, conhecidas como "\textit{delays}". Em tecnologias de processo CMOS atuais, é possível obter \textit{delays} com precisão de $10 ps$ ou menos. \cite{ferreira2020review} apresenta diferentes topologias de circuito para implementação de um TDC baseado em cascata de inversores.
+%
+%A medição de tempo é realizada pelo diferença de tempo $\Delta t_r$ medida em múltiplos inteiros de \textit{delays} simples $\Delta t_{res}$ em segundos conforme apresentado na Figura \ref{fig:tdc_chain_delayed}. O número de estágios do TDC é definido pelo número de inversores necessários para cobrir todo o período do \textit{clock} CKV. Dado que a resolução o TDC é limitada a $\Delta t_{res}$ somente múltiplos deste valor podem ser obtidos, desta forma, a medida é quantizada em $\Delta t_r\_Q$ conforme mostrada na Figura \ref{fig:tdc_quantization}.
 
 
 % entre as bordas do sinal de referência e de saída, como mostrado na . Essa informação é fundamental para calcular o erro de fase $\phi$, necessário para sincronizar a saída do sintetizador com a frequência de referência.
@@ -507,7 +509,7 @@ A diferença de fase fracional que é a saída do TDC é obtida conforme a equa�
 	\label{eq:tdc_error_quanti}
 \end{equation}
 
-Onde $\bar T_{CKV}$ é obtido pela média de CKV em um determinado período de tempo conforme mostrado na equação \ref{eq:tdc_tckv_avg}.
+Onde $\bar T_{CKV}$ é obtido após a média de longo prazo da estimativa baseada em hardware do período de \textit{clock} da saída do DCO (CKV) conforme mostrado na equação \ref{eq:tdc_tckv_avg}.
 
  \begin{equation}
 \bar T_{CKV}= \frac{1}{N_{avg}} \cdot \sum_{l=1}^{N_{avg}} ( t_{CKV}[l] - t_{CKV}[l-1])
@@ -518,7 +520,7 @@ Onde $\bar T_{CKV}$ é obtido pela média de CKV em um determinado período de t
 \section{Ruído de Fase}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Em um oscilador ideal operando na frequência $\omega_c$ toda potência é concentrada em $\omega_c$, já em um oscilador prático a a potência se espalha perto de $\omega_c$ como mostrado na Figura \ref{fig:phase_noise_ideal_practical}, sendo este espalhamento chamado de ruido de fase. Nos transmissores o ruido de fase pode interferir em canais adjacentes, enquanto no receptor afeta a seletividade do mesmo.
+Em um oscilador ideal operando na frequência $\omega_c$ toda potência é concentrada em $\omega_c$, já em um oscilador prático a potência se espalha perto de $\omega_c$ como mostrado na Figura \ref{fig:phase_noise_ideal_practical}, sendo este espalhamento chamado de ruido de fase. Nos transmissores o ruido de fase pode interferir em canais adjacentes, enquanto no receptor afeta a seletividade do mesmo.
 
 O ruido de fase é quantizado considerando uma largura de banda de $1Hz$ distante a $\Delta \omega$ da frequência central $\omega_c$, sendo a unidade de medida dada em (dBc/Hz), onde "c" do "dBc" é convencionado como uma medida em relação a portadora (\textit{carrier}).
 
@@ -545,13 +547,13 @@ A Figura \ref{fig:phase_noise_spectrum} mostra o espetro \textit{single side}  t
 	\label{fig:phase_noise_spectrum}
 \end{figure}
 
-A região $\/\omega^2$ é conhecida como região de ruido térmico (\textit{thermal noise}) ou \textit{wander noise}, causado por ruido branco ou não correlacionado flutuações no período do oscilador. É o ruido dominante no DCO de acordo com \cite{staszewski2006all}.
+A região $1\ /\omega^2$ é conhecida como região de ruido térmico (\textit{thermal noise}) ou \textit{wander noise}, causado por ruido branco ou não correlacionada flutuações no período do oscilador. É o ruido dominante no DCO de acordo com \cite{staszewski2006all}.
 
 A região plana $1/\omega ^0$ é definida como \textit{jitter noise} causando pequenas flutuações a cada período do oscilador.
 
-A região $1/\omega ^3$ é resultado do \textit{up-converted} $1/f$ \textit{noise}, conhecido como ruido de \textit{flicker} que afeta todos dispositivos eletrônicos. Ele é dominante em baixas frequências sendo não tão presente no DCO que opera em altas frequências, mas que pode impactar no receptor gerando problemas de intermodulação.
+A região $1/\omega ^3$ é resultado do \textit{up-converted} $1/f$ \textit{noise}, conhecido como ruido de \textit{flicker} que afeta todos dispositivos eletrônicos. Ele é dominante em baixas frequências sendo não tão presente no DCO que opera em altas frequências, mas que pode impactar no receptor após demodulação gerando problemas de intermodulação.
 
-No ADPLL os blocos mais críticos como geradores de ruido são o DCO, e o TDC. O DCO pela sua complexidade de utilização de bancos de capacitores e ruido térmico, e o TDC além do ruido térmico pelo erro de quantização causando variações de tempo. Esse ruido do TDC pode ser calculado conforme a equação \ref{eq:tdc_noise}.
+No ADPLL os blocos mais críticos como geradores de ruido são o DCO, e o TDC. O DCO pela sua complexidade de utilização de bancos de capacitores e ruido térmico, e o TDC que além do ruido térmico possui o erro de quantização causando variações de tempo. Esse ruido do TDC pode ser calculado conforme a equação \ref{eq:tdc_noise}.
 
 
  \begin{equation}
@@ -594,7 +596,7 @@ Assumindo que $K_{DCO}$ está corretamente estimado e desconsiderando as fontes 
 	\end{equation}
 Disto obtêm-se dois polos na origem $\omega_p1 = \omega_p2 = 0$, e um zero complexo em $\omega_z = j(\rho f_R / \alpha) $
 
-A função de transferência em \textit{loop} fechado para o sinal de referencia como estrada é mostrada na equação \ref{eq:hol_s_adpll_tipe_II}, ela comporta-se como um filtro passa-baixa com ganho dado pelo valor de N.
+A função de transferência em \textit{loop} fechado para o sinal de referencia como entrada é mostrada na equação \ref{eq:hol_s_adpll_tipe_II}, ela comporta-se como um filtro passa-baixa com ganho dado pelo valor de N.
 
 	\begin{equation}
 	H_{REF}(s) = N\frac{ ( \alpha + \rho f_R/s)(f_R/s)}{1 + (\alpha + \rho f_R/s) (f_R/s)} =  N\frac{ \alpha f_R s + \rho f_R^2}{s^2 + \alpha f_R s + \rho f_R^2}
@@ -613,7 +615,7 @@ Fazendo a mesma análise considerando as fontes de ruido do TDC ( $\phi_{n,TDC}$
 	\label{eq:dco_s_adpll_tipe_II}
 	\end{equation}
 
-Nota-se nque todas as funções de transferência de \textit{loop} fechado contém o mesmo denominador, sendo igual a $ 1 + H_{ol}(s)$, assim pode-se fazer uma simplificação como mostrado na equação \ref{eq:hcl_simplification}.
+Nota-se que todas as funções de transferência de \textit{loop} fechado contém o mesmo denominador, sendo igual a $ 1 + H_{ol}(s)$, assim pode-se fazer uma simplificação como mostrado na equação \ref{eq:hcl_simplification}.
 
 
 	\begin{equation}
@@ -643,9 +645,9 @@ onde $\zeta$ é o fator de amortecimento, e $\omega_n$ a frequência natural, te
 		\label{eq:qsi}
 	\end{equation}
 
-A transformada de Laplace utilizada no domínio S é para sistemas de tempo continuo, enquanto para sistemas discretos como é o caso do ADPLL é correto utilizar o domínio discreto Z. Domínio S facilita na análise do sistema facilmente podendo ser encontrado os polos e zeros e verificar parâmetros importantes em um sistema, porém, o tempo discreto pode ser aproximado ao domínio S se a frequência de amostragem for muito maior que a de interesse. 
+A transformada de Laplace utilizada no domínio S é para sistemas de tempo continuo, enquanto para sistemas discretos como é o caso do ADPLL é correto utilizar o domínio discreto Z. Domínio S facilita na análise do sistema podendo ser encontrado os polos e zeros de forma rápida e verificar parâmetros importantes em um sistema. O tempo discreto pode ser aproximado ao domínio S se a frequência de amostragem for muito maior que a de interesse. 
 
-O operador $Z$ é definido como $Z^{j\theta}$, sendo $\theta = \omega t_0$, $\omega = 2 \pi f$ a frequência angular e $t_0$ o período de amostragem, no caso $t_0 = 1/f_R$. Assim o operador Z é definido conforme a equação \ref{eq:z_operator}.
+O operador $Z$ é definido como $Z^{j\theta}$, sendo $\theta = \omega t_0$,  $\omega = 2 \pi f$ a frequência angular e $t_0$ o período de amostragem, no caso $t_0 = 1/f_R$. Assim o operador Z é definido conforme a equação \ref{eq:z_operator}.
 
 
 	\begin{equation}
@@ -670,12 +672,12 @@ Aplicando a conversão nas equações \ref{eq:hol_s_adpll_tipe_II} e \ref{eq:hcl
 	\end{equation}
 
 	\begin{equation}
-	H_{cl}(z) = N \frac{ \alpha (z - 1) + \rho}{ (z - 1)^2 + \alpha (z - 1) + \rho}
+	H_{REF}(z) = N \frac{ \alpha (z - 1) + \rho}{ (z - 1)^2 + \alpha (z - 1) + \rho}
 	\label{eq:hcl_z_adpll_tipe_II}
 	\end{equation}
 
 
-Quando utilizado filtro IRR como visto na seção \ref{sec:loop_filter} no \textit{lopp filter}, as funções de transferência do sistema devem considerar seus impactos.
+Quando utilizado filtro IRR como visto na seção \ref{sec:loop_filter} no \textit{lopp filter}, as funções de transferência do sistema sofrem variações.
 
 Da equação \ref{eq:irr_tranfer_function} de um filtro IRR de polo simples a função de transferência no domínio S é mostrada na equação \ref{eq:irr_s_domain}.
 
@@ -693,7 +695,7 @@ Assim a função de transferência de \textit{loop} aberto é alterada para:
 \end{equation}
 
 
-Sendo o filtro IRR com mais de um estágio e valores de $\lambda$ diferentes em cada $H_{ol}(s)$ resume-se a:
+Sendo o filtro IRR com mais de um estágio e valores de $\lambda$ diferentes em cada,  $H_{ol}(s)$ resume-se a:
 
 \begin{equation}
 H_{ol}(s) = \frac{\rho f_R^2}{s} \cdot \frac{1 + s/(\rho f_R / \alpha)}{s} \cdot \prod_{i=1}^{n} \frac{f_R}{s} \frac{ 1 + s/f_R}{ 1 + s/\lambda_i f_R}
@@ -708,7 +710,7 @@ Nesta seção, serão apresentados alguns trabalhos relacionados ao tema deste e
 
 O trabalho de Ioannis L. Syllaios em \cite{syllaios2008time} fornece um modelo de domínio do tempo para um ADPLL com aplicação em RF. Através deste modelo, o autor realiza uma análise detalhada do comportamento do circuito, abordando aspectos de projeto, desempenho e estabilidade. A simulação feita utilizando Matlab, e análise propostas nesse trabalho serão utilizadas como referência para a simulação do ADPLL desenvolvido neste estudo.
 
-Em \cite{staszewski2006all} Robert Bogdan Staszewski  apresenta um sintetizador de frequência totalmente digital implementado em tecnologia CMOS. O autor apresenta detalhadamente toda a estrutura de um ADPLL, e todas suas peculiaridades, discute=indo os desafios de implementação do ADPLL em tecnologias avançadas e destaca as vantagens do uso de uma abordagem totalmente digital em relação às soluções analógicas tradicionais. Essas informações são de grande importância para o dimensionamento do ADPLL principalmente quanto a analise de frequência e ruido de fase.
+Em \cite{staszewski2006all} Robert Bogdan Staszewski  apresenta um sintetizador de frequência totalmente digital implementado em tecnologia CMOS. O autor apresenta detalhadamente toda a estrutura de um ADPLL, e todas suas peculiaridades, discutindo os desafios de implementação do ADPLL em tecnologias avançadas e destaca as vantagens do uso de uma abordagem totalmente digital em relação às soluções analógicas tradicionais. Essas informações são de grande importância para o dimensionamento do ADPLL principalmente quanto a analise de frequência e ruido de fase.
 
 
 O trabalho de Andersson Fredrik em \cite{andersson2010modeling} aborda a modelagem e caracterização de um ADPLL totalmente digital para uma aplicação WCDMA. A simulação feita em Matlab possibilita a análise do desempenho em diferentes condições de operação. A modelagem e análise pelo autor elaborada auxiliam no desenvolvimento deste trabalho.
