@@ -704,16 +704,47 @@ H_{ol}(s) = \frac{\rho f_R^2}{s} \cdot \frac{1 + s/(\rho f_R / \alpha)}{s} \cdot
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Trabalhos correlatos}
+\section{Estado da arte}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Nesta seção, serão apresentados alguns trabalhos relacionados ao tema deste estudo, que envolve o desenvolvimento e simulação de um ADPLL em tecnologia CMOS. Esses trabalhos servirão como base e referência para o desenvolvimento neste trabalho.
 
-O trabalho de Ioannis L. Syllaios em \cite{syllaios2008time} fornece um modelo de domínio do tempo para um ADPLL com aplicação em RF. Através deste modelo, o autor realiza uma análise detalhada do comportamento do circuito, abordando aspectos de projeto, desempenho e estabilidade. A simulação feita utilizando Matlab, e análise propostas nesse trabalho serão utilizadas como referência para a simulação do ADPLL desenvolvido neste estudo.
+Nesta seção, apresentamos uma análise abrangente do estado da arte em projetos de PLLs Digitais (ADPLLs) e PLLs Híbridos (N-PLLs) implementados em tecnologia CMOS de 65nm. O objetivo é entender as tendências e os avanços recentes nessa área, com foco em métricas como Figure of Merit (FOM), jitter, consumo de energia e outros parâmetros relevantes.
 
-Em \cite{staszewski2006all} Robert Bogdan Staszewski  apresenta um sintetizador de frequência totalmente digital implementado em tecnologia CMOS. O autor apresenta detalhadamente toda a estrutura de um ADPLL, e todas suas peculiaridades, discutindo os desafios de implementação do ADPLL em tecnologias avançadas e destaca as vantagens do uso de uma abordagem totalmente digital em relação às soluções analógicas tradicionais. Essas informações são de grande importância para o dimensionamento do ADPLL principalmente quanto a analise de frequência e ruido de fase.
+%\subsubsection{ADPLLs em Tecnologia CMOS 65nm}
+%\subsection{N-PLLs em Tecnologia CMOS 65nm}
 
+Nesta seção, vamos explorar o estado da arte em PLLs Digitais (ADPLLs) e Híbridos (N-PLLs) implementados na tecnologia CMOS de 65nm. Para isso, utilizaremos como base os trabalhos mais relevantes e recentes na área, apresentando suas principais características, resultados e contribuições.
+Trabalho A: "A 529-µW Fractional-N All-Digital PLL Using TDC Gain Auto-Calibration and an Inverse-Class-F DCO in 65-nm CMOS" de Peng Chen
 
-O trabalho de Andersson Fredrik em \cite{andersson2010modeling} aborda a modelagem e caracterização de um ADPLL totalmente digital para uma aplicação WCDMA. A simulação feita em Matlab possibilita a análise do desempenho em diferentes condições de operação. A modelagem e análise pelo autor elaborada auxiliam no desenvolvimento deste trabalho.
+O trabalho de Peng Chen abordou a implementação de um ADPLL de baixo consumo de energia, utilizando uma calibração automática do ganho do TDC e um DCO de Classe-F Inverso. O estudo enfatizou a eficiência energética, alcançando um consumo de 529µW. Esse trabalho é relevante não apenas por sua abordagem de calibração, mas também pelo uso inovador da topologia de DCO.
+Trabalho B: "A 2.4 GHz fractional-N PLL with a low-power true single-phase clock prescaler" de Xincun Ji
+
+O estudo de Xincun Ji concentrou-se na implementação de um PLL Fractional-N de 2,4 GHz, utilizando um prescaler de clock de fase única de baixo consumo. O trabalho contribuiu para a redução do consumo de energia, ao mesmo tempo que manteve um bom desempenho de frequência. A escolha do prescaler é fundamental para a eficiência energética desse PLL.
+Trabalho C: "A 265-µW Fractional-N Digital PLL With Seamless Automatic Switching Sub-Sampling/Sampling Feedback Path and Duty-Cycled Frequency-Locked Loop in 65-nm CMOS" de Hanli Liu
+
+Hanli Liu apresentou um ADPLL com um caminho de feedback de amostragem/sub-amostragem que opera de forma contínua. O uso de um Duty-Cycled Frequency-Locked Loop (DC-FL) contribuiu para a eficiência energética, alcançando um consumo de 265µW. Esse trabalho é relevante por sua abordagem inovadora de controle de frequência.
+Trabalho D: "Design of a 1-V 3-mW 2.4-GHz Fractional-N PLL Synthesizer in 65nm CMOS" de Yongho Lee
+
+O trabalho de Yongho Lee focou na implementação de um PLL Fractional-N de 2,4 GHz com um consumo de 3mW. A escolha de um consumo energético razoável sem comprometer o desempenho de frequência é a principal contribuição deste estudo. Esse trabalho demonstra a importância do balanceamento entre consumo de energia e desempenho.
+Trabalho E: "Design of a Low Power Fractional-N PLL Frequency Synthesizer in 65nm CMOS" de Jack Ryan Chaille
+
+Jack Ryan Chaille propôs um PLL Fractional-N de baixo consumo de energia em tecnologia CMOS de 65nm. O estudo focou na otimização do consumo, alcançando um resultado de baixo consumo sem comprometer a qualidade do sinal gerado. A importância desse trabalho está na abordagem de baixa potência.
+Discussão e Tendências
+
+Os trabalhos analisados destacam a crescente preocupação com o consumo de energia e eficiência em PLLs Digitais e Híbridos em tecnologia CMOS de 65nm. Observamos uma tendência em explorar abordagens inovadoras, como otimização de componentes individuais (prescaler, DCO) e estratégias de controle de frequência (DC-FL). Além disso, a busca pelo equilíbrio entre consumo de energia e desempenho de frequência é um tema comum em todos esses trabalhos.
+
+Em resumo, o estado da arte na implementação de PLLs Digitais e Híbridos em tecnologia CMOS de 65nm revela uma busca constante por soluções que ofereçam desempenho excepcional e eficiência energética, abrindo espaço para futuras inovações e avanços nessa área.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\section{Trabalhos correlatos}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Nesta seção, serão apresentados alguns trabalhos relacionados ao tema deste estudo, que envolve o desenvolvimento e simulação de um ADPLL em tecnologia CMOS. Esses trabalhos servirão como base e referência para o desenvolvimento neste trabalho.
+%
+%O trabalho de Ioannis L. Syllaios em \cite{syllaios2008time} fornece um modelo de domínio do tempo para um ADPLL com aplicação em RF. Através deste modelo, o autor realiza uma análise detalhada do comportamento do circuito, abordando aspectos de projeto, desempenho e estabilidade. A simulação feita utilizando Matlab, e análise propostas nesse trabalho serão utilizadas como referência para a simulação do ADPLL desenvolvido neste estudo.
+%
+%Em \cite{staszewski2006all} Robert Bogdan Staszewski  apresenta um sintetizador de frequência totalmente digital implementado em tecnologia CMOS. O autor apresenta detalhadamente toda a estrutura de um ADPLL, e todas suas peculiaridades, discutindo os desafios de implementação do ADPLL em tecnologias avançadas e destaca as vantagens do uso de uma abordagem totalmente digital em relação às soluções analógicas tradicionais. Essas informações são de grande importância para o dimensionamento do ADPLL principalmente quanto a analise de frequência e ruido de fase.
+%
+%
+%O trabalho de Andersson Fredrik em \cite{andersson2010modeling} aborda a modelagem e caracterização de um ADPLL totalmente digital para uma aplicação WCDMA. A simulação feita em Matlab possibilita a análise do desempenho em diferentes condições de operação. A modelagem e análise pelo autor elaborada auxiliam no desenvolvimento deste trabalho.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Considerações Finais}
