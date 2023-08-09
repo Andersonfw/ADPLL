@@ -707,32 +707,46 @@ H_{ol}(s) = \frac{\rho f_R^2}{s} \cdot \frac{1 + s/(\rho f_R / \alpha)}{s} \cdot
 \section{Estado da arte}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Nesta seção, apresentamos uma análise abrangente do estado da arte em projetos de PLLs Digitais (ADPLLs) e PLLs Híbridos (N-PLLs) implementados em tecnologia CMOS de 65nm. O objetivo é entender as tendências e os avanços recentes nessa área, com foco em métricas como \textit{Figure of Merit} (FOM), \textit{jitter}, consumo de energia e outros parâmetros relevantes.
+Nesta seção, apresentamos uma análise abrangente do estado da arte em projetos de sintetizadores Digitais (ADPLLs) e fracionais (N-PLLs) implementados em tecnologia CMOS de 65nm. O objetivo é entender as tendências e os avanços recentes nessa área, com foco em métricas como \textit{Figure of Merit} (FOM), \textit{jitter}, consumo de energia e outros parâmetros relevantes.
 
 %\subsubsection{ADPLLs em Tecnologia CMOS 65nm}
 %\subsection{N-PLLs em Tecnologia CMOS 65nm}
 
-Trabalho A: "A 529-µW Fractional-N All-Digital PLL Using TDC Gain Auto-Calibration and an Inverse-Class-F DCO in 65-nm CMOS" de Peng Chen
+% Please add the following required packages to your document preamble:
+% \usepackage{graphicx}
+\begin{table}[]
+	\caption{Métricas de outros trabalhos}
+	\label{tab:others_works}
+	\resizebox{\columnwidth}{!}{%
+		\begin{tabular}{cccccc}
+			\hline
+			& \textbf{529} & \textbf{Liu ADPLL} & \textbf{Liu N-PLL} & \textbf{Xincun} & \textbf{Yongho} \\ \hline
+			\textbf{Processo CMOS (nm)}        & 65           & 65                 & 65                 & 65              & 65              \\ \hline
+			\textbf{Range de Frequência (GHz)} & 1,9-2,6      & 2,0-2,8            & 2,1-3,1            & 2,16-2,7        & 1,9-2,7         \\ \hline
+			\textbf{Potência (mW)}             & 0,53         & 0,98               & 0,27               & 8               & 2,94            \\ \hline
+			\textbf{FoM(dB)}                   & -244         & -246               & -237               & -230            &                 \\ \hline
+			\textbf{Jitter (ps)}               & 0,87         & 0,53               & 2,8                & 0,86            &                \\	\hline
+		\end{tabular}%
+	}
+\end{table}
 
-em \cite{
-O trabalho de Peng Chen abordou a implementação de um ADPLL de baixo consumo de energia, utilizando uma calibração automática do ganho do TDC e um DCO de Classe-F Inverso. O estudo enfatizou a eficiência energética, alcançando um consumo de 529µW. Esse trabalho é relevante não apenas por sua abordagem de calibração, mas também pelo uso inovador da topologia de DCO.
-Trabalho B: "A 2.4 GHz fractional-N PLL with a low-power true single-phase clock prescaler" de Xincun Ji
+O trabalho de \cite{chen2021529} aborda a implementação de um ADPLL de baixo consumo de energia para frequência de $2,4 GHz$, utilizando uma calibração automática do ganho do TDC e um DCO de Classe-F Inverso. O estudo enfatizou a eficiência energética, alcançando um consumo de $529\mu W$ e uma FoM de $-244dB$. 
 
-O estudo de Xincun Ji concentrou-se na implementação de um PLL Fractional-N de 2,4 GHz, utilizando um prescaler de clock de fase única de baixo consumo. O trabalho contribuiu para a redução do consumo de energia, ao mesmo tempo que manteve um bom desempenho de frequência. A escolha do prescaler é fundamental para a eficiência energética desse PLL.
-Trabalho C: "A 265-µW Fractional-N Digital PLL With Seamless Automatic Switching Sub-Sampling/Sampling Feedback Path and Duty-Cycled Frequency-Locked Loop in 65-nm CMOS" de Hanli Liu
 
-Hanli Liu apresentou um ADPLL com um caminho de feedback de amostragem/sub-amostragem que opera de forma contínua. O uso de um Duty-Cycled Frequency-Locked Loop (DC-FL) contribuiu para a eficiência energética, alcançando um consumo de 265µW. Esse trabalho é relevante por sua abordagem inovadora de controle de frequência.
-Trabalho D: "Design of a 1-V 3-mW 2.4-GHz Fractional-N PLL Synthesizer in 65nm CMOS" de Yongho Lee
+O ADPLL abordado no trabalho de \cite{Liu2018ADPLL}  focou em aplicações de IoT. O destaque deste estudo é a obtenção de uma FoM de $-246 dB$ e um consumo de energia de $0,98mW$.
 
-O trabalho de Yongho Lee focou na implementação de um PLL Fractional-N de 2,4 GHz com um consumo de 3mW. A escolha de um consumo energético razoável sem comprometer o desempenho de frequência é a principal contribuição deste estudo. Esse trabalho demonstra a importância do balanceamento entre consumo de energia e desempenho.
-Trabalho E: "Design of a Low Power Fractional-N PLL Frequency Synthesizer in 65nm CMOS" de Jack Ryan Chaille
 
-Jack Ryan Chaille propôs um PLL Fractional-N de baixo consumo de energia em tecnologia CMOS de 65nm. O estudo focou na otimização do consumo, alcançando um resultado de baixo consumo sem comprometer a qualidade do sinal gerado. A importância desse trabalho está na abordagem de baixa potência.
-Discussão e Tendências
+Já \cite{liu2019265} apresentou DPLL de $2,4 GHz$ com caminho de \textit{feedback} de amostragem/sub-amostragem que opera de forma contínua. O uso de um \textit{Duty-Cycled Frequency-Locked Loop} (DC-FLL) contribuiu para a eficiência energética, alcançando um consumo de $265 \mu W$, e uma FoM de $-237dB$
 
-Os trabalhos analisados destacam a crescente preocupação com o consumo de energia e eficiência em PLLs Digitais e Híbridos em tecnologia CMOS de 65nm. Observamos uma tendência em explorar abordagens inovadoras, como otimização de componentes individuais (prescaler, DCO) e estratégias de controle de frequência (DC-FL). Além disso, a busca pelo equilíbrio entre consumo de energia e desempenho de frequência é um tema comum em todos esses trabalhos.
 
-Em resumo, o estado da arte na implementação de PLLs Digitais e Híbridos em tecnologia CMOS de 65nm revela uma busca constante por soluções que ofereçam desempenho excepcional e eficiência energética, abrindo espaço para futuras inovações e avanços nessa área.
+Com uso de N-PLL O estudo \cite{ji20172} concentrou-se na implementação de um PLL fracional (N-PLL) de $2,4 GHz$, utilizando um \textit{prescaler} de \textit{clock} de fase única, obtendo um consumo de $8mW$ e uma FoM de $-230dB$.
+
+
+
+Utilizando também um PLL fracional o trabalho de \cite{lee2017design} propôs N-PLL para um range de ($1,9-2,7GHz$) utilizando um modulador Sigma Delta.  O estudo apresentou um consumo de $3mW$ com um tempo de $12\mu s$ para estabilização do sintetizador.
+
+
+Em resumo, o estado da arte na implementação de sintetizadores em tecnologia CMOS de 65nm revela uma busca constante por soluções que ofereçam desempenho excepcional e eficiência energética, abrindo espaço para futuras inovações e avanços nessa área.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\section{Trabalhos correlatos}

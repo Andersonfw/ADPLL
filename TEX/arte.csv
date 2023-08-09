@@ -1,0 +1,6 @@
+﻿;529;Liu ADPLL;Liu N-PLL;Xincun;Yongho
+Processo CMOS (nm) ;65;65;65;65;65
+Range de Frequência (GHz);1,9-2,6;2,0-2,8;2,1-3,1;2,16-2,7;1,9-2,7
+Potência (mW);0,53;0,98;0,27;8;2,94
+FoM(dB);-244;-246;-237;-230;
+Jitter (ps);0,87;0,53;2,8;0,86;
