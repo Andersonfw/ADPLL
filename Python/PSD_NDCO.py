@@ -104,7 +104,7 @@ plt.plot(fq / 1e6, XdB_q, label="Quantized")
 plt.plot(fq / 1e6, np.full_like(fq, np.mean(XdB_q)), 'black', label="mean")
 plt.grid(visible=True)
 plt.legend()
-plt.xlabel('Feq (MHz)')
+plt.xlabel('Feq offset from carrier (MHz)')
 plt.ylabel('Amplitude')
 plt.show()
 

@@ -242,9 +242,11 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
     fftstr = f'len(x)={len_x:.2f}, rbw={rbw / 1e3:.2f}kHz, fstep={fstep / 1e3:.2f}kHz, nfft={nfft:d}, nwin={nwin:d}'
     print(f'Calculating the PSD: {fftstr} ...')
     f, X = signal.welch(x, fs=fs, window=signal.windows.blackman(nwin), nperseg=nwin, nfft=nfft, scaling='density')
+    #f, X = signal.welch(x, nperseg=nwin, scaling='density')
     X *= (np.sinc(f / fs)) ** 2  # correct for ZOH
     XdB = 10 * np.log10(X)
     XdB_sig = np.max(XdB)
+    XdB = XdB - XdB_sig
     print(f'Signal PSD peak = {XdB_sig:.2f} dB, 10log(rbw) = {10 * np.log10(rbw):.1f}')
     return XdB, f
 
@@ -321,7 +323,7 @@ FDCO = FREF * FCW  # Frequência desejada na saída do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
 NOISE = True
-IRR = True
+IRR = False
 SDM = True
 SAVE = True
 
@@ -366,7 +368,7 @@ MOD_ARITH = 2 ** 8
 '''
         NOISE
 '''
-noise_floor = -150  # noise floor [dBc)
+noise_floor = -120#-150  # noise floor [dBc)
 L_j = 10 ** (noise_floor / 10)  # noise level
 f_desired = F0  # desired frequency
 t_required = 1 / f_desired  # period of frequency
@@ -385,15 +387,15 @@ w_decimal = w_decimal.quantize(decimal.Decimal('1e-15'), rounding=decimal.ROUND_
 # Converte o número arredondado de volta para notação científica
 Jt_noise = float('{:e}'.format(j_decimal))
 Wt_noise = float('{:e}'.format(w_decimal))
-# print("jitter noise",Jt_noise)
-# print("Wander noise",Wt_noise)
+print("jitter noise",Jt_noise)
+print("Wander noise",Wt_noise)
 # Wt_noise = 12e-15  # Wander noise time
 # Jt_noise = 111e-15  # jitter noise time
 
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 60000  # simulação de X bordas de FREF
+TIME = 600  # simulação de X bordas de FREF
 OVERSAMPLE = 100  # over sample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 
@@ -669,32 +671,67 @@ if __name__ == "__main__":
         saveresults(timestop=stopTime.strftime("%H:%M:%S"), timediff=diftime.total_seconds(), fout_n=f_CKV / 1e6, desv_n=(f_CKV - (FREF * FCW)) / 1e3,
                     fout_T=np.mean(freqmeanall) / 1e6, desv_T=(np.mean(freqmeanall) - (FREF * FCW)) / 1e3,
                     fout_SDM=SDMfreq, desv_SDM=SDMDesv, result=simulationResults, dfresult=dfresult)
-    plt.figure()
-    plt.plot(np.arange(1, TIME, 1), freqs[1:TIME], '-r')
+    # plt.figure()
+    # plt.plot(np.arange(1, TIME, 1), freqs[1:TIME], '-r')
     # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
     # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
     # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
     # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
-    plt.grid(visible=True)
-    plt.show()
+    # plt.grid(visible=True)
+    # plt.show()
 
 
     # plot_DCO_signal()
 
     #
-    # Xdb_o, f = fun_calc_psd((x_or), fs, 1e3, 10e3)
-    # Xdb, f = fun_calc_psd((x), fs, 1e3, 10e3)
+    tckvOfsset = 150 * 70
+    # tckv = np.array(t_CKV[len(t_CKV)-1000:])
+    tckv = np.array(t_CKV[tckvOfsset:])
+    x_t = []
+    for a in range(len(tckv) - 1):
+        T = tckv[a + 1] - tckv[a]
+        f = 1/T
+        step = T/9
+        N=3
+        t = np.linspace(T/N, T, N) #np.arange(tckv[a],tckv[a + 1], step)
+        x = 1.2 * np.sin(2 * np.pi * f * t)
+        for b in range(len(x)):
+            x_t.append(x[b])
+    # Xdb_o, f = fun_calc_psd((t_CKV[150*70:]), 6e9, 100e3, 1e3)
+    Xdb_o, f = fun_calc_psd((x_t), N*2e9, 500e3, 10e3)
     #
-    # plt.figure()
-    # # plt.plot(f / 1e6, Xdb_o, label="Original")
-    # plt.semilogx(f, Xdb_o, label="Original")
-    # # plt.plot(f / 1e6, Xdb, label="ERROR")
+    plt.figure()
+    # plt.plot(f / 1e6, Xdb_o, label="Original")
+    # plt.plot(f[:round(len(f)/3)], Xdb_o[:round(len(f)/3)], label="Original")
+    plt.plot(f, Xdb_o, label="Original")
+    # plt.plot(np.linspace(0, 500*T, 499), x_t[len(x_t)-499:], label="Original")
+    # plt.plot(f / 1e6, Xdb, label="ERROR")
     # plt.semilogx(f, Xdb, label="With Noise")
-    # plt.grid(visible=True)
-    # plt.legend()
-    # plt.xlabel('Freq (MHz)')
-    # plt.ylabel('Amplitude (dB)')
-    # # plt.show()
+    plt.grid(visible=True)
+    plt.legend()
+    plt.xlabel('Freq (MHz)')
+    plt.ylabel('Amplitude (dB)')
+
+    X = np.fft.fft(x_t) / len(x_t)  # calcula a fft do sinal e normaliza pelo número de pontos do sinal
+    l = len(X)  # tamanho da fft
+    k = np.arange(l)  # vetor em k do tamanho do sinal
+    T = l / (N*2e9)  # resolução de frequência Fs / N = Res.; cada N ponto representa N*Res (Hz)
+    # frq = np.fft.fftfreq(1000, ts)
+    frq = k / T  # k representa um vetor que multiplica pelo valor de resolução da FFT
+
+    # se for SSB
+    frq = frq[range(int(l / 2))]  # FFT é uma função par, logo só é necessário metade dos pontos
+    X = X[range(int(l / 2))]  # FFT é uma função par, logo só é necessário metade dos pontos
+    # X2 = np.fft.fftshift(X)
+
+    plt.figure()
+    # plt.stem(freq, np.abs(X[np.arange(0,len(n),1)]), linefmt='b', markerfmt=' ',basefmt="-b")
+    # plt.stem(frq, 2 * abs(X), linefmt='b', markerfmt=' ', basefmt="-b")  # multiplica por 2 o modúlo de X, pois sendo
+    plt.plot(frq, 2 * abs(X))
+    # função par divide o sinal pela metade
+    plt.xlabel('Freq (Hz)')
+    plt.ylabel('FFT SSB Amplitude |X(freq)|')
+    plt.show()
 
 '''
 For each f_ref cycle
