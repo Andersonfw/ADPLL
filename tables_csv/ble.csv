@@ -1,0 +1,10 @@
+﻿;Bluetooth Low Energy (BLE);;Bluetooth Classico
+Banda de frequência;2.4GHz Banda ISM  (2.402 – 2.480 GHz);2.4GHz Banda ISM  (2.402 – 2.480 GHz);
+Canais;40 canais com 2MHz de espaçamento;79 canais com 1 MHz de espaçamento;
+Modulação;GFSK;GFSK, π/4 DQPSK, 8DPSK;
+Uso do Canal;Frequency-Hopping Spread Spectrum (FHSS);Frequency-Hopping Spread Spectrum (FHSS);
+Data Rate;Até 2Mb/s;Até 3Mb/s;
+Sensibilidade (RX);"""-82dBm"" para data rate de 125kb/s";"""-70 dBm""";
+Topologia de comunicação;"Ponto a ponto
+Broadcast
+Mesh";Ponto a ponto;
