@@ -2,24 +2,66 @@
 \chapter{Metodologia}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%A metodologia empregada é divida em três etapas principais. A primeira consiste na definição do \textit{System Level} do sintetizador, ou seja as especificações que devem ser atendidas para operação em comunicação \textit{Bluetooth}. A segunda parte é voltada ao dimensionamento de cada bloco que compõe o ADPLL, e por fim definir o método de teste para verificação e avaliação de desempenho do modelo proposto.
+
+%A metodologia empregada neste trabalho é dividida em três etapas principais, são elas:
+%\begin{itemize}
+%	
+%	\item Definição do \textit{System Level}: Nesta fase, estabelecemos as especificações que o sintetizador deve atender para operar em comunicações \textit{Bluetooth}. Isso inclui considerações sobre frequência, faixa de operação e outros requisitos de alto nível.
+%	
+%	\item Dimensionamento dos Blocos Individuais: Aqui, realizamos o dimensionamento de cada bloco que compõe o ADPLL. Isso envolve projetar os componentes internos, como o DCO, o \textit{Loop Filter} e outros elementos-chave, para atender às especificações do sistema.
+%	
+%	\item Definição dos Testes de Desempenho: Nesta etapa, estabelecemos o método de teste que será utilizado para verificar e avaliar o desempenho do modelo proposto. Isso inclui a definição de métricas de desempenho, procedimentos de teste e critérios de sucesso.
+%	
+%\end{itemize}
+%
+%
+%
+%
+%
+%
+%
+%Essas etapas formam a base do nosso processo de projeto e nos guiarão na criação de um ADPLL eficaz e eficiente para aplicações \textit{Bluetooth}."
+
+A metodologia empregada neste trabalho é essencialmente dividida em três etapas principais, cada uma desempenhando um papel crucial no desenvolvimento de um \textit{All-Digital Phase-Locked Loop} (ADPLL) otimizado para aplicações Bluetooth. 
+%Cada etapa é projetada de forma a assegurar que o ADPLL atenda aos requisitos de desempenho conforme a especificação definida em \cite{BluetoothSite}.
+
+\section{Definição do \textit{System Level}}
+
+Na primeira etapa, focamos na definição do \textit{System Level} do sintetizador. Isso envolve a identificação e estabelecimento das especificações de alto nível que o ADPLL deve atender em sistemas de comunicação \textit{Bluetooth} do tipo BLE.  As especificações incluem, entre outras coisas, a faixa de frequência de operação, sensibilidade, potência e os requisitos de ruido como \textit{Phase-noise}. \cite{BluetoothSite} pos
+Além disso, consideramos os desafios específicos associados à comunicação Bluetooth, como a necessidade de consumo extremamente baixo de energia, requisitos de baixo jitter e requisitos de rápida aquisição de frequência durante a inicialização. O resultado desta fase é um conjunto claro e completo de especificações que servirão como diretrizes para as etapas subsequentes.
+
+\cite{BluetoothSite} define as especificações tais como faixa de frequência de operação, sensibilidade, potência e também os requisitos de ruido como \textit{Phase-noise}. Com base nestes dados é efetuado um estudo de 
+
+Além disso, será considerado outros efeitos específicos associados à comunicação Bluetooth como minimizar os efeitos  de \textit{jitter} e . O resultado desta fase é um conjunto claro e completo de especificações que servirão como diretrizes para as etapas subsequentes.
+
+\section{Dimensionamento dos Blocos Individuais}
+
+Com as especificações do \textit{System Level} estabelecidas, passamos para a segunda etapa, que se concentra no dimensionamento detalhado de cada bloco que compõe o ADPLL. Isso inclui a concepção e dimensionamento dos componentes internos, como o Oscilador Controlado Digitalmente (DCO), o \textit{Loop Filter} e outros elementos críticos. Nesta fase, otimizamos cada bloco para atender às especificações do sistema, levando em consideração considerações como consumo de energia, jitter, linearidade e estabilidade de frequência. Além disso, exploramos técnicas avançadas de projeto, como o uso de DCOs de classe F inversa e calibração automática do ganho do Time-to-Digital Converter (TDC). O resultado é um projeto detalhado e bem fundamentado de cada bloco do ADPLL.
+
+\section{Definição dos Testes de Desempenho}
+
+
+Na terceira etapa, concentramos nossa atenção na definição dos testes de desempenho que serão utilizados para verificar e avaliar o desempenho do modelo proposto. Isso inclui a definição de métricas de desempenho específicas, procedimentos de teste rigorosos e critérios claros de sucesso. Nosso objetivo é garantir que o ADPLL atenda não apenas às especificações de sistema estabelecidas na Etapa 1, mas também que demonstre um desempenho superior em relação a parâmetros-chave, como figura de mérito (FOM), jitter e consumo de energia.
+
+Esta metodologia estruturada e abrangente nos fornecerá a base necessária para projetar, otimizar e avaliar um ADPLL de alta qualidade, alinhado com os requisitos críticos das aplicações Bluetooth de baixo consumo de energia. A seguir, apresentaremos cada etapa em detalhes, destacando as principais considerações e abordagens de projeto em cada fase do processo.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\section{System Level}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Fluxograma de operação}
+%\section{Dimensionamento}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Hardware}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{RTC}
+%\section{Simulação e teste}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Super capacitor}
+%\subsection{Phase-Loop}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

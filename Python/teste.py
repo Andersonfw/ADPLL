@@ -1,40 +1,62 @@
-def int_to_complemento2(valor, num_bits):
-    # Verificar se o valor está dentro do intervalo representável
-    limite_superior = 2 ** (num_bits - 1) - 1
-    limite_inferior = -2 ** (num_bits - 1)
-    # if valor < limite_inferior or valor > limite_superior:
-    #     raise ValueError("Valor fora do intervalo representável.")
+import numpy as np
+from scipy import signal
+import matplotlib.pyplot as plt
 
-    # Converter para representação binária
-    binario = bin(valor & int("1" * num_bits, 2))[2:]
+rng = np.random.default_rng()
 
-    # Preencher com zeros à esquerda se necessário
-    binario = binario.zfill(num_bits)
+# Generate a test signal, a 2 Vrms sine wave at 1234 Hz, corrupted by
+# 0.001 V**2/Hz of white noise sampled at 10 kHz.
 
-    return binario
+fs = 10e3
+N = 1e5
+amp = 2 * np.sqrt(2)
+freq = 1234.0
+noise_power = 0.001 * fs / 2
+time = np.arange(N) / fs
+x = amp * np.sin(2 * np.pi * freq * time)
+noise = rng.normal(scale=np.sqrt(noise_power) , size=time.shape)
+x += rng.normal(scale=np.sqrt(noise_power) , size=time.shape)
 
+# Compute and plot the power spectral density.
 
-def complemento2_to_int(binario):
-    # Verificar se o número é negativo (bit mais significativo é 1)
-    if binario[0] == "1":
-        # Aplicar complemento de 2 invertendo todos os bits
-        invertido = "".join("1" if bit == "0" else "0" for bit in binario)
+# f , Pxx_den = signal.welch(x , fs , nperseg=1024)
+f, Pxx_den = signal.welch(x, fs=fs, window=signal.windows.blackman(1024), nperseg=1024, scaling='density')
+Pxx_den *= (np.sinc(f / fs)) ** 2  # correct for ZOH
+XdB = 10 * np.log10(Pxx_den)
+plt.semilogy(f , Pxx_den)
+plt.ylim([0.5e-3 , 1])
+plt.xlabel('frequency [Hz]')
+plt.ylabel('PSD [V**2/Hz]')
+plt.show()
 
-        # Adicionar 1 ao resultado
-        complemento2 = bin(int(invertido, 2) + 1)
+# If we average the last half of the spectral density, to exclude the
+# peak, we can recover the noise power on the signal.
 
-        # Converter para valor inteiro negativo
-        valor = int(complemento2, 2) * -1
-    else:
-        # Converter para valor inteiro positivo
-        valor = int(binario, 2)
+print(np.mean(Pxx_den[256:]))
 
-    return valor
+# Now compute and plot the power spectrum.
 
+f , Pxx_spec = signal.welch(x , fs , 'flattop' , 1024 , scaling='spectrum')
+signal.lfilter()
 
-valor = 228
-num_bits = 8
+plt.figure()
+plt.semilogy(f , np.sqrt(Pxx_spec))
+plt.xlabel('frequency [Hz]')
+plt.ylabel('Linear spectrum [V RMS]')
+plt.show()
 
-complemento2 = complemento2_to_int(int_to_complemento2(valor, num_bits))
-# complemento2 = complemento2_to_int(complemento2)
-print("Valor em complemento de 2:", complemento2)
+# The peak height in the power spectrum is an estimate of the RMS
+# amplitude.
+
+print(np.sqrt(Pxx_spec.max()))
+# 2.0077340678640727
+x[int(N // 2):int(N // 2) + 10] *= 50.
+f , Pxx_den = signal.welch(x , fs , nperseg=1024)
+f_med , Pxx_den_med = signal.welch(x , fs , nperseg=1024 , average='median')
+plt.semilogy(f , Pxx_den , label='mean')
+plt.semilogy(f_med , Pxx_den_med , label='median')
+plt.ylim([0.5e-3 , 1])
+plt.xlabel('frequency [Hz]')
+plt.ylabel('PSD [V**2/Hz]')
+plt.legend()
+plt.show()

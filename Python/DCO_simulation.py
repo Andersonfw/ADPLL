@@ -116,10 +116,10 @@ def TDC(tR, t_ckv, T0_avg):
         # tR_Q = TDC_chains
         error = 0
         NUM_ZEROS +=1
-    else:
+    # else:
         # error = 1 - (tR_Q * TDC_res) / T0_avg
-        error1 = 1 - (tR_Q * TDC_res) / T0_avg
-        error = (tR_Q * TDC_res) / T0_avg
+    error1 = 1 - (tR_Q * TDC_res) / T0_avg
+    error = (tR_Q * TDC_res) / T0_avg
     return error1
 
 
@@ -246,7 +246,6 @@ def fun_calc_psd(x, fs=1, rbw=100e3, fstep=None):
     X *= (np.sinc(f / fs)) ** 2  # correct for ZOH
     XdB = 10 * np.log10(X)
     XdB_sig = np.max(XdB)
-    XdB = XdB - XdB_sig
     print(f'Signal PSD peak = {XdB_sig:.2f} dB, 10log(rbw) = {10 * np.log10(rbw):.1f}')
     return XdB, f
 
@@ -324,8 +323,8 @@ FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
 NOISE = True
 IRR = False
-SDM = True
-SAVE = True
+SDM = False
+SAVE = False
 
 '''
         BANK CAPACITOR
@@ -352,9 +351,9 @@ trk_f_lsb = 0  # valor do LSB em Trekking fractional mode
 '''
         TDC
 '''
-TDC_res = 15e-12  # delay of each  inverter
+TDC_res = 50e-12  # delay of each  inverter
 TDC_chains = 40  # number of inverters
-AVG_FCKV = 128  # number of edges to average actual frequency
+AVG_FCKV = 128#128  # number of edges to average actual frequency
 NUM_ZEROS = 0
 '''
         LOOP FILTER
@@ -368,11 +367,11 @@ MOD_ARITH = 2 ** 8
 '''
         NOISE
 '''
-noise_floor = -120#-150  # noise floor [dBc)
+noise_floor = -150#-150  # noise floor [dBc)
 L_j = 10 ** (noise_floor / 10)  # noise level
-f_desired = F0  # desired frequency
+f_desired = FCW*FREF #F0  # desired frequency
 t_required = 1 / f_desired  # period of frequency
-Thermal_noise = -130  # Up converted Thermal noise with deltaf frequency offset [dBc]
+Thermal_noise = -130#-130  # Up converted Thermal noise with deltaf frequency offset [dBc]
 L_w = 10 ** (Thermal_noise / 10)  # noise level
 deltaf = 3.5e6  # offset frequency
 
@@ -395,7 +394,7 @@ print("Wander noise",Wt_noise)
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 600  # simulação de X bordas de FREF
+TIME = 6000  # simulação de X bordas de FREF
 OVERSAMPLE = 100  # over sample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 
@@ -506,10 +505,14 @@ if __name__ == "__main__":
     freqmeanSDM = []
     V = 0
     K = 0
+    # acq_bank_calib = True
+    # trk_bank_calib = True
+    # pvt_bank_calib = True
+    # offseterror = 2
     for k in range(1, TIME):
         K += FCW  # reference phase accumulator
-        if K > (MOD_ARITH - 1):
-            K = K - (MOD_ARITH - 1)
+        # if K > (MOD_ARITH - 1):
+        #     K = K - (MOD_ARITH - 1)
         RR_k += FCW
         t_R = k * FREF_edge
         U1[index] = 0
@@ -522,9 +525,9 @@ if __name__ == "__main__":
             countn += 1
             n += 1
             RV_n = n  # variable phase accumulator
-            V += 1
-            if V > (MOD_ARITH - 1):
-                V = V - (MOD_ARITH - 1)
+            # V += 1
+            # if V > (MOD_ARITH - 1):
+            #     V = V - (MOD_ARITH - 1)
             # delta_f = f_CKV - (F_start_DCO + (KDCO * (OTW)))
             delta_f = f_CKV - FDCO
             TDEV_I = delta_f / (f_CKV * (f_CKV + delta_f))
@@ -616,7 +619,8 @@ if __name__ == "__main__":
             if IRR:
                 phase_error[k] = IRR_filter(k, phase_error[k])
                 fractional_error_trk_IRR.append(phase_error[k])
-            NTW[k] = (phase_error[k]) * Kp_TRK - Kp_TRK * (phase_error[k - 1]) + Ki_TRK * (phase_error[k - 1]) + NTW[k - 1]  # calcula o novo valor de NTW
+            # NTW[k] = (phase_error[k]) * Kp_TRK - Kp_TRK * (phase_error[k - 1]) + Ki_TRK * (phase_error[k - 1]) + NTW[k - 1]  # calcula o novo valor de NTW
+            NTW[k] = (phase_error[k]) * Kp_TRK
             # OTW_acq = NTW[k] * (FREF / FREQ_RES_ACQ)
             # if IRR:
             #     irr = IRR_filter(k, NTW[k])
@@ -629,6 +633,9 @@ if __name__ == "__main__":
             elif OTW[k] < 0:
                 OTW[k] = 0
             OTW_trk = OTW[k]
+        # OTW_pvt = 153
+        # OTW_acq = 124
+        # OTW_trk = 43
         f_CKV = SET_DCO(OTW_pvt, OTW_acq, OTW_trk, OTW_trk_f)
         last_To = T0
         T0 = 1 / f_CKV
@@ -671,67 +678,103 @@ if __name__ == "__main__":
         saveresults(timestop=stopTime.strftime("%H:%M:%S"), timediff=diftime.total_seconds(), fout_n=f_CKV / 1e6, desv_n=(f_CKV - (FREF * FCW)) / 1e3,
                     fout_T=np.mean(freqmeanall) / 1e6, desv_T=(np.mean(freqmeanall) - (FREF * FCW)) / 1e3,
                     fout_SDM=SDMfreq, desv_SDM=SDMDesv, result=simulationResults, dfresult=dfresult)
+
+    xo = np.array(t_CKV[len(t_CKV) - 20000:])
+    # xo = np.array(t_CKV[2000:50000])
+    x =  np.zeros(len(xo))
+    y = np.zeros(len(xo))
+    t0 = 1/(FCW*FREF)
+    for i in range (len(xo) -2):
+        x[i]= t0 -(xo[i+1] - xo[i])
+        lastTo = (xo[i + 1] - xo[i])
+        y[i] = (xo[i + 2] - xo[i + 1]) - (lastTo)
+
+    print("Max error: ",np.max(x/1e-15))
+    plt.figure()
+    plt.plot(x/1e-15, 'b')
+    # plt.plot(y / 1e-15, 'r')
+    plt.grid(visible=True)
+    plt.show()
+
     # plt.figure()
-    # plt.plot(np.arange(1, TIME, 1), freqs[1:TIME], '-r')
+    # # plt.plot(np.arange(1, TIME, 1), freqs[1:TIME], '-r')
     # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
-    # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
-    # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
-    # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
+    # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
+    # # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
+    # # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
     # plt.grid(visible=True)
     # plt.show()
 
-
-    # plot_DCO_signal()
-
-    #
-    tckvOfsset = 150 * 70
+    tckvOfsset = len(t_CKV) - 20000
     # tckv = np.array(t_CKV[len(t_CKV)-1000:])
     tckv = np.array(t_CKV[tckvOfsset:])
+    # tckv = np.array(t_CKV[:tckvOfsset])
+    # tckv = (np.array(freqs[130:]))
+    # tckv = 1/tckv
     x_t = []
     for a in range(len(tckv) - 1):
         T = tckv[a + 1] - tckv[a]
+
         f = 1/T
-        step = T/9
-        N=3
+        # f=tckv[a]
+        # T=1/f
+        step = T/5
+        N=10
+        # x = np.zeros(N)
+        # x[0]=0
+        # x[1] = 1.2
+        # x[2] = -1.2
+        # x[3] = 0
         t = np.linspace(T/N, T, N) #np.arange(tckv[a],tckv[a + 1], step)
-        x = 1.2 * np.sin(2 * np.pi * f * t)
+        x = 1.2 * np.sin(2 * np.pi * 2e9 * t)
         for b in range(len(x)):
             x_t.append(x[b])
-    # Xdb_o, f = fun_calc_psd((t_CKV[150*70:]), 6e9, 100e3, 1e3)
-    Xdb_o, f = fun_calc_psd((x_t), N*2e9, 500e3, 10e3)
-    #
-    plt.figure()
-    # plt.plot(f / 1e6, Xdb_o, label="Original")
-    # plt.plot(f[:round(len(f)/3)], Xdb_o[:round(len(f)/3)], label="Original")
-    plt.plot(f, Xdb_o, label="Original")
-    # plt.plot(np.linspace(0, 500*T, 499), x_t[len(x_t)-499:], label="Original")
-    # plt.plot(f / 1e6, Xdb, label="ERROR")
-    # plt.semilogx(f, Xdb, label="With Noise")
-    plt.grid(visible=True)
-    plt.legend()
-    plt.xlabel('Freq (MHz)')
-    plt.ylabel('Amplitude (dB)')
 
-    X = np.fft.fft(x_t) / len(x_t)  # calcula a fft do sinal e normaliza pelo número de pontos do sinal
-    l = len(X)  # tamanho da fft
-    k = np.arange(l)  # vetor em k do tamanho do sinal
-    T = l / (N*2e9)  # resolução de frequência Fs / N = Res.; cada N ponto representa N*Res (Hz)
-    # frq = np.fft.fftfreq(1000, ts)
-    frq = k / T  # k representa um vetor que multiplica pelo valor de resolução da FFT
-
-    # se for SSB
-    frq = frq[range(int(l / 2))]  # FFT é uma função par, logo só é necessário metade dos pontos
-    X = X[range(int(l / 2))]  # FFT é uma função par, logo só é necessário metade dos pontos
-    # X2 = np.fft.fftshift(X)
 
     plt.figure()
-    # plt.stem(freq, np.abs(X[np.arange(0,len(n),1)]), linefmt='b', markerfmt=' ',basefmt="-b")
-    # plt.stem(frq, 2 * abs(X), linefmt='b', markerfmt=' ', basefmt="-b")  # multiplica por 2 o modúlo de X, pois sendo
-    plt.plot(frq, 2 * abs(X))
-    # função par divide o sinal pela metade
-    plt.xlabel('Freq (Hz)')
-    plt.ylabel('FFT SSB Amplitude |X(freq)|')
+    plt.plot( x_t[0:30], label="Original")
     plt.show()
+    # plot_DCO_signal()
+    # xo = np.array(t_CKV[1000 * 70:])
+    # x =  np.zeros(len(xo))
+    # for i in range (len(xo) -1):
+    #     x[i]= 1/(xo[i+1] - xo[i])
+    # x = np.array(freqmeanall)
+    # x = np.array(freqs[300:])
+    x = np.array(x_t)
+    # Crie um DataFrame do Pandas com uma única linha
+    x = tckv
+    df = pd.DataFrame([x])
+
+    # Especifique o nome do arquivo CSV onde deseja salvar
+    nome_arquivo_csv = 'freqmeanall.csv'
+
+    # Use a função to_csv para salvar o DataFrame no arquivo CSV em uma única linha
+    df.to_csv(nome_arquivo_csv , index=False , header=False )
+
+    # b = 1/FREF * 2 * np.pi
+    # a = np.array([1.0 , -1.0] , dtype=float)
+    # # x = np.array(x , dtype=float)
+    # # x = signal.lfilter([b,b], a,  x - np.mean(x))
+    # Xdb_o, f = fun_calc_psd(x, 2e9*N, 8e3, 1e3)
+    # # f , Xdb_o = signal.welch(x , fs=FREF , window=signal.windows.blackman(256) , nperseg=256 , scaling='spectrum')
+    # # Xdb_o *= (np.sinc(f / fs)) ** 2  # correct for ZOH
+    # # XdB = 10 * np.log10(Xdb_o)
+    # XdB_sig = np.max(Xdb_o)
+    # Xdb_o = Xdb_o - XdB_sig
+    # plt.figure()
+    # plt.semilogx(f, Xdb_o, label="Original")
+    # # plt.plot(np.linspace(0, 500*T, 499), x_t[len(x_t)-499:], label="Original")
+    # # plt.plot(f / 1e6, Xdb, label="ERROR")
+    # # plt.semilogx(f, Xdb, label="With Noise")
+    # # plt.axis([0, 10e10, -200, 0])
+    # plt.grid(visible=True)
+    # plt.legend()
+    # plt.xlabel('Freq (Hz)')
+    # plt.ylabel('Phase Noise [dBc/Hz]')
+    # plt.show()
+
+
 
 '''
 For each f_ref cycle
