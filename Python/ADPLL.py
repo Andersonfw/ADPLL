@@ -3,6 +3,7 @@ Created on setembro 12 22:53:30 2023
 
 @author: Ânderson Felipe Weschenfelder
 """
+import math
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -242,6 +243,8 @@ def fun_calc_psd(x , fs=1 , rbw=100e3 , fstep=None):
     if nwin > len_x:
         nwin = len_x
         rbw = fs * 1.62 / nwin
+    num_segments = 8
+    nwin = math.floor(len(x) / num_segments)
     fftstr = (f'len(x)={len_x:.2f}, rbw={rbw / 1e3:.2f}kHz, fstep={fstep / 1e3:.2f}kHz, nfft={nfft:d}, nwin={nwin:d}')
     print(f'Calculating the PSD: {fftstr} ...')
     f , X = signal.welch(x , fs=fs , window=signal.windows.blackman(nwin) , nperseg=nwin , nfft=nfft ,
@@ -315,7 +318,7 @@ FREQ_RES_PVT = 0
 FREQ_RES_ACQ = 0
 FREQ_RES_TRK = 0
 FREQ_RES_TRK_F = 0
-L = 1e-9  # Indutor utilizado
+L = 2e-9  # Indutor utilizado
 C0 = 0  # valor de capacitância inicial
 pvt_lsb = 0  # valor do LSB em PVT mode
 acq_lsb = 0  # valor do LSB em acquisition mode
@@ -325,7 +328,7 @@ trk_f_lsb = 0  # valor do LSB em Trekking fractional mode
 '''
         TDC
 '''
-TDC_res = 50e-12  # delay of each  inverter
+TDC_res = 15e-12  # delay of each  inverter
 TDC_chains = 40  # number of inverters
 AVG_FCKV = 128  # 128  # number of edges to average actual frequency
 NUM_ZEROS = 0
@@ -477,6 +480,10 @@ if __name__ == "__main__":
     freqmeanall = []
     freqmeanSDM = []
     K = 0
+    acq_bank_calib = True
+    trk_bank_calib = True
+    pvt_bank_calib = True
+    offseterror = 4
     for k in range(1 , TIME):
         K += FCW  # reference phase accumulator
         RR_k += FCW
@@ -573,9 +580,9 @@ if __name__ == "__main__":
             elif OTW[k] < 0:
                 OTW[k] = 0
             OTW_trk = OTW[k]  # calcula o novo valor de NTW como inteiro
-        # OTW_pvt = 153
-        # OTW_acq = 124
-        # OTW_trk = 43
+        OTW_pvt = 153
+        OTW_acq = 124
+        OTW_trk = 43
         f_CKV = SET_DCO(OTW_pvt , OTW_acq , OTW_trk , OTW_trk_f)
         last_To = T0
         T0 = 1 / f_CKV
@@ -614,17 +621,18 @@ if __name__ == "__main__":
                     fout_SDM=SDMfreq , desv_SDM=SDMDesv , result=simulationResults , dfresult=dfresult)
 
     #####   PLOT DOS VALORES DE DELTA DE TEMPO DE RUIDO EM RELAÇÃO A TO ##############
-    xo = np.array(t_CKV[len(t_CKV) - 20000:])
-    # xo = np.array(t_CKV[2000:50000])
+    # xo = np.array(t_CKV[len(t_CKV) - 20000:])
+    xo = np.array(t_CKV[20000:])
     x = np.zeros(len(xo))
     y = np.zeros(len(xo))
     t0 = 1 / (FCW * FREF)
     for i in range(len(xo) - 2):
-        x[i] = t0 - (xo[i + 1] - xo[i])
+        diff = t0 - (xo[i + 1] - xo[i])
+        x[i] = diff * 2*np.pi * FCW * FREF
         lastTo = (xo[i + 1] - xo[i])
         y[i] = (xo[i + 2] - xo[i + 1]) - (lastTo)
 
-    # print("Max error: ",np.max(x/1e-15))
+    print("Max error: ",np.max(x/1e-15))
     # plt.figure()
     # plt.plot(x/1e-15, 'b')
     # # plt.plot(y / 1e-15, 'r')
@@ -643,23 +651,24 @@ if __name__ == "__main__":
     # plt.show()
     ##################################################################################
 
+
     #######################   RECONSTRUÇÃO DO SINAL ##################################
     # tckvOfsset = len(t_CKV) - 100000
-    tckvOfsset = int(200 * FCW)
-    tckv = np.array(t_CKV[tckvOfsset:])
-    x_t = []
-    for a in range(len(tckv) - 1):
-        T = tckv[a + 1] - tckv[a]
-        f = 1 / T
-        step = T / 5
-        N = 10
-        t = np.linspace(T / N , T , N)
-        x = 1.2 * np.sin(2 * np.pi * f * t)
-        for b in range(len(x)):
-            x_t.append(x[b])
-
-    # x = np.array(x_t)
-    x = tckv
+    # tckvOfsset = int(200 * FCW)
+    # tckv = np.array(t_CKV[tckvOfsset:])
+    # x_t = []
+    # for a in range(len(tckv) - 1):
+    #     T = tckv[a + 1] - tckv[a]
+    #     f = 1 / T
+    #     step = T / 5
+    #     N = 10
+    #     t = np.linspace(T / N , T , N)
+    #     x = 1.2 * np.sin(2 * np.pi * f * t)
+    #     for b in range(len(x)):
+    #         x_t.append(x[b])
+    #
+    # # x = np.array(x_t)
+    # x = tckv
     ##################################################################################
 
     #############  SALVA EM UM CSV OS DADOS DO ARRAY DE TCKV #########################
@@ -669,8 +678,14 @@ if __name__ == "__main__":
     ##################################################################################
 
     ###############  CALCULA O PHASE NOISE DO DCO ####################################
-    Xdb_o , f = fun_calc_psd(x , int(F_DESIRED * N) , 8e3 , 10e3)
-    XdB_sig = np.max(Xdb_o)
+    # Xdb_o , f = fun_calc_psd(x , int(F_DESIRED * 4) , 8e3 , 10e3)
+    print("calc PSD")
+    b = 1
+    a = np.array([1.0 , -1.0] , dtype=float)
+    xphase = np.array(x , dtype=float)
+    x = signal.lfilter([b], a,  xphase - np.mean(xphase))
+    Xdb_o , f = fun_calc_psd(x , 2e9 , 2e3 , 700)
+    # XdB_sig = np.max(Xdb_o)
     # Xdb_o = Xdb_o - XdB_sig   #   NORMALIZA PELO MAIOR GANHO
     plt.figure()
     plt.semilogx(f , Xdb_o , label="Phase Noise")

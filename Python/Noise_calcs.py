@@ -8,10 +8,10 @@ import numpy as np
 
 FREF = 26e6
 TREF = 1/FREF
-FDCO = 2e9
+FDCO = 2.4e9
 TDCO = 1/FDCO
 DELTA_F = 3.5e6
-TDC_RES = 20e-12
+TDC_RES = 12e-12
 FRES_DCO = 31e3
 
 

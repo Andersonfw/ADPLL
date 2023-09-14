@@ -505,10 +505,10 @@ if __name__ == "__main__":
     freqmeanSDM = []
     V = 0
     K = 0
-    # acq_bank_calib = True
-    # trk_bank_calib = True
-    # pvt_bank_calib = True
-    # offseterror = 2
+    acq_bank_calib = True
+    trk_bank_calib = True
+    pvt_bank_calib = True
+    offseterror = 2
     for k in range(1, TIME):
         K += FCW  # reference phase accumulator
         # if K > (MOD_ARITH - 1):
