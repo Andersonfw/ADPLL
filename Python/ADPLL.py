@@ -178,6 +178,24 @@ def plot_DCO_signal():
     plt.ylabel('Amplitude (V)')
     plt.show()
 
+def plot_phaseNoiseMask():
+    # Geração das frequências
+    frequencies_1k_to_3_5M = np.linspace(1000, 3.5e6, 300)  # De 1k a 3,5M
+    frequencies_3_5M_to_10M= np.linspace(3.5e6, 10e6, num=200)  # De 3,5M a 10M
+    frequencies_above_10M = np.linspace(10e6, 2.2e9, num=300)  # Acima de 10M
+
+    # Geração dos níveis de fase noise correspondentes
+    phase_noise_1k_to_1M = np.full_like(frequencies_1k_to_3_5M, -89)
+    phase_noise_1M_to_10M = np.full_like(frequencies_3_5M_to_10M, -124)
+    phase_noise_above_10M = np.full_like(frequencies_above_10M, -132)
+
+    # Concatenação dos dados
+    freq = np.concatenate((frequencies_1k_to_3_5M, frequencies_3_5M_to_10M, frequencies_above_10M))
+    phase_noise = np.concatenate((phase_noise_1k_to_1M, phase_noise_1M_to_10M, phase_noise_above_10M))
+
+    return phase_noise, freq
+    
+
 
 def plot_histogram_noise(lenght):
     '''
@@ -243,7 +261,7 @@ def fun_calc_psd(x , fs=1 , rbw=100e3 , fstep=None):
     if nwin > len_x:
         nwin = len_x
         rbw = fs * 1.62 / nwin
-    num_segments = 8
+    num_segments = 16
     nwin = math.floor(len(x) / num_segments)
     fftstr = (f'len(x)={len_x:.2f}, rbw={rbw / 1e3:.2f}kHz, fstep={fstep / 1e3:.2f}kHz, nfft={nfft:d}, nwin={nwin:d}')
     print(f'Calculating the PSD: {fftstr} ...')
@@ -371,7 +389,7 @@ print("Wander noise" , Wt_noise)
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 6000  # simulação de X bordas de FREF
+TIME = 20000  # simulação de X bordas de FREF
 OVERSAMPLE = 100  # over sample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 
@@ -621,8 +639,8 @@ if __name__ == "__main__":
                     fout_SDM=SDMfreq , desv_SDM=SDMDesv , result=simulationResults , dfresult=dfresult)
 
     #####   PLOT DOS VALORES DE DELTA DE TEMPO DE RUIDO EM RELAÇÃO A TO ##############
-    # xo = np.array(t_CKV[len(t_CKV) - 20000:])
-    xo = np.array(t_CKV[20000:])
+    xo = np.array(t_CKV[len(t_CKV) - 100000:])
+    # xo = np.array(t_CKV[20000:])
     x = np.zeros(len(xo))
     y = np.zeros(len(xo))
     t0 = 1 / (FCW * FREF)
@@ -632,7 +650,7 @@ if __name__ == "__main__":
         lastTo = (xo[i + 1] - xo[i])
         y[i] = (xo[i + 2] - xo[i + 1]) - (lastTo)
 
-    print("Max error: ",np.max(x/1e-15))
+    print("Max error: ",np.max(x))
     # plt.figure()
     # plt.plot(x/1e-15, 'b')
     # # plt.plot(y / 1e-15, 'r')
@@ -672,8 +690,9 @@ if __name__ == "__main__":
     ##################################################################################
 
     #############  SALVA EM UM CSV OS DADOS DO ARRAY DE TCKV #########################
+    print("Save CSV")
     df = pd.DataFrame([x])
-    nome_arquivo_csv = 'freqmeanall.csv'
+    nome_arquivo_csv = 'Python/freqmeanall.csv'
     df.to_csv(nome_arquivo_csv , index=False , header=False)
     ##################################################################################
 
@@ -685,10 +704,11 @@ if __name__ == "__main__":
     xphase = np.array(x , dtype=float)
     x = signal.lfilter([b], a,  xphase - np.mean(xphase))
     Xdb_o , f = fun_calc_psd(x , 2e9 , 2e3 , 700)
-    # XdB_sig = np.max(Xdb_o)
-    # Xdb_o = Xdb_o - XdB_sig   #   NORMALIZA PELO MAIOR GANHO
+    mask_phase_noise, freq  = plot_phaseNoiseMask()
     plt.figure()
     plt.semilogx(f , Xdb_o , label="Phase Noise")
+    plt.semilogx(freq, mask_phase_noise, label='Phase Noise MASK')
+    
     # # plt.plot(f / 1e6, Xdb, label="ERROR")
     # # plt.semilogx(f, Xdb, label="With Noise")
     # # plt.axis([0, 10e10, -200, 0])

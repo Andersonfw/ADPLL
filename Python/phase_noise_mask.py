@@ -2,14 +2,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Geração das frequências
-frequencies_1k_to_1M = np.logspace(3, 6, num=300)  # De 1k a 1M
-frequencies_1M_to_10M = np.logspace(6, 7, num=200)  # De 1M a 10M
-frequencies_above_10M = np.logspace(7, 9, num=300)  # Acima de 10M
+
+# frequencies_1k_to_1M = np.logspace(3, 6, num=300)  # De 1k a 1M
+# frequencies_1M_to_10M = np.logspace(6, 7, num=200)  # De 1M a 10M
+# frequencies_above_10M = np.logspace(7, 9, num=300)  # Acima de 10M
+
+frequencies_1k_to_1M = np.linspace(1000, 3.5e6, 300)  # De 1k a 3,5M
+frequencies_1M_to_10M = np.linspace(3.5e6, 10e6, num=200)  # De 3,5M a 10M
+frequencies_above_10M = np.linspace(10e6, 2.2e9, num=300)  # Acima de 10M
 
 # Geração dos níveis de fase noise correspondentes
-phase_noise_1k_to_1M = np.full_like(frequencies_1k_to_1M, -90)
-phase_noise_1M_to_10M = np.full_like(frequencies_1M_to_10M, -130)
-phase_noise_above_10M = np.full_like(frequencies_above_10M, -140)
+phase_noise_1k_to_1M = np.full_like(frequencies_1k_to_1M, -89)
+phase_noise_1M_to_10M = np.full_like(frequencies_1M_to_10M, -124)
+phase_noise_above_10M = np.full_like(frequencies_above_10M, -132)
 
 # Concatenação dos dados
 frequencies = np.concatenate((frequencies_1k_to_1M, frequencies_1M_to_10M, frequencies_above_10M))

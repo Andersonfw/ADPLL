@@ -323,7 +323,7 @@ FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
 NOISE = True
 IRR = False
-SDM = False
+SDM = True
 SAVE = False
 
 '''
@@ -505,9 +505,9 @@ if __name__ == "__main__":
     freqmeanSDM = []
     V = 0
     K = 0
-    acq_bank_calib = True
-    trk_bank_calib = True
-    pvt_bank_calib = True
+    # acq_bank_calib = True
+    # trk_bank_calib = True
+    # pvt_bank_calib = True
     offseterror = 2
     for k in range(1, TIME):
         K += FCW  # reference phase accumulator
