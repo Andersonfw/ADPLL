@@ -26,11 +26,11 @@ if nargin<2,   fs = 1;   end;
 len = length(x);
 nwin = round(fs * 1.62 / rbw);
 nfft = round(fs / fstep);
-num_segments = 16;
+num_segments = 8;
 window_length = floor ( length ( x )/ num_segments );
 if nwin > len, nwin=len; rbw=fs*1.62/nwin; end
 fftstr = sprintf('fftlen=%d rbw=%gkHz, fstep=%gkHz, nfft=%d, nwin=%d', ...
-                  len, rbw/1e3, fstep, nfft, nwin);
+                  len, rbw/1e3, fstep, nfft, window_length);
 fprintf(2,'Calculating the PSD: %s ...\n', fftstr);
 [X f] = pwelch(x, blackman(window_length), [], nfft, fs);
 X = X .* (sinc(f/fs)).^2;	% correct for ZOH
