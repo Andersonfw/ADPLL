@@ -29,6 +29,7 @@ nfft = round(fs / fstep);
 num_segments = 8;
 window_length = floor ( length ( x )/ num_segments );
 if nwin > len, nwin=len; rbw=fs*1.62/nwin; end
+% window_length = nwin
 fftstr = sprintf('fftlen=%d rbw=%gkHz, fstep=%gkHz, nfft=%d, nwin=%d', ...
                   len, rbw/1e3, fstep, nfft, window_length);
 fprintf(2,'Calculating the PSD: %s ...\n', fftstr);

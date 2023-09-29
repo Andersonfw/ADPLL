@@ -191,11 +191,15 @@ N = 69.23  # relação de f/f_r
 # l = [2**-3, 2**-3, 2**-3, 2**-4]
 
 # Aassignment 4
-fr = 40e6  # Frequeência de referência
-a = 2 ** -7  # alpha value
-p = 2 ** -14  # rho value
+# fr = 40e6  # Frequeência de referência
+fr = 26e6  # Frequeência de referência
+# a = 2 ** -7  # alpha value
+a = 2 ** -5  # alpha value
+# p = 2 ** -14  # rho value
+p = 2 ** -11  # rho value
 # Coeficiêntes do filtro IIR
-l = [2 ** -2, 2 ** -3, 2 ** -2, 2 ** -3]
+# l = [2 ** -2, 2 ** -3, 2 ** -2, 2 ** -3]
+l = [2 ** -2 , 2 ** -1 , 2 ** -1 , 2 ** -1]
 
 # Open Loop Unit Gain
 w1 = a * fr * ( 0.5 + 0.5 * np.sqrt(1 + (4 * p / a**2)))
