@@ -106,25 +106,65 @@ def SET_DCO(pvt_OTW=255 , acq_OTW=255 , trk_i_OTW=64 , trk_f_OTW=0):
     return f
 
 
-def TDC(tR , t_ckv , T0_avg):
+def TDC(tR , t_ckv , TCKV_accumulator):
     global TDC_res , T0 , TDC_chains , RV_n , RV_k , NUM_ZEROS
-    dif = (tR - t_ckv)
-    # tR_Q = int((tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
-    tR_Q = abs(int((t_ckv - tR) / TDC_res))
+        # tR_Q = int((tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
+   
+    '''
+    Average of CKV Clock and normalization to DCO period
+    
+    '''
+    TDC_BITS_RESOLUTION = 24    #Bits de resolução do TDC
+    TDC_BITS_AVG_TCKV = 15    #Bits de resolução do TDC
+    T_Q =  int(( TCKV_accumulator * AVG_FCKV)  / TDC_res)    # quantização do accumulador em relação a resolução do TDC
+    K_TDC = int(( 1 / T_Q ) * 2**TDC_BITS_AVG_TCKV) # ganho do TDC
+    
+    # avg_res = (F_DESIRED / 2**24)
+    # quant = abs((1/T0_avg)/avg_res)
+    # freq = quant * avg_res
+    # t0 = 1/freq
+    # T0_avg = 1/(abs((1/T0_avg)/avg_res)*avg_res)
     # tR_Q = abs(tR_Q)
     # delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
     # error = 1 - (tR_Q * TDC_res) / T0
-    if tR_Q > TDC_chains and RV_n != RV_k:
-        pass
-    if tR_Q > TDC_chains:  # and RV_n == (RV_k+1):
-        # tR_Q = TDC_chains
-        error1 = 1 -  (TDC_chains * TDC_res) / T0_avg
-        NUM_ZEROS += 1
-    else:
-    # error = 1 - (tR_Q * TDC_res) / T0_avg
-        error1 = 1 - (tR_Q * TDC_res) / T0_avg
-    error = (tR_Q * TDC_res) / T0_avg
+    tR_Q = abs(int((t_ckv - tR) / TDC_res)) #qauntização da diferença em relação a resolução do TDC
+    BINARI_ERROR = tR_Q * ( K_TDC / 2**TDC_BITS_AVG_TCKV) * 2**TDC_BITS_RESOLUTION
+    NUMERICAL_ERROR = (1 / 2**TDC_BITS_RESOLUTION) * BINARI_ERROR
+    error1 = 1 - NUMERICAL_ERROR
+    # if tR_Q > TDC_chains and RV_n != RV_k:
+    #     pass
+    # if tR_Q > TDC_chains:  # and RV_n == (RV_k+1):
+    #     # tR_Q = TDC_chains
+    #     error1 = 1 -  (TDC_chains * TDC_res) / T0_avg
+    #     NUM_ZEROS += 1
+    # else:
+    # # error = 1 - (tR_Q * TDC_res) / T0_avg
+    #     error1 = 1 - (tR_Q * TDC_res) / T0_avg
+    # error = (tR_Q * TDC_res) / T0_avg
     return error1
+    # dif = (tR - t_ckv)
+    # # tR_Q = int((tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
+    # tR_Q = abs(int((t_ckv - tR) / TDC_res))
+    # T0_avg =  abs(T0_avg / TDC_res) * TDC_res
+    # avg_res = (F_DESIRED / 2**15)
+    # quant = abs((1/T0_avg)/avg_res)
+    # freq = quant * avg_res
+    # t0 = 1/freq
+    # T0_avg = 1/(abs((1/T0_avg)/avg_res)*avg_res)
+    # # tR_Q = abs(tR_Q)
+    # # delta_tR = int(((t_CKV - ntdc_init)/(n - n_init)) / TDC_res)
+    # # error = 1 - (tR_Q * TDC_res) / T0
+    # if tR_Q > TDC_chains and RV_n != RV_k:
+    #     pass
+    # if tR_Q > TDC_chains:  # and RV_n == (RV_k+1):
+    #     # tR_Q = TDC_chains
+    #     error1 = 1 -  (TDC_chains * TDC_res) / T0_avg
+    #     NUM_ZEROS += 1
+    # else:
+    # # error = 1 - (tR_Q * TDC_res) / T0_avg
+    #     error1 = 1 - (tR_Q * TDC_res) / T0_avg
+    # error = (tR_Q * TDC_res) / T0_avg
+    # return error1
 
 
 def SDM_modulator(ntw_f):
@@ -312,12 +352,20 @@ FREF = 26e6  # Frequência de referência
 F_DESIRED = 2e9
 # F_DESIRED = 4.8e9
 # FCW = 76.923076927661896  # 76.9230  # Frequency command word
-FCW = F_DESIRED / FREF  # 76.9230  # Frequency command word
+# FCW = F_DESIRED / FREF  # 76.9230  # Frequency command word
+FCW_I_bits = 8
+FCW_F_bits = 24
+fcw_temp = (F_DESIRED) / FREF
+fcw_f_res = FREF/2**FCW_F_bits
+fCW_f , fCW_i = math.modf(fcw_temp) #* fcw_f_res
+fCW_f = int((fCW_f * FREF) / fcw_f_res)
+fCW_f = (fCW_f * fcw_f_res )/ FREF
+FCW =   fCW_i + fCW_f  # Frequency command word
 FDCO = FREF * FCW  # Frequência desejada na saída do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
 NOISE = True
-IRR = True
+IRR = False
 SDM = False
 SAVE = False
 
@@ -535,7 +583,7 @@ if __name__ == "__main__":
             else:
                 t_CKV.append(t_CKV[n - 1] + T0)
         if trk_bank_calib:
-            error_fractional[k] = TDC(t_R , t_CKV[n - 1] , 1 / np.mean(freq_array))
+            error_fractional[k] = TDC(t_R , t_CKV[n - 1] , 1 / np.sum(freq_array))
 
         RV_k = RV_n  # variable phase accumulator
         erro_esperado = f_CKV / FREF
@@ -673,7 +721,7 @@ if __name__ == "__main__":
     #############  SALVA EM UM CSV OS DADOS DO ARRAY DE phase #########################
     print("Save CSV")
     df = pd.DataFrame([phase])
-    nome_arquivo_csv = 'Python/phaseErrorinRad.csv'
+    nome_arquivo_csv = 'phaseErrorinRad.csv'
     df.to_csv(nome_arquivo_csv , index=False , header=False)
     ##################################################################################
 
