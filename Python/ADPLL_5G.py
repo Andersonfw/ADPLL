@@ -103,6 +103,7 @@ def TDC(tR , t_ckv ,TCKV_accumulator):
    
     '''
     Average CKV Clock and normalization to DCO period
+    Ref: ADPLL Design for WiMAX (pg. 67)
     '''
     T_Q =  int(( TCKV_accumulator * AVG_FCKV)  / TDC_res)    # quantização do accumulador em relação a resolução do TDC
     K_TDC = int(( 1 / T_Q ) * 2**TDC_BITS_AVG_TCKV) # ganho do TDC
@@ -253,7 +254,7 @@ def fun_calc_psd(x , fs=1 , rbw=100e3 , fstep=None):
         nwin = len_x
         rbw = fs * 1.62 / nwin
     num_segments = 8
-    nwin = math.floor(len(x) / num_segments)
+    # nwin = math.floor(len(x) / num_segments)
     fftstr = (f'len(x)={len_x:.2f}, rbw={rbw / 1e3:.2f}kHz, fstep={fstep / 1e3:.2f}kHz, nfft={nfft:d}, nwin={nwin:d}')
     print(f'Calculating the PSD: {fftstr} ...')
     f , X = signal.welch(x , fs=fs , window=signal.windows.blackman(nwin) , nperseg=nwin , nfft=nfft ,scaling='density')
@@ -320,7 +321,7 @@ FDCO = FREF * FCW  # Frequência desejada na saída do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
 NOISE = True
-IRR = False
+IRR = True
 SDM = False
 SAVE = False
 
@@ -352,7 +353,7 @@ trk_f_lsb = 0  # valor do LSB em Trekking fractional mode
 '''
         TDC
 '''
-TDC_res = 10e-12  # delay of each  inverter
+TDC_res = 15e-12  # delay of each  inverter
 TDC_chains = 20  # number of inverters
 AVG_FCKV = 128  # 128  # number of edges to average actual frequency
 NUM_ZEROS = 0
@@ -557,7 +558,7 @@ if __name__ == "__main__":
             OTW_pvt = OTW[k]
             if diff_freq(f_CKV) <= FREQ_RES_PVT:
                 count += 1
-                if count == 3:#5:
+                if count == 5:#5:
                     pvt_bank_calib = True
                     print("Frequência na saída do PVT bank: " , f_CKV / 1e6 , "MHz em " , k ,
                           "bordas de FREF e valor do banco ajustado em: " , OTW_pvt)
@@ -602,8 +603,8 @@ if __name__ == "__main__":
                 k - 1]  # calcula o novo valor de NTW
             # NTW[k] = (phase_error[k]) * Kp_TRK
             OTW[k] = NTW[k] * (FREF / FREQ_RES_TRK) # gain normalization of TRK mode
-            if OTW[k] > 64:
-                OTW[k] = 64
+            if OTW[k] > 2**TRK_NB_I:
+                OTW[k] = 2**TRK_NB_I
             elif OTW[k] < 0:
                 OTW[k] = 0
             OTW_trk = OTW[k]  # calcula o novo valor de NTW como inteiro
@@ -613,7 +614,7 @@ if __name__ == "__main__":
         T0 = 1 / f_CKV
         freqs[k] = f_CKV/DIVISION_OUTPUT  # insere o valor de frequência ajustado no index k
         freqmeanall.append(f_CKV)
-#######################################################################################################################
+        #######################################################################################################################
     
     #####   PRINTS DE INFORMAÇÃO DA SIMULAÇÃO ##############
     print("freq ajustada: " , f_CKV / 1e6 ,
@@ -622,6 +623,7 @@ if __name__ == "__main__":
 
     SDMfreq = 0
     SDMDesv = 0
+    Last_100_edges_CKV = np.array(freqmeanall[len(freqmeanall)-100:])
     if SDM:
         SDMfreq = np.mean(freqmeanSDM) / 1e6
         SDMDesv = (np.mean(freqmeanSDM) - (F_DESIRED * 2)) / 1e3
@@ -629,9 +631,11 @@ if __name__ == "__main__":
               "MHz E a desejada era de :" , (F_DESIRED * 2) / 1e6 ,
               "MHz diferença de :" , SDMDesv , "kHz")
 
-    print("freq ajustada considerando a média total: " , np.mean(freqmeanall) / 1e6 ,
+    print("freq ajustada considerando a média das ultimas 100 Bordas: " , np.mean(Last_100_edges_CKV) / 1e6 ,
           "MHz E a desejada era de :" , (F_DESIRED * 2) / 1e6 ,
-          "MHz diferença de :" , (np.mean(freqmeanall) - (F_DESIRED * 2)) / 1e3 , "kHz")
+          "MHz diferença de :" , (np.mean(Last_100_edges_CKV) - (F_DESIRED * 2)) / 1e3 , "kHz")
+    
+    print("ULTIMOS 100 CLOCKS:  Max freq:", np.max(Last_100_edges_CKV), "MHz  MIN freq:", np.min(Last_100_edges_CKV), "MHz")
 
     print("Overflow TDC: " , NUM_ZEROS)
     print("number repetition of n index:" , n)
@@ -692,13 +696,14 @@ if __name__ == "__main__":
     ###############  CALCULA O PHASE NOISE DO DCO ####################################
     print("cálculo da PSD")
     print(len(x))
-    Xdb_o , f = fun_calc_psd(x , F_DESIRED , 500e3 , 1e3)
+    Xdb_o , f = fun_calc_psd(x , F_DESIRED , 100e3 , 1e3)
     mask_phase_noise, freq  = plot_phaseNoiseMask() # obter a mascara de phase noise
     plt.figure()
     plt.semilogx(f , Xdb_o , label="Phase Noise")
     plt.semilogx(freq, mask_phase_noise, label='Phase Noise MASK')
     plt.grid(visible=True)
     plt.legend()
+    plt.yticks([-160, -150, -140, -130, -120, -110, -100, -90, -80, -70])
     plt.xlabel('Freq (Hz)')
     plt.ylabel('Phase Noise [dBc/Hz]')
     # plt.show()

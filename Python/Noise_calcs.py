@@ -6,13 +6,14 @@ Created on setembro 12 17:46:23 2023
 import numpy as np
 
 
-FREF = 32e6
-TREF = 1/FREF
-FDCO = 4.8e9
-TDCO = 1/FDCO
 DELTA_F = 500e3
 TDC_RES = 15e-12
 FRES_DCO = 32e3
+FREF = 26e6
+TREF = 1/FREF
+FDCO = 4.8e9
+TDCO = int(1/FDCO / TDC_RES) * TDC_RES
+
 
 
 noise_DCO_time = (1/12) * ((FRES_DCO/DELTA_F)**2) * TREF * (np.sinc(DELTA_F/FREF)**2)
