@@ -3,8 +3,43 @@ import matplotlib.pyplot as plt
 import control
 import sympy as sp
 import warnings
+from scipy import signal
 
 warnings.filterwarnings('ignore')
+
+def fun_calc_psd(x , fs=1 , rbw=100e3 , fstep=None):
+    '''
+    Calculate power spectral density
+
+    INPUT arguments
+    x     :  data vector
+    fs    :  sample rate [Hz]
+    rbw   :  resolution bandwidth [Hz]
+    fstep :  FFT frequency bin separation [Hz]
+    OUTPUT
+    XdB	: spectrum of x [dB]
+    f	: frequency vector [Hz]
+    '''
+
+    if fstep is None:
+        fstep = rbw / 1.62
+    len_x = len(x)
+    nwin = round(fs * 1.62 / rbw)
+    nfft = round(fs / fstep)
+    if nwin > len_x:
+        nwin = len_x
+        rbw = fs * 1.62 / nwin
+    num_segments = 8
+    # nwin = math.floor(len(x) / num_segments)
+    fftstr = (f'len(x)={len_x:.2f}, rbw={rbw / 1e3:.2f}kHz, fstep={fstep / 1e3:.2f}kHz, nfft={nfft:d}, nwin={nwin:d}')
+    print(f'Calculating the PSD: {fftstr} ...')
+    f , X = signal.welch(x , fs=fs , window=signal.windows.blackman(nwin) , nperseg=nwin , nfft=nfft ,scaling='density')
+    X *= (np.sinc(f / fs)) ** 2  # correct for ZOH
+    XdB = 10 * np.log10(X)
+    XdB_sig = np.max(XdB)
+    print(f'Signal PSD peak = {XdB_sig:.2f} dB, 10log(rbw) = {10 * np.log10(rbw):.1f}')
+    return XdB , f
+
 
 '''
             Exibir duas funções de transferência em uma mesma figura
@@ -26,13 +61,14 @@ def format_plot(name1, name2, sys1, sys2,  omega, margins=False):
     if margins:
         gm1, pm1, sm1, wg1, wp1, ws1 = control.stability_margins(sys1)
         gm2, pm2, sm2, wg2, wp2, ws2 = control.stability_margins(sys2)
+        wp1 = wp1 / (2 * np.pi)
+        wg1 = wg1 / (2 * np.pi)
+        wp2 = wp2 / (2 * np.pi)
+        wg2 = wg2 / (2 * np.pi)
 
     omega1 = omega1 / (2 * np.pi)
     omega2 = omega2 / (2 * np.pi)
-    wp1 = wp1 / (2 * np.pi)
-    wg1 = wg1 / (2 * np.pi)
-    wp2 = wp2 / (2 * np.pi)
-    wg2 = wg2 / (2 * np.pi)
+
 
     plt.subplot(221)
     if margins:
@@ -181,7 +217,7 @@ def h_to_bode(H=None, numerador=None, denominador=None, irr=None, freq=None, mar
 '''
 # Símbolo 's' para a variável de Laplace
 s = sp.symbols('s')
-N = 69.23  # relação de f/f_r
+N = 4.8e9/26e6  # relação de f/f_r
 
 # Livro Bogdan PG 137/152
 # fr = 26e6  # Frequeência de referência
@@ -196,7 +232,7 @@ fr = 26e6  # Frequeência de referência
 # a = 2 ** -7  # alpha value
 a = 2 ** -5  # alpha value
 # p = 2 ** -14  # rho value
-p = 2 ** -11  # rho value
+p = 2 ** -8  # rho value
 # Coeficiêntes do filtro IIR
 # l = [2 ** -2, 2 ** -3, 2 ** -2, 2 ** -3]
 l = [2 ** -2 , 2 ** -1 , 2 ** -1 , 2 ** -1]
@@ -210,6 +246,10 @@ HOL = (a + p * fr / s) * (fr / s)
 # HOL = a * (fr/s)
 
 if __name__ == "__main__":
+    '''
+    loop BandWidth = alpha/2pi * FREF
+    
+    '''
     w = np.logspace(3, 8, 10000)  # List of frequencies in rad/sec to be used for frequency response ( 10^-1 até 10^3)
     margem = True
     # show the response in frequency of signal sampled
@@ -236,13 +276,36 @@ if __name__ == "__main__":
     format_plot("Closed Loop Hcl TDC(s)", "Closed Loop Hcl TDC(s) + IRR", Hcl_TDC, Hcl_TDC_irr, w, margins=True)
 
     plt.figure()
+    t, y = control.step_response(Hcl_TDC)
+
+    # Plotar a resposta ao degrau
+    plt.plot(t, y)
+    plt.title('Resposta ao Degrau')
+    plt.xlabel('Tempo (s)')
+    plt.ylabel('Resposta')
+    plt.grid()
+    plt.show()
+
+    plt.figure()
     # # Função de tranferência de loop fechado para o DCO
     Hcl_DCO = (1 / (1 + Hol))
     Hcl_DCO_irr = (1 / (1 + Hol_irr))
     format_plot("Closed Loop Hcl DCO(s)", "Closed Loop Hcl DCO(s) + IRR", Hcl_DCO, Hcl_DCO_irr, w, margins=True)
 
+    plt.figure()
+    Hcl_ADPLL = Hcl_DCO + Hcl_TDC + Hcl_ref
+    Hcl_ADPLL_irr = Hcl_DCO_irr + Hcl_TDC_irr + Hcl_ref_irr
+    format_plot("Phase Noise ADPLL", "Phase Noise ADPLL + IRR", Hcl_ADPLL, Hcl_ADPLL_irr, w, margins=False)
     # plt.figure()
     # control.bode(Hcl_DCO_irr, w, Hz=True, dB=True, deg=False, Plot=True, margins=False)
+    mag, phase, f = control.bode(Hcl_ADPLL, omega=w, Hz=True, dB=False, deg=True, margins=margem, plot=False)
+    Xdb_o , f = fun_calc_psd(mag , fr , 100e3 , 1e3)
+    plt.figure()
+    plt.semilogx(f , Xdb_o , label="Phase Noise")
+    plt.grid(visible=True)
+    plt.legend()
+    plt.xlabel('Freq (Hz)')
+    plt.ylabel('Phase Noise [dBc/Hz]')
 
     plt.tight_layout()
     plt.show()

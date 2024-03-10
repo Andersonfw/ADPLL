@@ -50,12 +50,12 @@ def Init_DCO():
     FREQ_RES_TRK = trk_i_bank.freq_lsb
     FREQ_RES_TRK_F = trk_f_bank.freq_lsb
     print("PVT -----  fmin: " , pvt_bank.fmin , " fmax: " , pvt_bank.fmax , "cmax: " , pvt_bank.cmax , " cmim: " ,
-          pvt_bank.cmin , " LSB: " , pvt_bank.lsb)
+          pvt_bank.cmin , " LSB: " , pvt_bank.lsb, " FREQ LSB: " , pvt_bank.freq_lsb)
     print("ACQ -----  fmin: " , acq_bank.fmin , " fmax: " , acq_bank.fmax , "cmax: " , acq_bank.cmax , " cmim: " ,
-          acq_bank.cmin , " LSB: " , acq_bank.lsb)
+          acq_bank.cmin , " LSB: " , acq_bank.lsb, " FREQ LSB: " , acq_bank.freq_lsb)
     print("TRK_I -----  fmin: " , trk_i_bank.fmin , " fmax: " , trk_i_bank.fmax , "cmax: " , trk_i_bank.cmax ,
           " cmim: " ,
-          trk_i_bank.cmin , " LSB: " , trk_i_bank.lsb)
+          trk_i_bank.cmin , " LSB: " , trk_i_bank.lsb, " FREQ LSB: " , trk_i_bank.freq_lsb)
     # print("TRK_F -----  fmin: ", trk_f_bank.fmin, " fmax: ", trk_f_bank.fmax, "cmax: ", trk_f_bank.cmax, " cmim: ",
     #       trk_f_bank.cmin, " LSB: ", trk_f_bank.lsb)
     return
@@ -96,7 +96,7 @@ def SET_DCO(pvt_OTW=255 , acq_OTW=255 , trk_i_OTW=64 , trk_f_OTW=0):
         
     return f
 
-
+tdc_delay = []
 def TDC(tR , t_ckv ,TCKV_accumulator):
     global TDC_res , T0 , TDC_chains , RV_n , RV_k , NUM_ZEROS, AVG_FCKV, TDC_BITS_RESOLUTION, TDC_BITS_RESOLUTION
     # tR_Q = int((tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
@@ -112,6 +112,7 @@ def TDC(tR , t_ckv ,TCKV_accumulator):
     '''
     tR_Q = abs(int((t_ckv - tR) / TDC_res)) #quantização da diferença em relação a resolução do TDC
     Binary_error = tR_Q * ( K_TDC / 2**TDC_BITS_AVG_TCKV) * 2**TDC_BITS_RESOLUTION
+    tdc_delay.append(tR_Q)
     Float_error = (1 / 2**TDC_BITS_RESOLUTION) * Binary_error
     error = 1 - Float_error
     return error
@@ -200,11 +201,13 @@ def plot_histogram_noise(lenght):
     jitter_noise = np.random.randn(lenght) * Jt_noise
     wander_noise = np.random.randn(lenght) * Wt_noise
     plt.subplot(121)
-    plt.hist(jitter_noise , bins=50 , label="Normal distribution of the Jitter noise")
+    plt.hist(jitter_noise , bins=100 , label="Jitter $\sigma_{\Delta t}$ = 73 fs ") 
+    #label="Normal distribution of the Jitter noise")
     plt.legend()
     plt.grid(visible=True)
     plt.subplot(122)
-    plt.hist(wander_noise , bins=50 , color="r" , label="Normal distribution of the wander noise")
+    plt.hist(wander_noise , bins=100 , color="r" , label="Wander $\sigma_{\Delta T}$ = 4 fs ") 
+    #label="Normal distribution of the wander noise")
     plt.legend()
     plt.grid(visible=True)
     plt.show()
@@ -292,6 +295,18 @@ def saveresults(timestop , timediff , fout_n , desv_n , fout_T , desv_T , fout_S
     testeTesting = pd.concat([result , dfresult] , ignore_index=True , axis=0)
     testeTesting.to_csv(csvsaveresults , index=False , sep=';')
 
+def savePhaseNoise(phasenoise, freq):
+    '''
+    Save results of phase Noise in a csv file
+    '''
+    global csvsavePhaseresults
+
+    locale.setlocale(locale.LC_ALL , 'pt_BR.UTF-8')
+    #phasenoise_locale = [locale.format_string('%.4f', valor, grouping=True) for valor in phasenoise]
+    # freq_locale = [locale.format_string('%.4f', valor, grouping=True) for valor in freq]
+    # df = pd.DataFrame({'PN': phasenoise_locale, 'freq': freq_locale})
+    df = pd.DataFrame({'PN': phasenoise, 'freq': freq})
+    df.to_csv(csvsavePhaseresults , index=False , sep=';',float_format='%.2f')
 
 '''
         DEFINIÇÕES GERAIS
@@ -321,7 +336,7 @@ FDCO = FREF * FCW  # Frequência desejada na saída do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
 NOISE = True
-IRR = True
+IRR = False
 SDM = False
 SAVE = False
 
@@ -333,8 +348,10 @@ ACQ_NB = 6  # número de bits em acquisition mode
 TRK_NB_I = 7  # número de bits Trekking integer mode
 TRK_NB_F = 5  # número de bits Trekking fractional mode
 FR_PVT = 1000e6  # range de frequência em PVT mode
-FR_ACQ = 80e6  # range de frequência em acquisition mode
-FR_TRK_I = 2e6  # range de frequência em Trekking integer mode
+""" FR_ACQ = 80e6  # range de frequência em acquisition mode
+FR_TRK_I = 2e6  # range de frequência em Trekking integer mode """
+FR_ACQ = 160e6  # range de frequência em acquisition mode
+FR_TRK_I = 4e6  # range de frequência em Trekking integer mode
 FR_TRK_F = FR_TRK_I / 2 ** TRK_NB_I  # range de frequência em Trekking fractional mode
 F0_PVT = 4.8e9 # frequência central do PVT bank
 F0_ACQ = 2.44e9 * 2  # frequência central do ACQ bank
@@ -353,8 +370,8 @@ trk_f_lsb = 0  # valor do LSB em Trekking fractional mode
 '''
         TDC
 '''
-TDC_res = 15e-12  # delay of each  inverter
-TDC_chains = 20  # number of inverters
+TDC_res = 20e-12  # delay of each  inverter
+TDC_chains = 28  # number of inverters
 AVG_FCKV = 128  # 128  # number of edges to average actual frequency
 NUM_ZEROS = 0
 TDC_BITS_RESOLUTION = 24  #Bits resolution of TDC
@@ -362,11 +379,22 @@ TDC_BITS_AVG_TCKV = 15    #Bits resolution to average the clock CKV
 TDC_DIVISOR = DIVISION_OUTPUT
 '''
         LOOP FILTER
+        
+The traditional rule of thumb is to select the offset frequency where (reference
+phase noise+TDC phase noise) and DCO phase noise meet as the PLL bandwidth
+Besides the bandwidth, for type-II PLL, we have another value which is the damping factor
+ζ. For our case, a over-damped type-II PLL (ζ ≥ 1) is preferred since it avoids a significant
+gain peaking 7
+Calculating the TDC noise and DCO noise, the values are equal ate 70kHz of distance the fv to DCO, thus the 
+Loop Filter bandwidth is dimensioned to thhis frequency
 '''
 Kp_PVT = 2 ** -2
 Kp_ACQ = 2 ** -5
 Kp_TRK = 2 ** -5
-Ki_TRK = 2 ** -11
+Ki_TRK = 2 ** -12
+w_n = np.sqrt(Ki_TRK) * FREF
+damping_factor = 0.5 * (Kp_TRK /  np.sqrt(Ki_TRK))
+print(f"LOOP FILTER --- Wn={w_n}rad/s and Damping Factor={damping_factor}")
 MOD_ARITH = 2 ** 8
 
 '''
@@ -374,14 +402,14 @@ MOD_ARITH = 2 ** 8
 '''
 noise_floor = -150  # -150  # noise floor [dBc)
 L_j = 10 ** (noise_floor / 10)  # noise level
-f_desired = F_DESIRED  # F0  # desired frequency
+f_desired = F_DESIRED * 2 # F0  # desired frequency
 t_required = 1 / f_desired  # period of frequency
 Thermal_noise = -111  # 6dB acima do desjado para dobro de freq.  # Up converted Thermal noise with deltaf frequency offset [dBc]
 L_w = 10 ** (Thermal_noise / 10)  # noise level
 deltaf = 500e3  # offset frequency
 
 j_noise = (t_required / (2 * np.pi)) * np.sqrt(L_j * f_desired)  # Jitter noise standard deviation
-W_noise = deltaf / f_desired * np.sqrt(t_required) * np.sqrt(L_w)  # Wander noise standard deviation
+W_noise = deltaf / f_desired * np.sqrt(t_required) * np.sqrt(L_w)  # Wander noise standard deviation (including the 1/f noise)
 # Converte o número em um decimal
 j_decimal = decimal.Decimal(j_noise)
 w_decimal = decimal.Decimal(W_noise)
@@ -411,6 +439,7 @@ y2 = np.zeros(TIME)
 y3 = np.zeros(TIME)
 y_IRR = np.zeros(TIME)
 IRR_coef = [2 ** -2 , 2 ** -1 , 2 ** -1 , 2 ** -1]
+f_BW_Irr = IRR_coef[0]/ 2 * np.pi * FREF
 
 '''
         SIGMA DELTA MODULATOR
@@ -472,6 +501,7 @@ OTW = np.zeros(TIME)  # oscilator tuning word
         Files
 '''
 csvsaveresults = "resultssimulations.csv"
+csvsavePhaseresults = "Phaseresultssimulations.csv"
 dfresult = pd.DataFrame()
 
 ################################################################################################################
@@ -494,8 +524,8 @@ if __name__ == "__main__":
     print("frequência inicial do DCO é: " , f_CKV / 1e6 , "MHz")
 
     ################  PLOT DO RUIDO ##################################
-    # plot_histogram_noise(10000)
-    # plot_DCO_signal()
+    #plot_histogram_noise(100000)
+    #plot_DCO_signal()
 
     ################  CRIA CABEÇALHO DO CSV SE NÃO EXISTE ##################################
     if not os.path.exists(csvsaveresults):
@@ -666,25 +696,35 @@ if __name__ == "__main__":
     ########################################################
 
     ###############   PLOT DOS VALORES DE FREQUÊNCIA E/OU ERROS ######################
-    # plt.figure()
-    # plt.plot(freqs[1:500]/1e9, '-r', label="DCO")
+    plt.figure()
+    plt.plot(freqs[1:500]/1e9, '-r', label="DCO")
     # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
     # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
     # # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
     # # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
-    # plt.legend()
-    # plt.xlabel('Reference Clock Cycles')
-    # plt.ylabel('Frequency out of DCO (Hz)')
-    # plt.grid(visible=True)
+    plt.legend()
+    plt.xlabel('Reference Clock Cycles')
+    plt.ylabel('Frequency out of DCO (Hz)')
+    plt.grid(visible=True)
     # plt.show()
     ##################################################################################
 
+    plt.figure()
+    plt.plot(tdc_delay, '-r', label="TDC")
+    # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
+    # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
+    # # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
+    # # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
+    plt.legend()
+    plt.xlabel('Reference Clock Cycles')
+    plt.ylabel('TDC delays')
+    plt.grid(visible=True)
 
     #############  SALVA EM UM CSV OS DADOS DO ARRAY DE phase #########################
     print("Save CSV")
     df = pd.DataFrame([phase])
     nome_arquivo_csv = 'phaseErrorinRad.csv'
-    df.to_csv(nome_arquivo_csv , index=False , header=False)
+    # df.to_csv(nome_arquivo_csv , index=False , header=False)
     ##################################################################################
 
     ##############  APLICA UM FILTRO NOS VALORES DE PHASE ############################
@@ -698,9 +738,14 @@ if __name__ == "__main__":
     print(len(x))
     Xdb_o , f = fun_calc_psd(x , F_DESIRED , 100e3 , 1e3)
     mask_phase_noise, freq  = plot_phaseNoiseMask() # obter a mascara de phase noise
+    marker = 1e6  # Substitua pelo valor específico de frequência desejado
+    indice = np.where(f == marker)[0][0]
+    marker_dB = Xdb_o[indice]
+    # savePhaseNoise(freq=f, phasenoise=Xdb_o)
     plt.figure()
     plt.semilogx(f , Xdb_o , label="Phase Noise")
-    plt.semilogx(freq, mask_phase_noise, label='Phase Noise MASK')
+    plt.scatter(marker, marker_dB, color='black', marker='o', label=f'{marker_dB:.2f} dBc/Hz')
+    # plt.semilogx(freq, mask_phase_noise, label='Phase Noise MASK')
     plt.grid(visible=True)
     plt.legend()
     plt.yticks([-160, -150, -140, -130, -120, -110, -100, -90, -80, -70])
