@@ -7,9 +7,9 @@ import numpy as np
 
 
 DELTA_F = 70e3
-TDC_RES = 20e-12
+TDC_RES = 16e-12
 FRES_DCO = 32e3
-FREF = 40e6
+FREF = 26e6
 TREF = 1/FREF
 FDCO = 4.8e9/2
 TDCO = int(1/FDCO / TDC_RES) * TDC_RES
