@@ -32,7 +32,9 @@ class LSB_BANK:
         self.lsb_inf = self.lsb * (1 - MISMATCH_DCO)
         self.freq_lsb = fr / 2 ** nb
 
-
+pvt_array = np.zeros(128)
+acq_array = np.zeros(64)
+trk_array = np.zeros(128)
 def Init_DCO():
     '''
     Configuração inicial do DCO
@@ -43,6 +45,7 @@ def Init_DCO():
     trk_i_bank = LSB_BANK(F0_TRK , TRK_NB_I , FR_TRK_I)
     trk_f_bank = LSB_BANK(F0_TRK , TRK_NB_F , FR_TRK_F)
     global C0 , pvt_lsb , acq_lsb , trk_i_lsb , trk_f_lsb , FREQ_RES_PVT , FREQ_RES_ACQ , FREQ_RES_TRK , FREQ_RES_TRK_F, pvt_lsb_inf, pvt_lsb_sup, acq_lsb_inf, acq_lsb_sup, trk_lsb_inf, trk_lsb_sup
+    global pvt_array, acq_array, trk_array, MISMATCH_DCO
     C0 = pvt_bank.cmin
     pvt_lsb = pvt_bank.lsb
     pvt_lsb_sup = pvt_bank.lsb_sup
@@ -58,13 +61,32 @@ def Init_DCO():
     FREQ_RES_ACQ = acq_bank.freq_lsb
     FREQ_RES_TRK = trk_i_bank.freq_lsb
     FREQ_RES_TRK_F = trk_f_bank.freq_lsb
+
+
+    for i in range(128):
+        var_pvt = np.random.normal(loc=0, scale = pvt_lsb * MISMATCH_DCO)
+        pvt_array[i] = pvt_lsb + var_pvt
+        var_trk = np.random.normal(loc=0, scale = trk_i_lsb * MISMATCH_DCO)
+        trk_array[i] = trk_i_lsb + var_trk
+        if i < 64:
+            var_acq = np.random.normal(loc=0, scale = acq_lsb * MISMATCH_DCO)
+            acq_array[i] = acq_lsb + var_acq
+    # var_pvt = np.random.normal(loc=0, scale= pvt_bank.lsb * MISMATCH_DCO, size=2**PVT_NB)
+    # pvt_array = np.full(2**PVT_NB, pvt_bank.lsb) + var_pvt
+    # var_acq = np.random.normal(loc=0, scale= acq_bank.lsb * MISMATCH_DCO, size=2**ACQ_NB)
+    # acq_array = np.full(2**ACQ_NB, acq_bank.lsb) + var_acq
+    # var_trk = np.random.normal(loc=0, scale= trk_i_bank.lsb * MISMATCH_DCO, size=2**TRK_NB_I)
+    # trk_array = np.full(2**TRK_NB_I, trk_i_bank.lsb) + var_trk
+
+
+
     print("PVT -----  fmin: " , pvt_bank.fmin , " fmax: " , pvt_bank.fmax , "cmax: " , pvt_bank.cmax , " cmim: " ,
-          pvt_bank.cmin , " LSB: " , pvt_bank.lsb, " FREQ LSB: " , pvt_bank.freq_lsb)
+          pvt_bank.cmin , " LSB: " , pvt_bank.lsb, " FREQ LSB: " , pvt_bank.freq_lsb, "MEAN: ", np.std(pvt_array))
     print("ACQ -----  fmin: " , acq_bank.fmin , " fmax: " , acq_bank.fmax , "cmax: " , acq_bank.cmax , " cmim: " ,
-          acq_bank.cmin , " LSB: " , acq_bank.lsb, " FREQ LSB: " , acq_bank.freq_lsb)
+          acq_bank.cmin , " LSB: " , acq_bank.lsb, " FREQ LSB: " , acq_bank.freq_lsb, "MEAN: ", np.std(acq_array))
     print("TRK_I -----  fmin: " , trk_i_bank.fmin , " fmax: " , trk_i_bank.fmax , "cmax: " , trk_i_bank.cmax ,
           " cmim: " ,
-          trk_i_bank.cmin , " LSB: " , trk_i_bank.lsb, " FREQ LSB: " , trk_i_bank.freq_lsb)
+          trk_i_bank.cmin , " LSB: " , trk_i_bank.lsb, " FREQ LSB: " , trk_i_bank.freq_lsb, "MEAN: ", np.std(trk_array))
     # print("TRK_F -----  fmin: ", trk_f_bank.fmin, " fmax: ", trk_f_bank.fmax, "cmax: ", trk_f_bank.cmax, " cmim: ",
     #       trk_f_bank.cmin, " LSB: ", trk_f_bank.lsb)
     return
@@ -91,14 +113,28 @@ def SET_DCO(pvt_OTW=255 , acq_OTW=255 , trk_i_OTW=64 , trk_f_OTW=0):
     f	: valor de frequência [Hz]
     '''
 
-    global C0 , pvt_lsb , acq_lsb , trk_i_lsb , trk_f_lsb , AVG_FCKV , avg_counter , freq_array , trk_bank_calib, pvt_lsb_inf, pvt_lsb_sup, acq_lsb_inf, acq_lsb_sup, trk_lsb_inf, trk_lsb_sup
+    global C0 , MISMATCH_DCO, pvt_lsb , acq_lsb , trk_i_lsb , trk_f_lsb , AVG_FCKV , avg_counter , freq_array , trk_bank_calib, pvt_lsb_inf, pvt_lsb_sup, acq_lsb_inf, acq_lsb_sup, trk_lsb_inf, trk_lsb_sup
+    global pvt_bank_calib, acq_bank_calib, trk_bank_calib, desvio_padrao_pvt, desvio_padrao_acq, desvio_padrao_trk
+    global pvt_array, acq_array, trk_array
+    
     pvt = binaryValue(PVT_NB , pvt_OTW)
     acq = binaryValue(ACQ_NB , acq_OTW)
     trk_i = binaryValue(TRK_NB_I , trk_i_OTW)
     trk_f = 0  # binaryValue(TRK_NB_F, trk_f_OTW)
+
+
+    if not pvt_bank_calib:
+        desvio_padrao_pvt = np.random.normal(loc=0, scale = pvt_lsb * MISMATCH_DCO)
     
-    f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * random.uniform(pvt_lsb_inf, pvt_lsb_sup) + acq * random.uniform(acq_lsb_inf, acq_lsb_sup) + trk_i * random.uniform(trk_lsb_inf, trk_lsb_sup) + trk_f_lsb * trk_f)))
-    #f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb + trk_f_lsb * trk_f)))
+    elif not acq_bank_calib:
+        desvio_padrao_acq = np.random.normal(loc=0, scale = acq_lsb * MISMATCH_DCO)
+
+    elif trk_bank_calib:
+        desvio_padrao_trk = np.random.normal(loc=0, scale = trk_i_lsb * MISMATCH_DCO)
+    # f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * random.uniform(pvt_lsb_inf, pvt_lsb_sup) + acq * random.uniform(acq_lsb_inf, acq_lsb_sup) + trk_i * random.uniform(trk_lsb_inf, trk_lsb_sup) + trk_f_lsb * trk_f)))
+    # f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb + trk_f_lsb * trk_f)))
+    # f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * (pvt_lsb+desvio_padrao_pvt) + acq * (acq_lsb + desvio_padrao_acq) + trk_i * (trk_i_lsb + desvio_padrao_trk) + trk_f_lsb * trk_f)))
+    f = 1 / (2 * np.pi * np.sqrt(L * (C0 + np.sum(pvt_array[:pvt]) + np.sum(acq_array[:acq]) + np.sum(trk_array[:trk_i]) )))
 
     freq_array[avg_counter] = f / TDC_DIVISOR   # accumulator of CKV after divisor to average in TDC
     avg_counter += 1
@@ -106,6 +142,46 @@ def SET_DCO(pvt_OTW=255 , acq_OTW=255 , trk_i_OTW=64 , trk_f_OTW=0):
         avg_counter = 0
         
     return f
+# def SET_DCO(pvt_OTW=255 , acq_OTW=255 , trk_i_OTW=64 , trk_f_OTW=0):
+#     '''
+#     Ajusta a frequência do DCO conforme valor binario de cada bank capacitor
+
+#     INPUT arguments
+#     pvt_OTW     :  Valor inteiro do bank pvt
+#     acq_OTW     :  Valor inteiro do bank acquisition
+#     trk_i_OTW   :  Valor inteiro do bank trekking integer
+#     trk_f_OTW   :  Valor inteiro do bank trekking fractional
+
+#     OUTPUT
+#     f	: valor de frequência [Hz]
+#     '''
+
+#     global C0 , MISMATCH_DCO, pvt_lsb , acq_lsb , trk_i_lsb , trk_f_lsb , AVG_FCKV , avg_counter , freq_array , trk_bank_calib, pvt_lsb_inf, pvt_lsb_sup, acq_lsb_inf, acq_lsb_sup, trk_lsb_inf, trk_lsb_sup
+#     global pvt_bank_calib, acq_bank_calib, trk_bank_calib, desvio_padrao_pvt, desvio_padrao_acq, desvio_padrao_trk
+#     pvt = binaryValue(PVT_NB , pvt_OTW)
+#     acq = binaryValue(ACQ_NB , acq_OTW)
+#     trk_i = binaryValue(TRK_NB_I , trk_i_OTW)
+#     trk_f = 0  # binaryValue(TRK_NB_F, trk_f_OTW)
+
+
+#     if not pvt_bank_calib:
+#         desvio_padrao_pvt = np.random.normal(loc=0, scale = pvt_lsb * MISMATCH_DCO)
+    
+#     elif not acq_bank_calib:
+#         desvio_padrao_acq = np.random.normal(loc=0, scale = acq_lsb * MISMATCH_DCO)
+
+#     elif trk_bank_calib:
+#         desvio_padrao_trk = np.random.normal(loc=0, scale = trk_i_lsb * MISMATCH_DCO)
+#     # f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * random.uniform(pvt_lsb_inf, pvt_lsb_sup) + acq * random.uniform(acq_lsb_inf, acq_lsb_sup) + trk_i * random.uniform(trk_lsb_inf, trk_lsb_sup) + trk_f_lsb * trk_f)))
+#     #f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb + trk_f_lsb * trk_f)))
+#     f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * (pvt_lsb+desvio_padrao_pvt) + acq * (acq_lsb + desvio_padrao_acq) + trk_i * (trk_i_lsb + desvio_padrao_trk) + trk_f_lsb * trk_f)))
+
+#     freq_array[avg_counter] = f / TDC_DIVISOR   # accumulator of CKV after divisor to average in TDC
+#     avg_counter += 1
+#     if avg_counter == AVG_FCKV:
+#         avg_counter = 0
+        
+#     return f
 
 tdc_delay = []
 def TDC(tR , t_ckv ,TCKV_accumulator):
@@ -309,7 +385,7 @@ def saveresults(timestop , timediff , fout_n , desv_n , fout_T , desv_T , fout_S
     testeTesting = pd.concat([result , dfresult] , ignore_index=True , axis=0)
     testeTesting.to_csv(csvsaveresults , index=False , sep=';')
 
-def savePhaseNoise(phasenoise, freq):
+def SaveCsvValues(name, x, y):
     '''
     Save results of phase Noise in a csv file
     '''
@@ -319,8 +395,8 @@ def savePhaseNoise(phasenoise, freq):
     #phasenoise_locale = [locale.format_string('%.4f', valor, grouping=True) for valor in phasenoise]
     # freq_locale = [locale.format_string('%.4f', valor, grouping=True) for valor in freq]
     # df = pd.DataFrame({'PN': phasenoise_locale, 'freq': freq_locale})
-    df = pd.DataFrame({'PN': phasenoise, 'freq': freq})
-    df.to_csv(csvsavePhaseresults , index=False , sep=';',float_format='%.2f')
+    df = pd.DataFrame({'x': x, 'y': y})
+    df.to_csv(name , index=False , sep=';',float_format='%.2f')
 
 '''
         DEFINIÇÕES GERAIS
@@ -332,7 +408,7 @@ DIVISION_OUTPUT = 2 # Divisor after DCO output
 # F0 = 2045e6  # frequência central de ajuste do DCO
 FREF = 26e6  # Frequência de referência
 # F_DESIRED = 2e9
-F_DESIRED = 2.4e9
+F_DESIRED = 2.48e9
 # FCW = 76.923076927661896  #  Frequency command word
 '''
 Normalize the FCW integer + fractional in relationship the Nbits resolutions
@@ -359,13 +435,13 @@ ENGLISH = False
         BANK CAPACITOR
 '''
 PVT_NB = 7  # número de bits em PVT mode
-ACQ_NB = 6  # número de bits em acquisition mode
+ACQ_NB = 7  # número de bits em acquisition mode
 TRK_NB_I = 7  # número de bits Trekking integer mode
 TRK_NB_F = 5  # número de bits Trekking fractional mode
 FR_PVT = 1000e6  # range de frequência em PVT mode
 """ FR_ACQ = 80e6  # range de frequência em acquisition mode
 FR_TRK_I = 2e6  # range de frequência em Trekking integer mode """
-FR_ACQ = 160e6  # range de frequência em acquisition mode
+FR_ACQ = 200e6  # range de frequência em acquisition mode
 FR_TRK_I = 4e6  # range de frequência em Trekking integer mode
 FR_TRK_F = FR_TRK_I / 2 ** TRK_NB_I  # range de frequência em Trekking fractional mode
 F0_PVT = 4.8e9 # frequência central do PVT bank
@@ -377,7 +453,7 @@ FREQ_RES_TRK = 0
 FREQ_RES_TRK_F = 0
 L = 1e-9  # Indutor utilizado
 C0 = 0  # valor de capacitância inicial
-MISMATCH_DCO = 0.01/100 # 0,01%
+MISMATCH_DCO = 0#0.01/100 # 0,01%
 pvt_lsb = 0  # valor do LSB em PVT mode
 pvt_lsb_sup = 0
 pvt_lsb_inf = 0
@@ -388,18 +464,20 @@ trk_i_lsb = 0  # valor do LSB em Trekking integer mode
 trk_lsb_sup = 0
 trk_lsb_inf = 0
 trk_f_lsb = 0  # valor do LSB em Trekking fractional mode
-
+desvio_padrao_pvt = 0 
+desvio_padrao_acq = 0
+desvio_padrao_trk = 0
 '''
         TDC
 '''
-TDC_res = 16.6e-12  # delay of each  inverter
+TDC_res = 16e-12  # delay of each  inverter
 TDC_chains = 28  # number of inverters
 AVG_FCKV = 128  # 128  # number of edges to average actual frequency
 NUM_ZEROS = 0
 TDC_BITS_RESOLUTION = 16  #Bits resolution of TDC
 TDC_BITS_AVG_TCKV = 15    #Bits resolution to average the clock CKV
 TDC_DIVISOR = DIVISION_OUTPUT
-TDC_MISMATCH = 5/100  #5%
+TDC_MISMATCH = 1/100  #5%
 '''
         LOOP FILTER
         
@@ -429,7 +507,7 @@ f_desired = F_DESIRED * 2 # F0  # desired frequency
 t_required = 1 / f_desired  # period of frequency
 Thermal_noise = -111  # 6dB acima do desjado para dobro de freq.  # Up converted Thermal noise with deltaf frequency offset [dBc]
 L_w = 10 ** (Thermal_noise / 10)  # noise level
-deltaf = 500e3  # offset frequency
+deltaf = 1e6  # offset frequency
 
 j_noise = (t_required / (2 * np.pi)) * np.sqrt(L_j * f_desired)  # Jitter noise standard deviation
 W_noise = deltaf / f_desired * np.sqrt(t_required) * np.sqrt(L_w)  # Wander noise standard deviation (including the 1/f noise)
@@ -461,7 +539,7 @@ y1 = np.zeros(TIME)
 y2 = np.zeros(TIME)
 y3 = np.zeros(TIME)
 y_IRR = np.zeros(TIME)
-IRR_coef = [2 ** -2 , 2 ** -1 , 2 ** -1 , 2 ** -1]
+IRR_coef = [2 ** -2 , 2 ** -2 , 2 ** -2 , 2 ** -2]
 # IRR_coef = [2 ** -2 , 2 ** -1 , 2 ** -1 , 2 ** -1]
 f_BW_Irr = IRR_coef[0]/ 2 * np.pi * FREF
 
@@ -507,7 +585,7 @@ pvt_bank_calib = False
 acq_bank_calib = False
 trk_bank_calib = False
 OTW_pvt = 0  # initial value of pvt bank
-OTW_acq = 2 **PVT_NB /2  # initial value of acq bank
+OTW_acq = 2 **ACQ_NB /2  -1# initial value of acq bank
 OTW_trk = 2 **TRK_NB_I /2  # initial value of trk integer bank
 OTW_trk_f = 0  # initial value of trk fractional bank
 phase_dif = 0  # phase difference
@@ -525,7 +603,6 @@ OTW = np.zeros(TIME)  # oscilator tuning word
         Files
 '''
 csvsaveresults = "resultssimulations.csv"
-csvsavePhaseresults = "phasenoise_PSD_without_IRR.csv"
 dfresult = pd.DataFrame()
 
 ################################################################################################################
@@ -591,10 +668,10 @@ if __name__ == "__main__":
                 else:
                     t_CKV.append(t_CKV[n - 1] + T0)
             else:
-                if NOISE:
-                    t_CKV.append(t_CKV[n - 1] + T0 + jitter[n] + wander[n] - jitter[n - 1])
-                else:
-                    t_CKV.append(t_CKV[n - 1] + T0)
+                # if NOISE:
+                #     t_CKV.append(t_CKV[n - 1] + T0 + jitter[n] + wander[n] - jitter[n - 1])
+                # else:
+                t_CKV.append(t_CKV[n - 1] + T0)
         if trk_bank_calib:
             error_fractional[k] = TDC(t_R*TDC_DIVISOR , t_CKV[n - 1]*TDC_DIVISOR ,1 / np.sum(freq_array))
 
@@ -604,7 +681,7 @@ if __name__ == "__main__":
         phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
         if int(phase_error[k]) < 0:
             phase_error[k] = phase_error[k - 1]
-            print("if int(phase_error[k]) < 0:")
+           # print("if int(phase_error[k]) < 0:", phase_error[k])
             pass
         #######################################################################################################################
 
@@ -647,8 +724,9 @@ if __name__ == "__main__":
         elif trk_bank_calib:
             # NTW[k] = OTW_trk + ((int(phase_error[k] - phase_error[k - 1])) * Kp_TRK)
             if phase_error[k] < (OFFSET_ERROR_ACQ - OFFSET_ERROR_ACQ / 2):
-                print(" phase_error[k] < (OFFSET_ERROR_ACQ - OFFSET_ERROR_ACQ / 2):")
-                pass
+                print(" phase_error[k] < (OFFSET_ERROR_ACQ - OFFSET_ERROR_ACQ / 2): ", phase_error[k], k, OFFSET_ERROR_ACQ)
+                # pass
+                break
             else:
                 phase_error[k] = abs(phase_error[k]) - OFFSET_ERROR_ACQ
             fractional_error_trk.append(phase_error[k])
@@ -711,12 +789,22 @@ if __name__ == "__main__":
     ################################################################################################################
     
     ################ ERRO DE FASE EM RAD/S #################
+    # print("Calculando o erro de fase em rad/s")
+    # tckv = np.array(t_CKV[len(t_CKV) - 500000:])
+    # phase = np.zeros(len(tckv))
+    # tref = 1 / F_DESIRED
+    # for i in range(len(tckv) - 2):
+    #     diff = tref - ((tckv[i + 1] - tckv[i]) * DIVISION_OUTPUT)
+    #     phase[i] = diff * 2*np.pi * F_DESIRED
+
+    # print("Max error: ",np.max(phase), " rad/s")
+
     print("Calculando o erro de fase em rad/s")
     tckv = np.array(t_CKV[len(t_CKV) - 500000:])
     phase = np.zeros(len(tckv))
-    tref = 1 / F_DESIRED
+    tref = 1 / (F_DESIRED * DIVISION_OUTPUT)
     for i in range(len(tckv) - 2):
-        diff = tref - ((tckv[i + 1] - tckv[i]) * DIVISION_OUTPUT)
+        diff = tref - ((tckv[i + 1] - tckv[i]) )
         phase[i] = diff * 2*np.pi * F_DESIRED
 
     print("Max error: ",np.max(phase), " rad/s")
@@ -769,19 +857,19 @@ if __name__ == "__main__":
     ###############  CALCULA O PHASE NOISE DO DCO ####################################
     print("cálculo da PSD")
     print(len(x))
-    Xdb_o , f = fun_calc_psd(x , F_DESIRED , 100e3 , 1e3)
+    Xdb_o , f = fun_calc_psd(x , F_DESIRED * DIVISION_OUTPUT , 100e3 , 1e3)
     mask_phase_noise, freq  = plot_phaseNoiseMask() # obter a mascara de phase noise
-    marker = 0.5e6  # Substitua pelo valor específico de frequência desejado
+    marker = 1e6  # Substitua pelo valor específico de frequência desejado
     indice = np.where(f == marker)[0][0]
     marker_dB = Xdb_o[indice]
-    # savePhaseNoise(freq=f, phasenoise=Xdb_o)
+    SaveCsvValues("phasenoise_PSD_without_IRR.csv",x=f, y=Xdb_o)
     plt.figure()
     if ENGLISH:
         label1 = "Phase Noise"
     else:
         label1 = "Ruído de fase"
     plt.semilogx(f , Xdb_o , label=label1)
-    plt.scatter(marker, marker_dB, color='black', marker='o', label=f'{marker_dB:.2f} dBc/Hz  @500 kHz')
+    plt.scatter(marker, marker_dB, color='black', marker='o', label=f'{marker_dB:.2f} dBc/Hz  @1 MHz')
     plt.semilogx(freq, mask_phase_noise, label='Phase Noise MASK')
     plt.grid(visible=True)
     plt.legend()

@@ -5,19 +5,19 @@ import os
 ENGLISH = False
 # Especificar o caminho do arquivo CSV
 dirr = os.path.dirname(__file__)
-PN_with_IRR = os.path.join(dirr, '..', 'phasenoise_PSD.csv')
+PN_with_IRR = os.path.join(dirr, '..', 'phasenoise_PSD_plus_IRR.csv')
 PN_witout_IRR = os.path.join(dirr, '..', 'phasenoise_PSD_without_IRR.csv')
 
 # Carregar o arquivo CSV em um DataFrame do pandas
 df = pd.read_csv(PN_witout_IRR, sep=';')
 df1 = pd.read_csv(PN_with_IRR, sep=';')
 # Extrair os dados das colunas
-print(df['PN'])
-Xdb_o = df['PN']
-f = df['freq']
+print(df['y'])
+Xdb_o = df['y']
+f = df['x']
 
-Xdb_1 = df1['PN']
-f_1 = df1['freq']
+Xdb_1 = df1['y']
+f_1 = df1['x']
 
 ponto_especifico_f = 500e3  # Substitua pelo valor específico de frequência desejado
 ponto_especifico_Xdb_o = Xdb_1[f == ponto_especifico_f].values[0]
