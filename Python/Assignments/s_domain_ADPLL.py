@@ -233,10 +233,11 @@ fr = 26e6  # Frequeência de referência
 # a = 2 ** -7  # alpha value
 a = 2 ** -5  # alpha value
 # p = 2 ** -14  # rho value
-p = 2 ** -12  # rho value
+p = 2 ** -11  # rho value
 # Coeficiêntes do filtro IIR
-# l = [2 ** -2, 2 ** -3, 2 ** -2, 2 ** -3]
+# l = [2 ** -3, 2 ** -3, 2 ** -3, 2 ** -3]
 l = [2 ** -2 , 2 ** -1 , 2 ** -1 , 2 ** -1]
+# l = [2 ** -0.3 , 2 ** -0.3 , 2 ** -0.3 , 2 ** -0.3]
 
 # Open Loop Unit Gain
 w1 = a * fr * ( 0.5 + 0.5 * np.sqrt(1 + (4 * p / a**2)))
@@ -303,7 +304,7 @@ if __name__ == "__main__":
     # plt.figure()
     # control.bode(Hcl_DCO_irr, w, Hz=True, dB=True, deg=False, Plot=True, margins=False)
     mag, phase, f = control.bode(Hcl_ADPLL, omega=w, Hz=True, dB=False, deg=True, margins=margem, plot=False)
-    Xdb_o , f = fun_calc_psd(mag , fr , 100e3 , 1e3)
+    Xdb_o , f = fun_calc_psd(mag , fr , 50e3 , 1e3)
     plt.figure()
     plt.semilogx(f , Xdb_o , label="Phase Noise")
     plt.grid(visible=True)

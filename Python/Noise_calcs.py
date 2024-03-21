@@ -6,7 +6,7 @@ Created on setembro 12 17:46:23 2023
 import numpy as np
 
 
-DELTA_F = 70e3
+DELTA_F = 1000e3
 TDC_RES = 16e-12
 FRES_DCO = 32e3
 FREF = 26e6
