@@ -318,7 +318,7 @@ DIVISION_OUTPUT = 2 # Divisor after DCO output
 # F0 = 2045e6  # frequência central de ajuste do DCO
 FREF = 26e6  # Frequência de referência
 # F_DESIRED = 2e9
-F_DESIRED = 2.4e9
+F_DESIRED = 2.42e9   #2.402e9 --- 2.48e9
 # FCW = 76.923076927661896  #  Frequency command word
 '''
 Normalize the FCW integer + fractional in relationship the Nbits resolutions
@@ -344,13 +344,13 @@ SAVE = False
         BANK CAPACITOR
 '''
 PVT_NB = 7  # número de bits em PVT mode
-ACQ_NB = 6  # número de bits em acquisition mode
+ACQ_NB = 7  # número de bits em acquisition mode
 TRK_NB_I = 7  # número de bits Trekking integer mode
 TRK_NB_F = 5  # número de bits Trekking fractional mode
 FR_PVT = 1000e6  # range de frequência em PVT mode
 """ FR_ACQ = 80e6  # range de frequência em acquisition mode
 FR_TRK_I = 2e6  # range de frequência em Trekking integer mode """
-FR_ACQ = 160e6  # range de frequência em acquisition mode
+FR_ACQ = 300e6  # range de frequência em acquisition mode
 FR_TRK_I = 4e6  # range de frequência em Trekking integer mode
 FR_TRK_F = FR_TRK_I / 2 ** TRK_NB_I  # range de frequência em Trekking fractional mode
 F0_PVT = 4.8e9 # frequência central do PVT bank
@@ -684,13 +684,22 @@ if __name__ == "__main__":
     ################################################################################################################
     
     ################ ERRO DE FASE EM RAD/S #################
+    # print("Calculando o erro de fase em rad/s")
+    # tckv = np.array(t_CKV[len(t_CKV) - 500000:])
+    # phase = np.zeros(len(tckv))
+    # tref = 1 / F_DESIRED
+    # for i in range(len(tckv) - 2):
+    #     diff = tref - ((tckv[i + 1] - tckv[i]) * DIVISION_OUTPUT)
+    #     phase[i] = diff * 2*np.pi * F_DESIRED
+
+    # print("Max error: ",np.max(phase), " rad/s")
     print("Calculando o erro de fase em rad/s")
     tckv = np.array(t_CKV[len(t_CKV) - 500000:])
     phase = np.zeros(len(tckv))
-    tref = 1 / F_DESIRED
+    tref = 1 / (F_DESIRED * DIVISION_OUTPUT)
     for i in range(len(tckv) - 2):
-        diff = tref - ((tckv[i + 1] - tckv[i]) * DIVISION_OUTPUT)
-        phase[i] = diff * 2*np.pi * F_DESIRED
+        diff = tref - ((tckv[i + 1] - tckv[i]) )
+        phase[i] = diff * 2*np.pi * F_DESIRED * DIVISION_OUTPUT
 
     print("Max error: ",np.max(phase), " rad/s")
     ########################################################

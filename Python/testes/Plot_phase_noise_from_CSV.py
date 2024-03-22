@@ -32,7 +32,7 @@ else:
     label2 = "Ruído de fase + Filtro IRR"
 plt.semilogx(f , Xdb_o , label=label1)
 plt.semilogx(f_1 , Xdb_1 , label=label2)
-plt.scatter(ponto_especifico_f, ponto_especifico_Xdb_o, color='black', marker='o', label=f'{ponto_especifico_Xdb_o:.2f} dBc/Hz @1 MHz')
+# plt.scatter(ponto_especifico_f, ponto_especifico_Xdb_o, color='black', marker='o', label=f'{ponto_especifico_Xdb_o:.2f} dBc/Hz @1 MHz')
 plt.grid(visible=True)
 plt.legend()
 plt.yticks([-160, -150, -140, -130, -120, -110, -100, -90, -80, -70])
