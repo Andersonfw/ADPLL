@@ -427,7 +427,7 @@ print("Wander noise" , Wt_noise)
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 50000  # simulação de X bordas de FREF
+TIME = 5000  # simulação de X bordas de FREF
 OVERSAMPLE = 100  # over sample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 

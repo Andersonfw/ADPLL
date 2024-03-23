@@ -136,9 +136,13 @@ def TDC(tR , t_ckv ,TCKV_accumulator):
     '''
     tR_Q = abs(int((t_ckv - tR) / tdc_resolution)) #quantização da diferença em relação a resolução do TDC
     Binary_error = tR_Q * ( K_TDC / 2**TDC_BITS_AVG_TCKV) * 2**TDC_BITS_RESOLUTION
-    tdc_delay.append(T_Q)
+    
     Float_error = (1 / 2**TDC_BITS_RESOLUTION) * Binary_error
-    error = 1 - Float_error
+    # error = 1 - Float_error
+    error = Float_error
+    # t_avg = TCKV_accumulator * AVG_FCKV
+    # error = (1/t_avg) * tdc_resolution * (tR_Q)
+    tdc_delay.append(error)
     return error
 
 '''------------------------------------------------------------------------------------------------------- '''
@@ -350,8 +354,8 @@ IRR = True
 SDM = False
 SAVE = False
 ENGLISH = False
-MISMATCH_DCO = 0#0.1/100 # 0,01%
-TDC_MISMATCH = 0#20/100  #5%
+MISMATCH_DCO = 0.1/100 # 0,01%
+TDC_MISMATCH = 1/100  #5%
 '''------------------------------------------------------------------------------------------------------- '''
 '''
 Normalize the FCW integer + fractional in relationship the Nbits resolutions
@@ -410,7 +414,7 @@ trk_array = np.zeros(2**TRK_NB_I)
 '''
         TDC
 '''
-TDC_res = 10e-12  # delay of each  inverter
+TDC_res = 16e-12  # delay of each  inverter
 TDC_chains = 28  # number of inverters
 AVG_FCKV = 128  # 128  # number of edges to average actual frequency
 NUM_ZEROS = 0
@@ -445,7 +449,7 @@ noise_floor = -150  # -150  # noise floor [dBc)
 L_j = 10 ** (noise_floor / 10)  # noise level
 f_desired = F_DESIRED * 2 # F0  # desired frequency
 t_required = 1 / f_desired  # period of frequency
-Thermal_noise = -111  # 6dB acima do desjado para dobro de freq.  # Up converted Thermal noise with deltaf frequency offset [dBc]
+Thermal_noise = -108  # 6dB acima do desjado para dobro de freq.  # Up converted Thermal noise with deltaf frequency offset [dBc]
 L_w = 10 ** (Thermal_noise / 10)  # noise level
 deltaf = 1e6  # offset frequency
 
@@ -608,8 +612,8 @@ if __name__ == "__main__":
                 else:
                     t_CKV.append(t_CKV[n - 1] + T0)
         if trk_bank_calib:
-            error_fractional[k] = TDC(t_R*TDC_DIVISOR , t_CKV[n - 1]*TDC_DIVISOR ,1 / np.sum(freq_array))
-
+            #  error_fractional[k] = TDC(t_R*TDC_DIVISOR , t_CKV[n-1]*TDC_DIVISOR ,1 / np.sum(freq_array))
+             error_fractional[k] = TDC(t_R*TDC_DIVISOR , t_CKV[n]*TDC_DIVISOR ,1 / np.sum(freq_array))
         RV_k = RV_n  # variable phase accumulator
         erro_esperado = f_CKV / FREF
         erro_esperado = FCW - erro_esperado
@@ -666,8 +670,8 @@ if __name__ == "__main__":
             #     phase_error[k - 1] = 1
             # NTW[k] = OTW_trk + ((int(phase_error[k] - phase_error[k - 1])) * Kp_TRK)
             if phase_error[k] < (OFFSET_ERROR_ACQ - OFFSET_ERROR_ACQ / 2):
-                print(" phase_error[k] < (OFFSET_ERROR_ACQ - OFFSET_ERROR_ACQ / 2): ", phase_error[k], k, OFFSET_ERROR_ACQ)
-                # pass
+                #print(" phase_error[k] < (OFFSET_ERROR_ACQ - OFFSET_ERROR_ACQ / 2): ", phase_error[k], k, OFFSET_ERROR_ACQ)
+                #pass
                 break
             else:
                 phase_error[k] = abs(phase_error[k]) - OFFSET_ERROR_ACQ
@@ -734,12 +738,22 @@ if __name__ == "__main__":
     tckv = np.array(t_CKV[len(t_CKV) - 500000:]) * DIVISION_OUTPUT
     phase = np.zeros(len(tckv)) 
     tref = 1 / F_DESIRED
-    print("tckv[0]: ", tckv[1]-tckv[0], "  phase[0]: ", phase[1], "  tref: ", tref)
+    # print("tckv[0]: ", tckv[1]-tckv[0], "  phase[0]: ", phase[1], "  tref: ", tref)
     for i in range(len(tckv) - 2):
         diff = tref - ((tckv[i + 1] - tckv[i]))
         phase[i] = diff * 2*np.pi * F_DESIRED
 
     print("Max error: ",np.max(phase), "Mean error: ",np.mean(phase), " rad/s")
+
+    # tckv = np.array(t_CKV[len(t_CKV) - 500000:])
+    # phase = np.zeros(len(tckv)) 
+    # tref = 1 / (F_DESIRED * DIVISION_OUTPUT)
+    # print("tckv[0]: ", tckv[1]-tckv[0], "  phase[0]: ", phase[1], "  tref: ", tref)
+    # for i in range(len(tckv) - 2):
+    #     diff = tref - ((tckv[i + 1] - tckv[i]))
+    #     phase[i] = diff * 2*np.pi * F_DESIRED * DIVISION_OUTPUT
+
+    # print("Max error: ",np.max(phase), "Mean error: ",np.mean(phase), " rad/s")
     ########################################################
 
     ###############   PLOT DOS VALORES DE FREQUÊNCIA E/OU ERROS ######################
@@ -763,7 +777,7 @@ if __name__ == "__main__":
     ##################################################################################
 
     plt.figure()
-    plt.plot(NTW[150:], '-r', label="TDC")
+    plt.plot(tdc_delay, '-r', label="TDC")
     # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
     # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
     # # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
@@ -813,9 +827,9 @@ if __name__ == "__main__":
         label1 = "Ruído de fase"
     if IRR:
         label1 += " + IRR"
-        SaveCsvValues("phasenoise_PSD_plus_IRR.csv",x=f, y=Xdb_o)
-    else:
-        SaveCsvValues("phasenoise_PSD_without_IRR.csv",x=f, y=Xdb_o)
+        # SaveCsvValues("phasenoise_PSD_plus_IRR.csv",x=f, y=Xdb_o)
+    # else:
+        # SaveCsvValues("phasenoise_PSD_without_IRR.csv",x=f, y=Xdb_o)
     plt.semilogx(f , Xdb_o , label=label1)
     plt.scatter(marker, marker_dB, color='black', marker='o', label=f'{marker_dB:.2f} dBc/Hz  @1 MHz')
     plt.semilogx(freq, mask_phase_noise, label='Phase Noise MASK')
@@ -825,6 +839,34 @@ if __name__ == "__main__":
     plt.xlabel('Freq. (Hz)')
     plt.ylabel(label1 + ' [dBc/Hz]')
     # plt.show()
+    ##################################################################################
+
+    ###############  CALCULA O  phase jitter ####################################
+    phase_jitter_rad = 0
+    phase_jitter_seconds = 0
+    phase_jitter_dbc = 0
+    index = np.where(f == 100e3)[0][0]
+    Bw = 100e3 - 1e3
+    # valores = []
+    # distancias = []
+    # for i in range(len(f)):
+    #     if(f[i] == 1e3): # and f[i] < 100e3 ):
+    #         valores.append(Xdb_o[i])
+    #         distancias.append(f[i])
+    #     if(f[i] == 10e3):
+    #         valores.append(Xdb_o[i] + 10*np.log10(10e3 - 1e3))
+    #         distancias.append(f[i])
+    #     if(f[i] == 100e3):
+    #         a = i
+    #         valores.append(Xdb_o[i] + 10*np.log10(100e3 - 10e3))
+    #         distancias.append(f[i])
+            
+    phase_jitter_dbc = 10 **((Xdb_o[index] + 10*np.log10(Bw))/10)
+    print("phase_jitter_dbc:  ", phase_jitter_dbc, " Value in dBc: ", Xdb_o[index])
+    phase_jitter_rad = np.sqrt(2* phase_jitter_dbc)
+    phase_jitter_seconds = phase_jitter_rad / ( 2 * np.pi * F_DESIRED)
+    phase_jitter_deg =  phase_jitter_seconds / ((1/F_DESIRED)/360)
+    print("Phase jitter: ", phase_jitter_rad * 1000, " mrad/s ---- ", phase_jitter_seconds * 1e12, " ps  ----", "Jitter in degrees: ", phase_jitter_deg, "deg")
     ##################################################################################
 
     stopTime = datetime.datetime.now()
