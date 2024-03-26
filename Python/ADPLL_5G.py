@@ -127,7 +127,9 @@ def TDC(tR , t_ckv ,TCKV_accumulator):
     Average CKV Clock and normalization to DCO period
     Ref: ADPLL Design for WiMAX (pg. 67)
     '''
-    tdc_resolution = random.uniform(TDC_res*(1 + TDC_MISMATCH), TDC_res*(1 - TDC_MISMATCH))
+    # tdc_resolution = random.uniform(TDC_res*(1 + TDC_MISMATCH), TDC_res*(1 - TDC_MISMATCH))
+    tdc_resolution = np.random.normal(loc=0, scale = TDC_res * TDC_MISMATCH)
+    tdc_resolution += TDC_res
     t = TCKV_accumulator * AVG_FCKV
     T_Q =  int(( TCKV_accumulator * AVG_FCKV)  / tdc_resolution)    # quantização do accumulador em relação a resolução do TDC
     K_TDC = int(( 1 / T_Q ) * 2**TDC_BITS_AVG_TCKV) # ganho do TDC
@@ -348,14 +350,14 @@ FCW_I_bits = 8  # Frequency Command Word integer resolution
 FCW_F_bits = 24 # Frequency Command Word Fractional resolution
 DIVISION_OUTPUT = 2 # Divisor after DCO output
 FREF = 26e6  # Frequência de referência
-F_DESIRED = 2.4e9
+F_DESIRED = 2.48e9
 NOISE = True
-IRR = True
+IRR = False
 SDM = False
 SAVE = False
 ENGLISH = False
-MISMATCH_DCO = 0.1/100 # 0,01%
-TDC_MISMATCH = 1/100  #5%
+MISMATCH_DCO = 0#0.1/100 # 0,01%
+TDC_MISMATCH = 0#10/100  #5%
 '''------------------------------------------------------------------------------------------------------- '''
 '''
 Normalize the FCW integer + fractional in relationship the Nbits resolutions
@@ -416,7 +418,7 @@ trk_array = np.zeros(2**TRK_NB_I)
 '''
 TDC_res = 16e-12  # delay of each  inverter
 TDC_chains = 28  # number of inverters
-AVG_FCKV = 128  # 128  # number of edges to average actual frequency
+AVG_FCKV = 512  # 128  # number of edges to average actual frequency
 NUM_ZEROS = 0
 TDC_BITS_RESOLUTION = 16  #Bits resolution of TDC
 TDC_BITS_AVG_TCKV = 15    #Bits resolution to average the clock CKV
@@ -447,9 +449,9 @@ MOD_ARITH = 2 ** 8
 '''
 noise_floor = -150  # -150  # noise floor [dBc)
 L_j = 10 ** (noise_floor / 10)  # noise level
-f_desired = F_DESIRED * 2 # F0  # desired frequency
+f_desired = F_DESIRED * DIVISION_OUTPUT # F0  # desired frequency
 t_required = 1 / f_desired  # period of frequency
-Thermal_noise = -108  # 6dB acima do desjado para dobro de freq.  # Up converted Thermal noise with deltaf frequency offset [dBc]
+Thermal_noise = -111  # 6dB acima do desjado para dobro de freq.  # Up converted Thermal noise with deltaf frequency offset [dBc]
 L_w = 10 ** (Thermal_noise / 10)  # noise level
 deltaf = 1e6  # offset frequency
 
@@ -522,7 +524,7 @@ pvt_bank_calib = False
 acq_bank_calib = False
 trk_bank_calib = False
 OTW_pvt = 0  # initial value of pvt bank
-OTW_acq = 2 **ACQ_NB /2  -10# initial value of acq bank
+OTW_acq = 2 **ACQ_NB /2  - 15 #random.uniform(-10, 10)# initial value of acq bank
 OTW_trk = 2 **TRK_NB_I /2  # initial value of trk integer bank
 OTW_trk_f = 0  # initial value of trk fractional bank
 phase_dif = 0  # phase difference
@@ -763,29 +765,36 @@ if __name__ == "__main__":
     else:
         label1 = "Ciclos de clock de referência"
         label2 = 'Frequência de saída do DCO (Hz)'
-    plt.figure()
-    plt.plot(freqs[1:500]/1e9, '-r', label="DCO")
-    # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
-    # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
-    # # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
-    # # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
-    plt.legend()
-    plt.xlabel(label1)
-    plt.ylabel(label2)
-    plt.grid(visible=True)
+    # plt.figure()
+    # indice = 800
+    # marker_dB = freqs[indice]/1e9
+    # label_anotate = '$\\Delta f = $' + '{:.3f}'.format((freqs[4999] - F_DESIRED) / 1e3) + " kHz"
+    # # print(label_anotate, " ---", freqs[4999])
+    # plt.scatter(indice, marker_dB, color='black', marker='o', label=f'{marker_dB:.3f}  GHz | ' + label_anotate)
+    # # plt.annotate(label_anotate, xy=(indice, marker_dB-0.01), xytext=(indice - 10, marker_dB - 0.1),
+    #         #  arrowprops=dict(facecolor='blue', arrowstyle='-|>', lw=2.5), fontsize=15, ha='right')
+    # plt.plot(freqs[1:1000]/1e9, '-r', label="DCO")
+    # # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
+    # # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
+    # # # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
+    # # # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
+    # plt.legend()
+    # plt.xlabel(label1)
+    # plt.ylabel(label2)
+    # plt.grid(visible=True)
     # plt.show()
     ##################################################################################
 
-    plt.figure()
-    plt.plot(tdc_delay, '-r', label="TDC")
-    # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
-    # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
-    # # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
-    # # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
-    plt.legend()
-    plt.xlabel(label1)
-    plt.ylabel('TDC delays')
-    plt.grid(visible=True)
+    # plt.figure()
+    # plt.plot(tdc_delay, '-r', label="TDC")
+    # # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
+    # # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
+    # # # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
+    # # # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
+    # plt.legend()
+    # plt.xlabel(label1)
+    # plt.ylabel('TDC delays')
+    # plt.grid(visible=True)
 
     #############  SALVA EM UM CSV OS DADOS DO ARRAY DE phase #########################
     print("Save CSV")
@@ -813,7 +822,7 @@ if __name__ == "__main__":
     ###############  CALCULA O PHASE NOISE DO DCO ####################################
     print("cálculo da PSD")
     print(len(x))
-    Xdb_o , f = fun_calc_psd(x , F_DESIRED , 50e3 , 500)
+    Xdb_o , f = fun_calc_psd(x , F_DESIRED , 100e3 , 500)
     mask_phase_noise, freq  = plot_phaseNoiseMask() # obter a mascara de phase noise
     marker = 1e6  # Substitua pelo valor específico de frequência desejado
     indice = np.where(f == marker)[0][0]
@@ -827,9 +836,9 @@ if __name__ == "__main__":
         label1 = "Ruído de fase"
     if IRR:
         label1 += " + IRR"
-        # SaveCsvValues("phasenoise_PSD_plus_IRR.csv",x=f, y=Xdb_o)
-    # else:
-        # SaveCsvValues("phasenoise_PSD_without_IRR.csv",x=f, y=Xdb_o)
+        SaveCsvValues("phasenoise_PSD_plus_IRR.csv",x=f, y=Xdb_o)
+    else:
+        SaveCsvValues("phasenoise_PSD_without_IRR.csv",x=f, y=Xdb_o)
     plt.semilogx(f , Xdb_o , label=label1)
     plt.scatter(marker, marker_dB, color='black', marker='o', label=f'{marker_dB:.2f} dBc/Hz  @1 MHz')
     plt.semilogx(freq, mask_phase_noise, label='Phase Noise MASK')
@@ -845,7 +854,7 @@ if __name__ == "__main__":
     phase_jitter_rad = 0
     phase_jitter_seconds = 0
     phase_jitter_dbc = 0
-    index = np.where(f == 100e3)[0][0]
+    index = np.where(f == 50e3)[0][0]
     Bw = 100e3 - 1e3
     # valores = []
     # distancias = []
@@ -861,13 +870,13 @@ if __name__ == "__main__":
     #         valores.append(Xdb_o[i] + 10*np.log10(100e3 - 10e3))
     #         distancias.append(f[i])
             
-    phase_jitter_dbc = 10 **((Xdb_o[index] + 10*np.log10(Bw))/10)
-    print("phase_jitter_dbc:  ", phase_jitter_dbc, " Value in dBc: ", Xdb_o[index])
-    phase_jitter_rad = np.sqrt(2* phase_jitter_dbc)
-    phase_jitter_seconds = phase_jitter_rad / ( 2 * np.pi * F_DESIRED)
-    phase_jitter_deg =  phase_jitter_seconds / ((1/F_DESIRED)/360)
-    print("Phase jitter: ", phase_jitter_rad * 1000, " mrad/s ---- ", phase_jitter_seconds * 1e12, " ps  ----", "Jitter in degrees: ", phase_jitter_deg, "deg")
-    ##################################################################################
+    # phase_jitter_dbc = 10 **((Xdb_o[index] + 10*np.log10(Bw))/10)
+    # # print("phase_jitter_dbc:  ", phase_jitter_dbc, " Value in dBc: ", Xdb_o[index])
+    # phase_jitter_rad = np.sqrt(2* phase_jitter_dbc)
+    # phase_jitter_seconds = phase_jitter_rad / ( 2 * np.pi * F_DESIRED)
+    # phase_jitter_deg =  phase_jitter_seconds / ((1/F_DESIRED)/360)
+    # print("Phase jitter: ", phase_jitter_rad * 1000, " mrad/s ---- ", phase_jitter_seconds * 1e12, " ps  ----", "Jitter in degrees: ", phase_jitter_deg, "deg")
+    # ##################################################################################
 
     stopTime = datetime.datetime.now()
     diftime = stopTime - starTime
