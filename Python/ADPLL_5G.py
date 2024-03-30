@@ -232,14 +232,14 @@ def plot_histogram_noise(lenght):
     jitter_noise = np.random.randn(lenght) * Jt_noise
     wander_noise = np.random.randn(lenght) * Wt_noise
     plt.subplot(121)
-    plt.hist(jitter_noise , bins=100 , label="jitter") 
-    # plt.hist(jitter_noise , bins=100 , label="Jitter $\sigma_{\Delta t}$ = 73 fs ") 
+    # plt.hist(jitter_noise , bins=100 , label="jitter") 
+    plt.hist(jitter_noise , bins=100 , label="Jitter $\\sigma_{\\Delta t}$ = 103 fs ") 
     #label="Normal distribution of the Jitter noise")
     plt.legend()
     plt.grid(visible=True)
     plt.subplot(122)
-    plt.hist(wander_noise , bins=100 , color="r" , label="Wander")
-    # plt.hist(wander_noise , bins=100 , color="r" , label="Wander $\sigma_{\Delta T}$ = 8 fs ") 
+    # plt.hist(wander_noise , bins=100 , color="r" , label="Wander")
+    plt.hist(wander_noise , bins=100 , color="r" , label="Wander $\\sigma_{\\Delta T}$ = 17 fs ") 
     #label="Normal distribution of the wander noise")
     plt.legend()
     plt.grid(visible=True)
@@ -350,9 +350,9 @@ FCW_I_bits = 8  # Frequency Command Word integer resolution
 FCW_F_bits = 24 # Frequency Command Word Fractional resolution
 DIVISION_OUTPUT = 2 # Divisor after DCO output
 FREF = 26e6  # Frequência de referência
-F_DESIRED = 2.48e9
+F_DESIRED = 2.42e9
 NOISE = True
-IRR = False
+IRR = True
 SDM = False
 SAVE = False
 ENGLISH = False
@@ -364,7 +364,7 @@ Normalize the FCW integer + fractional in relationship the Nbits resolutions
 FCW_FRAC = FREF/2^(Nbits)
 '''
 ##########################################################
-fcw_temp = (F_DESIRED * 2) / FREF
+fcw_temp = (F_DESIRED * DIVISION_OUTPUT) / FREF
 fcw_f_res = FREF/2**FCW_F_bits
 fCW_f , fCW_i = math.modf(fcw_temp) 
 fCW_f = int((fCW_f * FREF) / fcw_f_res)
@@ -416,9 +416,9 @@ trk_array = np.zeros(2**TRK_NB_I)
 '''
         TDC
 '''
-TDC_res = 16e-12  # delay of each  inverter
+TDC_res = 12e-12  # delay of each  inverter
 TDC_chains = 28  # number of inverters
-AVG_FCKV = 512  # 128  # number of edges to average actual frequency
+AVG_FCKV = 256  # 128  # number of edges to average actual frequency
 NUM_ZEROS = 0
 TDC_BITS_RESOLUTION = 16  #Bits resolution of TDC
 TDC_BITS_AVG_TCKV = 15    #Bits resolution to average the clock CKV
@@ -449,14 +449,15 @@ MOD_ARITH = 2 ** 8
 '''
 noise_floor = -150  # -150  # noise floor [dBc)
 L_j = 10 ** (noise_floor / 10)  # noise level
-f_desired = F_DESIRED * DIVISION_OUTPUT # F0  # desired frequency
+f_desired = F_DESIRED #* DIVISION_OUTPUT # F0  # desired frequency
 t_required = 1 / f_desired  # period of frequency
-Thermal_noise = -111  # 6dB acima do desjado para dobro de freq.  # Up converted Thermal noise with deltaf frequency offset [dBc]
+Thermal_noise = -105  # 6dB acima do desjado para dobro de freq.  # Up converted Thermal noise with deltaf frequency offset [dBc]
 L_w = 10 ** (Thermal_noise / 10)  # noise level
-deltaf = 1e6  # offset frequency
+deltaf = 0.5e6  # offset frequency
 
 j_noise = (t_required / (2 * np.pi)) * np.sqrt(L_j * f_desired)  # Jitter noise standard deviation
 W_noise = deltaf / f_desired * np.sqrt(t_required) * np.sqrt(L_w)  # Wander noise standard deviation (including the 1/f noise)
+W_noise = 1 / np.sqrt(DIVISION_OUTPUT) * W_noise
 # Converte o número em um decimal
 j_decimal = decimal.Decimal(j_noise)
 w_decimal = decimal.Decimal(W_noise)
@@ -478,7 +479,7 @@ y1 = np.zeros(TIME)
 y2 = np.zeros(TIME)
 y3 = np.zeros(TIME)
 y_IRR = np.zeros(TIME)
-IRR_coef = [2 ** -1 , 2 ** -1 , 2 ** -1 , 2 ** -1]
+IRR_coef = [2 ** -1 , 2 ** -1 , 2 ** -2 , 2 ** -2]
 # IRR_coef = [2 ** -0.3 , 2 ** -0.3 , 2 ** -0.3 , 2 ** -0.3]
 f_BW_Irr = IRR_coef[0]/ 2 * np.pi * FREF
 
@@ -610,6 +611,7 @@ if __name__ == "__main__":
                     t_CKV.append(t_CKV[n - 1] + T0)
             else:
                 if NOISE:
+                    # t_CKV.append(t_CKV[n - 1] + T0)
                     t_CKV.append(t_CKV[n - 1] + T0 + jitter[n] + wander[n] - jitter[n - 1])
                 else:
                     t_CKV.append(t_CKV[n - 1] + T0)
@@ -691,6 +693,7 @@ if __name__ == "__main__":
                 OTW[k] = 0
             OTW_trk = OTW[k]  # calcula o novo valor de NTW como inteiro
         #######################################################################################################################
+        # f_CKV = SET_DCO(93 , 48 , 34 , OTW_trk_f)   #2,4Ghz
         f_CKV = SET_DCO(OTW_pvt , OTW_acq , OTW_trk , OTW_trk_f)
         last_To = T0
         T0 = 1 / f_CKV
@@ -700,22 +703,22 @@ if __name__ == "__main__":
     
     #####   PRINTS DE INFORMAÇÃO DA SIMULAÇÃO ##############
     print("freq ajustada: " , f_CKV / 1e6 ,
-          "MHz E a desejada era de :" , (F_DESIRED * 2) / 1e6 ,
-          "MHz diferença de :" , (f_CKV - (F_DESIRED * 2)) / 1e3 , "kHz e valor do banco ajustado em: " , OTW_trk)
+          "MHz E a desejada era de :" , (F_DESIRED * DIVISION_OUTPUT) / 1e6 ,
+          "MHz diferença de :" , (f_CKV - (F_DESIRED * DIVISION_OUTPUT)) / 1e3 , "kHz e valor do banco ajustado em: " , OTW_trk)
 
     SDMfreq = 0
     SDMDesv = 0
     Last_100_edges_CKV = np.array(freqmeanall[len(freqmeanall)-100:])
     if SDM:
         SDMfreq = np.mean(freqmeanSDM) / 1e6
-        SDMDesv = (np.mean(freqmeanSDM) - (F_DESIRED * 2)) / 1e3
+        SDMDesv = (np.mean(freqmeanSDM) - (F_DESIRED * DIVISION_OUTPUT)) / 1e3
         print("freq ajustada considerando a média SDM: " , SDMfreq ,
-              "MHz E a desejada era de :" , (F_DESIRED * 2) / 1e6 ,
+              "MHz E a desejada era de :" , (F_DESIRED * DIVISION_OUTPUT) / 1e6 ,
               "MHz diferença de :" , SDMDesv , "kHz")
 
     print("freq ajustada considerando a média das ultimas 100 Bordas: " , np.mean(Last_100_edges_CKV) / 1e6 ,
-          "MHz E a desejada era de :" , (F_DESIRED * 2) / 1e6 ,
-          "MHz diferença de :" , (np.mean(Last_100_edges_CKV) - (F_DESIRED * 2)) / 1e3 , "kHz")
+          "MHz E a desejada era de :" , (F_DESIRED * DIVISION_OUTPUT) / 1e6 ,
+          "MHz diferença de :" , (np.mean(Last_100_edges_CKV) - (F_DESIRED * DIVISION_OUTPUT)) / 1e3 , "kHz")
     
     print("ULTIMOS 100 CLOCKS:  Max freq:", np.max(Last_100_edges_CKV), "MHz  MIN freq:", np.min(Last_100_edges_CKV), "MHz")
 
@@ -731,12 +734,12 @@ if __name__ == "__main__":
     if SAVE:
         saveresults(timestop=stopTime.strftime("%H:%M:%S") , timediff=diftime.total_seconds() , fout_n=f_CKV / 1e6 ,
                     desv_n=(f_CKV - F_DESIRED*DIVISION_OUTPUT) / 1e3 ,
-                    fout_T=np.mean(freqmeanall) / 1e6 , desv_T=(np.mean(freqmeanall) - F_DESIRED*2) / 1e3 ,
+                    fout_T=np.mean(freqmeanall) / 1e6 , desv_T=(np.mean(freqmeanall) - F_DESIRED*DIVISION_OUTPUT) / 1e3 ,
                     fout_SDM=SDMfreq , desv_SDM=SDMDesv , result=simulationResults , dfresult=dfresult)
     ################################################################################################################
     
     ################ ERRO DE FASE EM RAD/S #################
-    print("Calculando o erro de fase em rad/s")
+    print("Calculando o erro de fase em rad/s em 2.4 GHz")
     tckv = np.array(t_CKV[len(t_CKV) - 500000:]) * DIVISION_OUTPUT
     phase = np.zeros(len(tckv)) 
     tref = 1 / F_DESIRED
@@ -747,6 +750,7 @@ if __name__ == "__main__":
 
     print("Max error: ",np.max(phase), "Mean error: ",np.mean(phase), " rad/s")
 
+    # print("Calculando o erro de fase em rad/s em 4.8 GHz")
     # tckv = np.array(t_CKV[len(t_CKV) - 500000:])
     # phase = np.zeros(len(tckv)) 
     # tref = 1 / (F_DESIRED * DIVISION_OUTPUT)
@@ -756,7 +760,7 @@ if __name__ == "__main__":
     #     phase[i] = diff * 2*np.pi * F_DESIRED * DIVISION_OUTPUT
 
     # print("Max error: ",np.max(phase), "Mean error: ",np.mean(phase), " rad/s")
-    ########################################################
+    #######################################################
 
     ###############   PLOT DOS VALORES DE FREQUÊNCIA E/OU ERROS ######################
     if ENGLISH:
@@ -786,6 +790,8 @@ if __name__ == "__main__":
     ##################################################################################
 
     # plt.figure()
+    # plt.hist(wander , bins=100 , color="r" , label="Wander")
+    # plt.legend()
     # plt.plot(tdc_delay, '-r', label="TDC")
     # # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
     # # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
@@ -822,7 +828,7 @@ if __name__ == "__main__":
     ###############  CALCULA O PHASE NOISE DO DCO ####################################
     print("cálculo da PSD")
     print(len(x))
-    Xdb_o , f = fun_calc_psd(x , F_DESIRED , 100e3 , 500)
+    Xdb_o , f = fun_calc_psd(x , F_DESIRED, 50e3 , 500)
     mask_phase_noise, freq  = plot_phaseNoiseMask() # obter a mascara de phase noise
     marker = 1e6  # Substitua pelo valor específico de frequência desejado
     indice = np.where(f == marker)[0][0]
@@ -834,14 +840,18 @@ if __name__ == "__main__":
         label1 = "Phase Noise"
     else:
         label1 = "Ruído de fase"
-    if IRR:
-        label1 += " + IRR"
-        SaveCsvValues("phasenoise_PSD_plus_IRR.csv",x=f, y=Xdb_o)
-    else:
-        SaveCsvValues("phasenoise_PSD_without_IRR.csv",x=f, y=Xdb_o)
+    # if IRR:
+    #     label1 += " + IRR"
+    #     SaveCsvValues("phasenoise_PSD_plus_IRR.csv",x=f, y=Xdb_o)
+    # else:
+    #     SaveCsvValues("phasenoise_PSD_without_IRR.csv",x=f, y=Xdb_o)
+
+    # SaveCsvValues("PN_model_sem_TDC.csv",x=f, y=Xdb_o)
+    # SaveCsvValues("PN_desvio_0.csv",x=f, y=Xdb_o)
+    # SaveCsvValues("PN_com_desvio.csv",x=f, y=Xdb_o)
     plt.semilogx(f , Xdb_o , label=label1)
     plt.scatter(marker, marker_dB, color='black', marker='o', label=f'{marker_dB:.2f} dBc/Hz  @1 MHz')
-    plt.semilogx(freq, mask_phase_noise, label='Phase Noise MASK')
+    # plt.semilogx(freq, mask_phase_noise, label='Phase Noise MASK')
     plt.grid(visible=True)
     plt.legend()
     plt.yticks([-160, -150, -140, -130, -120, -110, -100, -90, -80, -70])

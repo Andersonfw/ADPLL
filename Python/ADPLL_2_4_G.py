@@ -35,9 +35,9 @@ def Init_DCO():
     Configuração inicial do DCO
     '''
 
-    pvt_bank = LSB_BANK(F0 , PVT_NB , FR_PVT)
-    acq_bank = LSB_BANK(F0 , ACQ_NB , FR_ACQ)
-    trk_i_bank = LSB_BANK(F0 , TRK_NB_I , FR_TRK_I)
+    pvt_bank = LSB_BANK(F_DESIRED , PVT_NB , FR_PVT)
+    acq_bank = LSB_BANK(F_DESIRED , ACQ_NB , FR_ACQ)
+    trk_i_bank = LSB_BANK(F_DESIRED , TRK_NB_I , FR_TRK_I)
     trk_f_bank = LSB_BANK(F0 , TRK_NB_F , FR_TRK_F)
     global C0 , pvt_lsb , acq_lsb , trk_i_lsb , trk_f_lsb , FREQ_RES_PVT , FREQ_RES_ACQ , FREQ_RES_TRK , FREQ_RES_TRK_F
     C0 = pvt_bank.cmin
@@ -141,6 +141,8 @@ def TDC(tR , t_ckv , TCKV_accumulator):
     # # error = 1 - (tR_Q * TDC_res) / T0_avg
     #     error1 = 1 - (tR_Q * TDC_res) / T0_avg
     # error = (tR_Q * TDC_res) / T0_avg
+    t_avg = TCKV_accumulator * AVG_FCKV
+    error1 = 1 -(1/t_avg) * TDC_res * (tR_Q)
     return error1
     # dif = (tR - t_ckv)
     # # tR_Q = int((tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
@@ -218,20 +220,38 @@ def plot_DCO_signal():
     plt.ylabel('Amplitude (V)')
     plt.show()
 
+# def plot_phaseNoiseMask():
+#     # Geração das frequências
+#     frequencies_1k_to_3_5M = np.linspace(1000, 3.5e6, 300)  # De 1k a 3,5M
+#     frequencies_3_5M_to_10M= np.linspace(3.5e6, 10e6, num=200)  # De 3,5M a 10M
+#     frequencies_above_10M = np.linspace(10e6, 2.2e9, num=300)  # Acima de 10M
+
+#     # Geração dos níveis de fase noise correspondentes
+#     phase_noise_1k_to_1M = np.full_like(frequencies_1k_to_3_5M, -89)
+#     phase_noise_1M_to_10M = np.full_like(frequencies_3_5M_to_10M, -124)
+#     phase_noise_above_10M = np.full_like(frequencies_above_10M, -132)
+
+#     # Concatenação dos dados
+#     freq = np.concatenate((frequencies_1k_to_3_5M, frequencies_3_5M_to_10M, frequencies_above_10M))
+#     phase_noise = np.concatenate((phase_noise_1k_to_1M, phase_noise_1M_to_10M, phase_noise_above_10M))
+
+#     return phase_noise, freq
 def plot_phaseNoiseMask():
     # Geração das frequências
-    frequencies_1k_to_3_5M = np.linspace(1000, 3.5e6, 300)  # De 1k a 3,5M
-    frequencies_3_5M_to_10M= np.linspace(3.5e6, 10e6, num=200)  # De 3,5M a 10M
-    frequencies_above_10M = np.linspace(10e6, 2.2e9, num=300)  # Acima de 10M
+    frequencies_1k_to_1M = np.linspace(1000, 1e6, 300)  # De 1k a 1M
+    frequencies_2M_to_2M= np.linspace(1e6, 2e6, num=100)  # De 1M a 2M
+    frequencies_2M_to_3M = np.linspace(2e6, 3e6, num=100)  # De 2M a 3M
+    frequencies_above_3M = np.linspace(3e6, 5e9, num=300)  # Acima de 3M
 
     # Geração dos níveis de fase noise correspondentes
-    phase_noise_1k_to_1M = np.full_like(frequencies_1k_to_3_5M, -89)
-    phase_noise_1M_to_10M = np.full_like(frequencies_3_5M_to_10M, -124)
-    phase_noise_above_10M = np.full_like(frequencies_above_10M, -132)
+    phase_noise_1k_to_1M = np.full_like(frequencies_1k_to_1M, -66)
+    phase_noise_1M_to_2M = np.full_like(frequencies_2M_to_2M, -98)
+    phase_noise_2M_to_3M = np.full_like(frequencies_2M_to_3M, -108)
+    phase_noise_above_3M = np.full_like(frequencies_above_3M, -108)
 
     # Concatenação dos dados
-    freq = np.concatenate((frequencies_1k_to_3_5M, frequencies_3_5M_to_10M, frequencies_above_10M))
-    phase_noise = np.concatenate((phase_noise_1k_to_1M, phase_noise_1M_to_10M, phase_noise_above_10M))
+    phase_noise = np.concatenate((phase_noise_1k_to_1M, phase_noise_1M_to_2M, phase_noise_2M_to_3M, phase_noise_above_3M))
+    freq = np.concatenate((frequencies_1k_to_1M, frequencies_2M_to_2M, frequencies_2M_to_3M, frequencies_above_3M))
 
     return phase_noise, freq
     
@@ -349,7 +369,7 @@ def saveresults(timestop , timediff , fout_n , desv_n , fout_T , desv_T , fout_S
 # F0 = 5.0e9 # frequência central de ajuste do DCO
 F0 = 2045e6  # frequência central de ajuste do DCO
 FREF = 26e6  # Frequência de referência
-F_DESIRED = 2e9
+F_DESIRED = 2.4e9
 # F_DESIRED = 4.8e9
 # FCW = 76.923076927661896  # 76.9230  # Frequency command word
 # FCW = F_DESIRED / FREF  # 76.9230  # Frequency command word
@@ -365,18 +385,18 @@ FDCO = FREF * FCW  # Frequência desejada na saída do DCO
 FREF_edge = 1 / FREF  # tempo de borda de FREF
 FDCO_edge = 1 / FDCO  # tempo de borda de F0
 NOISE = True
-IRR = False
+IRR = True
 SDM = False
 SAVE = False
 
 '''
         BANK CAPACITOR
 '''
-PVT_NB = 8  # número de bits em PVT mode
-ACQ_NB = 8  # número de bits em acquisition mode
-TRK_NB_I = 6  # número de bits Trekking integer mode
+PVT_NB = 7  # número de bits em PVT mode
+ACQ_NB = 7  # número de bits em acquisition mode
+TRK_NB_I = 8  # número de bits Trekking integer mode
 TRK_NB_F = 5  # número de bits Trekking fractional mode
-FR_PVT = 500e6  # range de frequência em PVT mode
+FR_PVT = 800e6  # range de frequência em PVT mode
 FR_ACQ = 100e6  # range de frequência em acquisition mode
 FR_TRK_I = 2e6  # range de frequência em Trekking integer mode
 FR_TRK_F = FR_TRK_I / 2 ** TRK_NB_I  # range de frequência em Trekking fractional mode
@@ -384,7 +404,7 @@ FREQ_RES_PVT = 0
 FREQ_RES_ACQ = 0
 FREQ_RES_TRK = 0
 FREQ_RES_TRK_F = 0
-L = 2e-9  # Indutor utilizado
+L = 1e-9  # Indutor utilizado
 C0 = 0  # valor de capacitância inicial
 pvt_lsb = 0  # valor do LSB em PVT mode
 acq_lsb = 0  # valor do LSB em acquisition mode
@@ -404,8 +424,11 @@ NUM_ZEROS = 0
 Kp_PVT = 2 ** -2
 Kp_ACQ = 2 ** -5
 Kp_TRK = 2 ** -5
-Ki_TRK = 2 ** -11
+Ki_TRK = 2 ** -13
 MOD_ARITH = 2 ** 8
+w_n = np.sqrt(Ki_TRK) * FREF
+damping_factor = 0.5 * (Kp_TRK /  np.sqrt(Ki_TRK))
+print(f"LOOP FILTER --- Wn={w_n}rad/s and Damping Factor={damping_factor}")
 
 '''
         NOISE
@@ -414,9 +437,9 @@ noise_floor = -150  # -150  # noise floor [dBc)
 L_j = 10 ** (noise_floor / 10)  # noise level
 f_desired = FCW * FREF  # F0  # desired frequency
 t_required = 1 / f_desired  # period of frequency
-Thermal_noise = -130  # -130  # Up converted Thermal noise with deltaf frequency offset [dBc]
+Thermal_noise = -105  # -130  # Up converted Thermal noise with deltaf frequency offset [dBc]
 L_w = 10 ** (Thermal_noise / 10)  # noise level
-deltaf = 3.5e6  # offset frequency
+deltaf = 1e6  # offset frequency
 
 j_noise = (t_required / (2 * np.pi)) * np.sqrt(L_j * f_desired)  # Jitter noise standard deviation
 W_noise = deltaf / f_desired * np.sqrt(t_required) * np.sqrt(L_w)  # Wander noise standard deviation
@@ -437,7 +460,7 @@ print("Wander noise" , Wt_noise)
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 50000  # simulação de X bordas de FREF
+TIME = 5000  # simulação de X bordas de FREF
 OVERSAMPLE = 100  # over sample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 
@@ -448,7 +471,7 @@ y1 = np.zeros(TIME)
 y2 = np.zeros(TIME)
 y3 = np.zeros(TIME)
 y_IRR = np.zeros(TIME)
-IRR_coef = [2 ** -2 , 2 ** -1 , 2 ** -1 , 2 ** -1]
+IRR_coef = [2 ** -1 , 2 ** -1 , 2 ** -1 , 2 ** -1]
 
 '''
         SIGMA DELTA MODULATOR
@@ -492,8 +515,8 @@ pvt_bank_calib = False
 acq_bank_calib = False
 trk_bank_calib = False
 OTW_pvt = 0  # initial value of pvt bank
-OTW_acq = 128  # initial value of acq bank
-OTW_trk = 32  # initial value of trk integer bank
+OTW_acq = 64  # initial value of acq bank
+OTW_trk = 64  # initial value of trk integer bank
 OTW_trk_f = 0  # initial value of trk fractional bank
 phase_dif = 0  # phase difference
 prev_phase = 0  # new phase difference
@@ -642,15 +665,16 @@ if __name__ == "__main__":
                 k - 1]  # calcula o novo valor de NTW
             # NTW[k] = (phase_error[k]) * Kp_TRK
             OTW[k] = NTW[k] * (FREF / FREQ_RES_TRK)
-            if OTW[k] > 64:
-                OTW[k] = 64
-            elif OTW[k] < 0:
-                OTW[k] = 0
+            # if OTW[k] > 64:
+            #     OTW[k] = 64
+            # elif OTW[k] < 0:
+            #     OTW[k] = 0
             OTW_trk = OTW[k]  # calcula o novo valor de NTW como inteiro
         # OTW_pvt = 153
         # OTW_acq = 124
         # OTW_trk = 43
-        f_CKV = SET_DCO(OTW_pvt , OTW_acq , OTW_trk , OTW_trk_f)
+        f_CKV = SET_DCO(87 , 60 , 64 , 0)
+        # f_CKV = SET_DCO(OTW_pvt , OTW_acq , OTW_trk , OTW_trk_f)
         last_To = T0
         T0 = 1 / f_CKV
         freqs[k] = f_CKV  # insere o valor de frequência ajustado no index k
@@ -693,7 +717,7 @@ if __name__ == "__main__":
     
     ################ ERRO DE FASE EM RAD/S #################
     print("Calculando o erro de fase em rad/s")
-    tckv = np.array(t_CKV[len(t_CKV) - 150000:])
+    tckv = np.array(t_CKV[len(t_CKV) - 500000:])
     phase = np.zeros(len(tckv))
     tref = 1 / (FCW * FREF)
     for i in range(len(tckv) - 2):
@@ -736,10 +760,15 @@ if __name__ == "__main__":
 
     ###############  CALCULA O PHASE NOISE DO DCO ####################################
     print("cálculo da PSD")
-    Xdb_o , f = fun_calc_psd(x , 2e9 , 2e3 , 700)
+    marker = 1e6  # Substitua pelo valor específico de frequência desejado
+    Xdb_o , f = fun_calc_psd(x , F_DESIRED, 100e3 , 500)
+   
+    indice = np.where(f == marker)[0][0]
+    marker_dB = Xdb_o[indice]
     mask_phase_noise, freq  = plot_phaseNoiseMask() # obter a mascara de phase noise
     plt.figure()
     plt.semilogx(f , Xdb_o , label="Phase Noise")
+    plt.scatter(marker, marker_dB, color='black', marker='o', label=f'{marker_dB:.2f} dBc/Hz  @1 MHz')
     plt.semilogx(freq, mask_phase_noise, label='Phase Noise MASK')
     plt.grid(visible=True)
     plt.legend()

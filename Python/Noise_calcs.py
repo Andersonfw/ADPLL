@@ -6,9 +6,9 @@ Created on setembro 12 17:46:23 2023
 import numpy as np
 
 
-DELTA_F = 1000e3
-TDC_RES = 16e-12
-FRES_DCO = 32e3
+DELTA_F = 500e3
+TDC_RES = 12e-12
+FRES_DCO = 15e3
 FREF = 26e6
 TREF = 1/FREF
 FDCO = 4.8e9/2
