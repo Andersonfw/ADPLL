@@ -107,8 +107,8 @@ def SET_DCO(pvt_OTW=255 , acq_OTW=255 , trk_i_OTW=64 , trk_f_OTW=0):
     trk_i = binaryValue(TRK_NB_I , trk_i_OTW)
     trk_f = 0  # binaryValue(TRK_NB_F, trk_f_OTW)
 
-    # f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb + trk_f_lsb * trk_f)))
-    f = 1 / (2 * np.pi * np.sqrt(L * (C0 + np.sum(pvt_array[:pvt]) + np.sum(acq_array[:acq]) + np.sum(trk_array[:trk_i]) )))
+    f = 1 / (2 * np.pi * np.sqrt(L * (C0 + pvt * pvt_lsb + acq * acq_lsb + trk_i * trk_i_lsb + trk_f_lsb * trk_f)))
+    # f = 1 / (2 * np.pi * np.sqrt(L * (C0 + np.sum(pvt_array[:pvt]) + np.sum(acq_array[:acq]) + np.sum(trk_array[:trk_i]) )))
 
     freq_array[avg_counter] = f / TDC_DIVISOR   # accumulator of CKV after divisor to average in TDC
     avg_counter += 1
@@ -129,7 +129,8 @@ def TDC(tR , t_ckv ,TCKV_accumulator):
     '''
     # tdc_resolution = random.uniform(TDC_res*(1 + TDC_MISMATCH), TDC_res*(1 - TDC_MISMATCH))
     tdc_resolution = np.random.normal(loc=0, scale = TDC_res * TDC_MISMATCH)
-    tdc_resolution += TDC_res
+    # tdc_resolution += TDC_res
+    tdc_resolution = TDC_res
     t = TCKV_accumulator * AVG_FCKV
     T_Q =  int(( TCKV_accumulator * AVG_FCKV)  / tdc_resolution)    # quantização do accumulador em relação a resolução do TDC
     K_TDC = int(( 1 / T_Q ) * 2**TDC_BITS_AVG_TCKV) # ganho do TDC
@@ -140,10 +141,11 @@ def TDC(tR , t_ckv ,TCKV_accumulator):
     Binary_error = tR_Q * ( K_TDC / 2**TDC_BITS_AVG_TCKV) * 2**TDC_BITS_RESOLUTION
     
     Float_error = (1 / 2**TDC_BITS_RESOLUTION) * Binary_error
-    # error = 1 - Float_error
-    error = Float_error
-    # t_avg = TCKV_accumulator * AVG_FCKV
-    # error = (1/t_avg) * tdc_resolution * (tR_Q)
+    error = 1 - Float_error
+    # error = Float_error
+
+    t_avg = TCKV_accumulator * AVG_FCKV
+    error = 1 - (1/t_avg) * tdc_resolution * (tR_Q)
     tdc_delay.append(error)
     return error
 
@@ -347,17 +349,17 @@ def SaveCsvValues(name, x, y):
         DEFINIÇÕES GERAIS
 '''
 FCW_I_bits = 8  # Frequency Command Word integer resolution
-FCW_F_bits = 24 # Frequency Command Word Fractional resolution
+FCW_F_bits = 16 # Frequency Command Word Fractional resolution
 DIVISION_OUTPUT = 2 # Divisor after DCO output
 FREF = 26e6  # Frequência de referência
-F_DESIRED = 2.42e9
+F_DESIRED = 2.4e9
 NOISE = True
 IRR = True
 SDM = False
 SAVE = False
 ENGLISH = False
 MISMATCH_DCO = 0#0.1/100 # 0,01%
-TDC_MISMATCH = 0#10/100  #5%
+TDC_MISMATCH = 0#5/100  #5%
 '''------------------------------------------------------------------------------------------------------- '''
 '''
 Normalize the FCW integer + fractional in relationship the Nbits resolutions
@@ -378,7 +380,7 @@ FDCO_edge = 1 / FDCO  # tempo de borda de F0
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 5000  # simulação de X bordas de FREF
+TIME = 20000  # simulação de X bordas de FREF
 OVERSAMPLE = 100  # over sample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 
@@ -416,12 +418,12 @@ trk_array = np.zeros(2**TRK_NB_I)
 '''
         TDC
 '''
-TDC_res = 12e-12  # delay of each  inverter
+TDC_res = 20e-12  # delay of each  inverter
 TDC_chains = 28  # number of inverters
-AVG_FCKV = 256  # 128  # number of edges to average actual frequency
+AVG_FCKV = 128  # 128  # number of edges to average actual frequency
 NUM_ZEROS = 0
-TDC_BITS_RESOLUTION = 16  #Bits resolution of TDC
-TDC_BITS_AVG_TCKV = 15    #Bits resolution to average the clock CKV
+TDC_BITS_RESOLUTION = 24  #Bits resolution of TDC
+TDC_BITS_AVG_TCKV = 24    #Bits resolution to average the clock CKV
 TDC_DIVISOR = DIVISION_OUTPUT
 '''------------------------------------------------------------------------------------------------------- '''
 '''
@@ -525,7 +527,7 @@ pvt_bank_calib = False
 acq_bank_calib = False
 trk_bank_calib = False
 OTW_pvt = 0  # initial value of pvt bank
-OTW_acq = 2 **ACQ_NB /2  - 15 #random.uniform(-10, 10)# initial value of acq bank
+OTW_acq = 2 **ACQ_NB /2  - 0#25 # random.uniform(-10, 10)# initial value of acq bank
 OTW_trk = 2 **TRK_NB_I /2  # initial value of trk integer bank
 OTW_trk_f = 0  # initial value of trk fractional bank
 phase_dif = 0  # phase difference
@@ -616,8 +618,8 @@ if __name__ == "__main__":
                 else:
                     t_CKV.append(t_CKV[n - 1] + T0)
         if trk_bank_calib:
-            #  error_fractional[k] = TDC(t_R*TDC_DIVISOR , t_CKV[n-1]*TDC_DIVISOR ,1 / np.sum(freq_array))
-             error_fractional[k] = TDC(t_R*TDC_DIVISOR , t_CKV[n]*TDC_DIVISOR ,1 / np.sum(freq_array))
+             error_fractional[k] = TDC(t_R*TDC_DIVISOR , t_CKV[n-1]*TDC_DIVISOR ,1 / np.sum(freq_array))
+            #  error_fractional[k] = TDC(t_R*TDC_DIVISOR , t_CKV[n]*TDC_DIVISOR ,1 / np.sum(freq_array))
         RV_k = RV_n  # variable phase accumulator
         erro_esperado = f_CKV / FREF
         erro_esperado = FCW - erro_esperado
@@ -635,7 +637,7 @@ if __name__ == "__main__":
             OTW_pvt = OTW[k]
             if diff_freq(f_CKV) <= FREQ_RES_PVT:
                 count += 1
-                if count == 5:#5:
+                if count == 10:#5:#5:
                     pvt_bank_calib = True
                     print("Frequência na saída do PVT bank: " , f_CKV / 1e6 , "MHz em " , k ,
                           "bordas de FREF e valor do banco ajustado em: " , OTW_pvt)
@@ -648,18 +650,20 @@ if __name__ == "__main__":
         elif not acq_bank_calib:
             NTW[k] = (int(phase_error[k]) * Kp_ACQ)  # calcula o novo valor de NTW como inteiro
             OTW[k] = NTW[k] * (FREF / FREQ_RES_ACQ) # gain normalization of TRK mode
+            if OTW[k] > 2**ACQ_NB:
+                OTW[k] = 2**ACQ_NB
             OTW_acq = OTW[k]  # ajusta o novo valor de controle dos capacitores do ACQ bank
             if diff_freq(f_CKV) <= FREQ_RES_ACQ:
                 count += 1
-                if count == 5:
+                if count == 10:#5:
                     acq_bank_calib = True
                     trk_bank_calib = True
                     OTW_acq = OTW[k - 1]
                     print("Frequência na saída do ACQ bank: " , f_CKV / 1e6 , "MHz em " , k ,
                           "bordas de FREF e valor do banco ajustado em: " , OTW_acq)
                     # OTW_trk = 0
-                    OFFSET_ERROR_ACQ = int(phase_error[k])  # compensão do erro inteiro para ser apenas considerado o erro fracionário
-                    # bfirst = True
+                    # OFFSET_ERROR_ACQ = int(phase_error[k])  # compensão do erro inteiro para ser apenas considerado o erro fracionário
+                    bfirst = True
                     
             else:
                 count = 0
@@ -667,14 +671,14 @@ if __name__ == "__main__":
 
         ##################### TREKING MODE ################################################
         elif trk_bank_calib:
-            # if bfirst:
-            #     OFFSET_ERROR_ACQ = int(phase_error[k])  # compensão do erro inteiro para ser apenas considerado o erro fracionário
-            #     bfirst = False
-            #     NTW[k - 1] = 0
-            #     phase_error[k - 1] = 1
+            if bfirst:
+                OFFSET_ERROR_ACQ = int(phase_error[k])  # compensão do erro inteiro para ser apenas considerado o erro fracionário
+                bfirst = False
+                NTW[k - 1] = 0
+                phase_error[k - 1] = 1
             # NTW[k] = OTW_trk + ((int(phase_error[k] - phase_error[k - 1])) * Kp_TRK)
             if phase_error[k] < (OFFSET_ERROR_ACQ - OFFSET_ERROR_ACQ / 2):
-                #print(" phase_error[k] < (OFFSET_ERROR_ACQ - OFFSET_ERROR_ACQ / 2): ", phase_error[k], k, OFFSET_ERROR_ACQ)
+                print(" phase_error[k] < (OFFSET_ERROR_ACQ - OFFSET_ERROR_ACQ / 2): ", phase_error[k], k, OFFSET_ERROR_ACQ)
                 #pass
                 break
             else:
@@ -740,13 +744,14 @@ if __name__ == "__main__":
     
     ################ ERRO DE FASE EM RAD/S #################
     print("Calculando o erro de fase em rad/s em 2.4 GHz")
-    tckv = np.array(t_CKV[len(t_CKV) - 500000:]) * DIVISION_OUTPUT
-    phase = np.zeros(len(tckv)) 
-    tref = 1 / F_DESIRED
+    # tckv = np.array(t_CKV[len(t_CKV) - 500000:]) * DIVISION_OUTPUT
+    tckv = np.array(t_CKV[len(t_CKV) - 500000:]) 
+    phase = np.zeros(len(tckv)-2) 
+    tref = 1 / (F_DESIRED*2)
     # print("tckv[0]: ", tckv[1]-tckv[0], "  phase[0]: ", phase[1], "  tref: ", tref)
     for i in range(len(tckv) - 2):
         diff = tref - ((tckv[i + 1] - tckv[i]))
-        phase[i] = diff * 2*np.pi * F_DESIRED
+        phase[i] = diff * 2*np.pi * F_DESIRED * 2
 
     print("Max error: ",np.max(phase), "Mean error: ",np.mean(phase), " rad/s")
 
@@ -768,45 +773,56 @@ if __name__ == "__main__":
         label2 = 'Frequency out of DCO (Hz)'
     else:
         label1 = "Ciclos de clock de referência"
-        label2 = 'Frequência de saída do DCO (Hz)'
-    # plt.figure()
-    # indice = 800
-    # marker_dB = freqs[indice]/1e9
-    # label_anotate = '$\\Delta f = $' + '{:.3f}'.format((freqs[4999] - F_DESIRED) / 1e3) + " kHz"
-    # # print(label_anotate, " ---", freqs[4999])
-    # plt.scatter(indice, marker_dB, color='black', marker='o', label=f'{marker_dB:.3f}  GHz | ' + label_anotate)
-    # # plt.annotate(label_anotate, xy=(indice, marker_dB-0.01), xytext=(indice - 10, marker_dB - 0.1),
-    #         #  arrowprops=dict(facecolor='blue', arrowstyle='-|>', lw=2.5), fontsize=15, ha='right')
-    # plt.plot(freqs[1:1000]/1e9, '-r', label="DCO")
-    # # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
-    # # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
-    # # # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
-    # # # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
-    # plt.legend()
-    # plt.xlabel(label1)
-    # plt.ylabel(label2)
-    # plt.grid(visible=True)
+        label2 = 'Frequência de saída do DCO (GHz)'
+    plt.figure()
+    indice = 400
+    marker_dB = freqs[indice]/1e9
+    label_anotate = '$\\Delta f = $' + '{:.3f}'.format((freqs[4999] - F_DESIRED) / 1e3) + " kHz"
+    # print(label_anotate, " ---", freqs[4999])
+    plt.scatter(indice, marker_dB, color='black', marker='o', label=f'{marker_dB:.3f}  GHz | ' + label_anotate)
+    # plt.annotate(label_anotate, xy=(indice, marker_dB-0.01), xytext=(indice - 10, marker_dB - 0.1),
+            #  arrowprops=dict(facecolor='blue', arrowstyle='-|>', lw=2.5), fontsize=15, ha='right')
+    plt.plot(freqs[1:500]/1e9, '-r', label="DCO")
+    # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
+    # plt.plot( fractional_error_trk_IRR, '-b')
+    # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
+    # # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
+    # # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
+    plt.legend()
+    # plt.xticks([0,50,100, 150, 200, 250, 300, 350, 400, 450, 500])
+    plt.xlabel(label1)
+    plt.ylabel(label2)
+    plt.grid(visible=True)
     # plt.show()
     ##################################################################################
 
+    plt.figure()
+    # plt.hist(wander[len(wander) - 500000:] , bins=100 , color="r" , label="Wander")
+    # plt.legend()
+    # plt.grid(visible=True)
     # plt.figure()
-    # plt.hist(wander , bins=100 , color="r" , label="Wander")
+    # plt.hist(jitter[len(jitter) - 500000:] , bins=100 , color="b" , label="Jitter")
     # plt.legend()
     # plt.plot(tdc_delay, '-r', label="TDC")
-    # # plt.plot(np.arange(1, TIME, 1), OTW[1:TIME], '-b')
+    plt.plot(np.arange(1, 600, 1), OTW[1:600], '-r')
+    # plt.annotate("Modo PVT", xy=(20, 45), xytext=(-10, 40),
+            #  arrowprops=dict(facecolor='blue', arrowstyle='<-', lw=2.5)) # fontsize=10, ha='right')
     # # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
     # # # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
     # # # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
     # plt.legend()
-    # plt.xlabel(label1)
-    # plt.ylabel('TDC delays')
-    # plt.grid(visible=True)
+    # plt.xticks([0,50,100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600])
+    plt.xlabel(label1)
+    plt.ylabel('OTW')
+    plt.grid(visible=True)
+    # SaveCsvValues("OTW.csv",x=OTW[1:600], y=np.arange(1, 600, 1))
+    # plt.show()
 
     #############  SALVA EM UM CSV OS DADOS DO ARRAY DE phase #########################
     print("Save CSV")
     df = pd.DataFrame([phase])
     nome_arquivo_csv = 'phaseErrorinRad.csv'
-    # df.to_csv(nome_arquivo_csv , index=False , header=False)
+    df.to_csv(nome_arquivo_csv , index=False , header=False)
     ##################################################################################
 
     ##############  APLICA UM FILTRO NOS VALORES DE PHASE ############################
@@ -823,16 +839,23 @@ if __name__ == "__main__":
     b = 1
     a = np.array([1 , -1])
     x = signal.lfilter([b], a,  phase - np.mean(phase))
+    # plt.figure()
+    # plt.plot(x)
+    # plt.grid(visible=True)
     ##################################################################################
 
     ###############  CALCULA O PHASE NOISE DO DCO ####################################
     print("cálculo da PSD")
     print(len(x))
-    Xdb_o , f = fun_calc_psd(x , F_DESIRED, 50e3 , 500)
+    Xdb_o , f = fun_calc_psd(x , F_DESIRED*2, 100e3 , 500)
     mask_phase_noise, freq  = plot_phaseNoiseMask() # obter a mascara de phase noise
     marker = 1e6  # Substitua pelo valor específico de frequência desejado
     indice = np.where(f == marker)[0][0]
     marker_dB = Xdb_o[indice]
+
+    marker_tdc = 1e3  # Substitua pelo valor específico de frequência desejado
+    indice_tdc = np.where(f == marker_tdc)[0][0]
+    marker_dB_tdc = Xdb_o[indice_tdc]
     
     # SaveCsvValues("phasenoise_PSD_plus_IRR.csv",x=f, y=Xdb_o)
     plt.figure()
@@ -847,10 +870,11 @@ if __name__ == "__main__":
     #     SaveCsvValues("phasenoise_PSD_without_IRR.csv",x=f, y=Xdb_o)
 
     # SaveCsvValues("PN_model_sem_TDC.csv",x=f, y=Xdb_o)
-    # SaveCsvValues("PN_desvio_0.csv",x=f, y=Xdb_o)
+    SaveCsvValues("PN_desvio_0.csv",x=f, y=Xdb_o)
     # SaveCsvValues("PN_com_desvio.csv",x=f, y=Xdb_o)
     plt.semilogx(f , Xdb_o , label=label1)
     plt.scatter(marker, marker_dB, color='black', marker='o', label=f'{marker_dB:.2f} dBc/Hz  @1 MHz')
+    plt.scatter(marker_tdc, marker_dB_tdc, color='red', marker='o', label=f'{marker_dB_tdc:.2f} dBc/Hz  @100 kHz')
     # plt.semilogx(freq, mask_phase_noise, label='Phase Noise MASK')
     plt.grid(visible=True)
     plt.legend()
@@ -880,12 +904,12 @@ if __name__ == "__main__":
     #         valores.append(Xdb_o[i] + 10*np.log10(100e3 - 10e3))
     #         distancias.append(f[i])
             
-    # phase_jitter_dbc = 10 **((Xdb_o[index] + 10*np.log10(Bw))/10)
-    # # print("phase_jitter_dbc:  ", phase_jitter_dbc, " Value in dBc: ", Xdb_o[index])
-    # phase_jitter_rad = np.sqrt(2* phase_jitter_dbc)
-    # phase_jitter_seconds = phase_jitter_rad / ( 2 * np.pi * F_DESIRED)
-    # phase_jitter_deg =  phase_jitter_seconds / ((1/F_DESIRED)/360)
-    # print("Phase jitter: ", phase_jitter_rad * 1000, " mrad/s ---- ", phase_jitter_seconds * 1e12, " ps  ----", "Jitter in degrees: ", phase_jitter_deg, "deg")
+    phase_jitter_dbc = 10 **((Xdb_o[index] + 10*np.log10(Bw))/10)
+    # print("phase_jitter_dbc:  ", phase_jitter_dbc, " Value in dBc: ", Xdb_o[index])
+    phase_jitter_rad = np.sqrt(2* phase_jitter_dbc)
+    phase_jitter_seconds = phase_jitter_rad / ( 2 * np.pi * F_DESIRED)
+    phase_jitter_deg =  phase_jitter_seconds / ((1/F_DESIRED)/360)
+    print("Phase jitter: ", phase_jitter_rad * 1000, " mrad/s ---- ", phase_jitter_seconds * 1e12, " ps  ----", "Jitter in degrees: ", phase_jitter_deg, "deg")
     # ##################################################################################
 
     stopTime = datetime.datetime.now()

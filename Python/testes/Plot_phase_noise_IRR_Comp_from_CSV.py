@@ -2,11 +2,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-ENGLISH = False
+ENGLISH = True
 # Especificar o caminho do arquivo CSV
 dirr = os.path.dirname(__file__)
-PN_with_IRR = os.path.join(dirr, '..', 'phasenoise_PSD_plus_IRR_kp_4_KI_11.csv')
-PN_witout_IRR = os.path.join(dirr, '..', 'phasenoise_PSD_without_IRR_kp_4_KI_11.csv')
+PN_with_IRR = os.path.join(dirr, '..', 'phasenoise_PSD_plus_IRR.csv')
+PN_witout_IRR = os.path.join(dirr, '..', 'phasenoise_PSD_without_IRR.csv')
 
 # Carregar o arquivo CSV em um DataFrame do pandas
 df = pd.read_csv(PN_witout_IRR, sep=';')

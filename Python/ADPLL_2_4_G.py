@@ -35,9 +35,9 @@ def Init_DCO():
     Configuração inicial do DCO
     '''
 
-    pvt_bank = LSB_BANK(F_DESIRED , PVT_NB , FR_PVT)
-    acq_bank = LSB_BANK(F_DESIRED , ACQ_NB , FR_ACQ)
-    trk_i_bank = LSB_BANK(F_DESIRED , TRK_NB_I , FR_TRK_I)
+    pvt_bank = LSB_BANK(2.4e9 , PVT_NB , FR_PVT)
+    acq_bank = LSB_BANK(2.44e9 , ACQ_NB , FR_ACQ)
+    trk_i_bank = LSB_BANK(2.4e9 , TRK_NB_I , FR_TRK_I)
     trk_f_bank = LSB_BANK(F0 , TRK_NB_F , FR_TRK_F)
     global C0 , pvt_lsb , acq_lsb , trk_i_lsb , trk_f_lsb , FREQ_RES_PVT , FREQ_RES_ACQ , FREQ_RES_TRK , FREQ_RES_TRK_F
     C0 = pvt_bank.cmin
@@ -142,7 +142,7 @@ def TDC(tR , t_ckv , TCKV_accumulator):
     #     error1 = 1 - (tR_Q * TDC_res) / T0_avg
     # error = (tR_Q * TDC_res) / T0_avg
     t_avg = TCKV_accumulator * AVG_FCKV
-    error1 = 1 -(1/t_avg) * TDC_res * (tR_Q)
+    error1 = 1 - (1/t_avg) * TDC_res * (tR_Q)
     return error1
     # dif = (tR - t_ckv)
     # # tR_Q = int((tR - t_ckv) / TDC_res)  # Diferença de tempo entre a última borda de clock de CKV até a borda de REF. (FIG 2 Time-Domain Modeling of an RF All-Digital PLL)
@@ -322,7 +322,7 @@ def fun_calc_psd(x , fs=1 , rbw=100e3 , fstep=None):
         nwin = len_x
         rbw = fs * 1.62 / nwin
     num_segments = 8
-    nwin = math.floor(len(x) / num_segments)
+    #nwin = math.floor(len(x) / num_segments)
     fftstr = (f'len(x)={len_x:.2f}, rbw={rbw / 1e3:.2f}kHz, fstep={fstep / 1e3:.2f}kHz, nfft={nfft:d}, nwin={nwin:d}')
     print(f'Calculating the PSD: {fftstr} ...')
     f , X = signal.welch(x , fs=fs , window=signal.windows.blackman(nwin) , nperseg=nwin , nfft=nfft ,
@@ -397,7 +397,7 @@ ACQ_NB = 7  # número de bits em acquisition mode
 TRK_NB_I = 8  # número de bits Trekking integer mode
 TRK_NB_F = 5  # número de bits Trekking fractional mode
 FR_PVT = 800e6  # range de frequência em PVT mode
-FR_ACQ = 100e6  # range de frequência em acquisition mode
+FR_ACQ = 200e6  # range de frequência em acquisition mode
 FR_TRK_I = 2e6  # range de frequência em Trekking integer mode
 FR_TRK_F = FR_TRK_I / 2 ** TRK_NB_I  # range de frequência em Trekking fractional mode
 FREQ_RES_PVT = 0
@@ -414,7 +414,7 @@ trk_f_lsb = 0  # valor do LSB em Trekking fractional mode
 '''
         TDC
 '''
-TDC_res = 15e-12  # delay of each  inverter
+TDC_res = 10e-12  # delay of each  inverter
 TDC_chains = 40  # number of inverters
 AVG_FCKV = 128  # 128  # number of edges to average actual frequency
 NUM_ZEROS = 0
@@ -424,7 +424,7 @@ NUM_ZEROS = 0
 Kp_PVT = 2 ** -2
 Kp_ACQ = 2 ** -5
 Kp_TRK = 2 ** -5
-Ki_TRK = 2 ** -13
+Ki_TRK = 2 ** -12
 MOD_ARITH = 2 ** 8
 w_n = np.sqrt(Ki_TRK) * FREF
 damping_factor = 0.5 * (Kp_TRK /  np.sqrt(Ki_TRK))
@@ -435,11 +435,11 @@ print(f"LOOP FILTER --- Wn={w_n}rad/s and Damping Factor={damping_factor}")
 '''
 noise_floor = -150  # -150  # noise floor [dBc)
 L_j = 10 ** (noise_floor / 10)  # noise level
-f_desired = FCW * FREF  # F0  # desired frequency
+f_desired = F_DESIRED #FCW * FREF  # F0  # desired frequency
 t_required = 1 / f_desired  # period of frequency
 Thermal_noise = -105  # -130  # Up converted Thermal noise with deltaf frequency offset [dBc]
 L_w = 10 ** (Thermal_noise / 10)  # noise level
-deltaf = 1e6  # offset frequency
+deltaf = 0.5e6  # offset frequency
 
 j_noise = (t_required / (2 * np.pi)) * np.sqrt(L_j * f_desired)  # Jitter noise standard deviation
 W_noise = deltaf / f_desired * np.sqrt(t_required) * np.sqrt(L_w)  # Wander noise standard deviation
@@ -460,7 +460,7 @@ print("Wander noise" , Wt_noise)
 '''
         VARIÁVEIS DE CONTROLE DA SIMULAÇÃO
 '''
-TIME = 5000  # simulação de X bordas de FREF
+TIME = 10000  # simulação de X bordas de FREF
 OVERSAMPLE = 100  # over sample de frequência para discretizar a frequência do DCO
 len_simulation = 6 * OVERSAMPLE  # plotar 6 períodos do DCO
 
@@ -516,7 +516,7 @@ acq_bank_calib = False
 trk_bank_calib = False
 OTW_pvt = 0  # initial value of pvt bank
 OTW_acq = 64  # initial value of acq bank
-OTW_trk = 64  # initial value of trk integer bank
+OTW_trk = 128  # initial value of trk integer bank
 OTW_trk_f = 0  # initial value of trk fractional bank
 phase_dif = 0  # phase difference
 prev_phase = 0  # new phase difference
@@ -543,7 +543,7 @@ if __name__ == "__main__":
     starTime = datetime.datetime.now()
     print("iniciando simulação do ADPLL em: " , starTime.strftime("%H:%M:%S") , "\r\nFrequência de referência: " ,
           FREF / 1e6 , "MHz" ,
-          "\r\nFrequência desejada: " , FDCO / 1e6 , "MHz" , "\r\nBordas de referência: " , TIME , "vezes \r\nFCW: " ,
+          "\r\nFrequência desejada: " , F_DESIRED / 1e6 , "MHz" , "\r\nBordas de referência: " , TIME , "vezes \r\nFCW: " ,
           FCW ,
           "\r\nRuido: " , "Ativado" if NOISE else "Desativado" ,
           "\r\nSDM: " , "Ativado" if SDM else "Desativado" ,
@@ -604,7 +604,8 @@ if __name__ == "__main__":
                 else:
                     t_CKV.append(t_CKV[n - 1] + T0)
             else:
-                t_CKV.append(t_CKV[n - 1] + T0)
+                # t_CKV.append(t_CKV[n - 1] + T0)
+                t_CKV.append(t_CKV[n - 1] + T0 + jitter[n] + wander[n] - jitter[n - 1])
         if trk_bank_calib:
             error_fractional[k] = TDC(t_R , t_CKV[n - 1] , 1 / np.sum(freq_array))
 
@@ -614,6 +615,7 @@ if __name__ == "__main__":
         phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
         if int(phase_error[k]) < 0:
             phase_error[k] = phase_error[k - 1]
+            print("if int(phase_error[k]) < 0:", phase_error[k])
             pass
 
         ##################### PVT MODE #################################################
@@ -653,6 +655,7 @@ if __name__ == "__main__":
         elif trk_bank_calib:
             # NTW[k] = OTW_trk + ((int(phase_error[k] - phase_error[k - 1])) * Kp_TRK)
             if phase_error[k] < (offseterror - offseterror / 2):
+                print(" phase_error[k] < (OFFSET_ERROR_ACQ - OFFSET_ERROR_ACQ / 2): ", phase_error[k], k, offseterror)
                 pass
             else:
                 phase_error[k] = abs(phase_error[k]) - offseterror
@@ -661,8 +664,7 @@ if __name__ == "__main__":
             if IRR:
                 phase_error[k] = IRR_filter(k , phase_error[k])  # aplica o filtro IRR
                 fractional_error_trk_IRR.append(phase_error[k])
-            NTW[k] = (phase_error[k]) * Kp_TRK - Kp_TRK * (phase_error[k - 1]) + Ki_TRK * (phase_error[k - 1]) + NTW[
-                k - 1]  # calcula o novo valor de NTW
+            NTW[k] = (phase_error[k]) * Kp_TRK - Kp_TRK * (phase_error[k - 1]) + Ki_TRK * (phase_error[k - 1]) + NTW[k - 1]  # calcula o novo valor de NTW
             # NTW[k] = (phase_error[k]) * Kp_TRK
             OTW[k] = NTW[k] * (FREF / FREQ_RES_TRK)
             # if OTW[k] > 64:
@@ -673,8 +675,8 @@ if __name__ == "__main__":
         # OTW_pvt = 153
         # OTW_acq = 124
         # OTW_trk = 43
-        f_CKV = SET_DCO(87 , 60 , 64 , 0)
-        # f_CKV = SET_DCO(OTW_pvt , OTW_acq , OTW_trk , OTW_trk_f)
+        # f_CKV = SET_DCO(87 , 60 , 64 , 0)
+        f_CKV = SET_DCO(OTW_pvt , OTW_acq , OTW_trk , OTW_trk_f)
         last_To = T0
         T0 = 1 / f_CKV
         freqs[k] = f_CKV  # insere o valor de frequência ajustado no index k
@@ -710,8 +712,8 @@ if __name__ == "__main__":
 
     if SAVE:
         saveresults(timestop=stopTime.strftime("%H:%M:%S") , timediff=diftime.total_seconds() , fout_n=f_CKV / 1e6 ,
-                    desv_n=(f_CKV - (FREF * FCW)) / 1e3 ,
-                    fout_T=np.mean(freqmeanall) / 1e6 , desv_T=(np.mean(freqmeanall) - (FREF * FCW)) / 1e3 ,
+                    desv_n=(f_CKV - (F_DESIRED)) / 1e3 ,
+                    fout_T=np.mean(freqmeanall) / 1e6 , desv_T=(np.mean(freqmeanall) - (F_DESIRED)) / 1e3 ,
                     fout_SDM=SDMfreq , desv_SDM=SDMDesv , result=simulationResults , dfresult=dfresult)
     ################################################################################################################
     
@@ -719,12 +721,12 @@ if __name__ == "__main__":
     print("Calculando o erro de fase em rad/s")
     tckv = np.array(t_CKV[len(t_CKV) - 500000:])
     phase = np.zeros(len(tckv))
-    tref = 1 / (FCW * FREF)
+    tref = 1 / (F_DESIRED)
     for i in range(len(tckv) - 2):
         diff = tref - (tckv[i + 1] - tckv[i])
-        phase[i] = diff * 2*np.pi * FCW * FREF
+        phase[i] = diff * 2*np.pi * F_DESIRED
 
-    print("Max error: ",np.max(phase), " rad/s")
+    print("Max error: ",np.max(phase), " rad/s", "Mean error: ",np.mean(phase), " rad/s")
     ########################################################
 
     ###############   PLOT DOS VALORES DE FREQUÊNCIA E/OU ERROS ######################
@@ -746,7 +748,7 @@ if __name__ == "__main__":
     print("Save CSV")
     df = pd.DataFrame([phase])
     nome_arquivo_csv = 'phaseErrorinRad.csv'
-    df.to_csv(nome_arquivo_csv , index=False , header=False)
+    # df.to_csv(nome_arquivo_csv , index=False , header=False)
     ##################################################################################
 
     ##############  APLICA UM FILTRO NOS VALORES DE PHASE ############################
@@ -772,6 +774,7 @@ if __name__ == "__main__":
     plt.semilogx(freq, mask_phase_noise, label='Phase Noise MASK')
     plt.grid(visible=True)
     plt.legend()
+    plt.yticks([-160, -150, -140, -130, -120, -110, -100, -90, -80, -70])
     plt.xlabel('Freq (Hz)')
     plt.ylabel('Phase Noise [dBc/Hz]')
     # plt.show()
