@@ -4,6 +4,8 @@ import control
 import sympy as sp
 import warnings
 from scipy import signal
+import scienceplots 
+
 
 warnings.filterwarnings('ignore')
 
@@ -71,7 +73,8 @@ def format_plot(name1, name2, sys1, sys2,  omega, margins=False, offset=0):
     omega2 = omega2 / (2 * np.pi)
 
     #mag_dB1 -= 20 * np.log10(1/omega1) - 10 * np.log10(omega1[0] / omega1)
-
+    plt.figure(figsize=(5.5,4), dpi=600)
+    
     plt.subplot(211)
     """     if margins:
         plt.hlines(0, omega1[0], omega1[-1], linestyle='--')
@@ -79,11 +82,14 @@ def format_plot(name1, name2, sys1, sys2,  omega, margins=False, offset=0):
     """
 
     plt.semilogx(omega1, mag_dB1, '-r',  label="{}".format(name1))
-    plt.xlabel('Frequência (Hz)')
+    plt.xlabel('Frequência (Hz)',fontsize=12)
     step = 10
     # plt.yticks(np.arange(-180, -90, step))
-    plt.ylabel('PN (dBc/Hz)')
-    plt.legend()
+    # plt.ylabel('PN (dBc/Hz)')
+    plt.ylabel('Magnitude (dB)',fontsize=12)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.legend(facecolor='white', framealpha=1, fontsize=12)
     plt.grid()
 
     """     if margins:
@@ -110,12 +116,15 @@ def format_plot(name1, name2, sys1, sys2,  omega, margins=False, offset=0):
         plt.hlines(0, omega2[0], omega2[-1], linestyle='--')
         plt.vlines([wp2, wg2], np.min(mag_dB2), np.max(mag_dB2), linestyle='--') 
     """
-    plt.semilogx(omega2, mag_dB2, '-b',  label="{}".format(name2))
-    plt.xlabel('Frequência (Hz)')
-    plt.ylabel('Magnitude (dB)')
-    plt.legend()
+    plt.semilogx(omega2, mag_dB2, 'black',  label="{}".format(name2))
+    plt.xlabel('Frequência (Hz)',fontsize=12)
+    plt.ylabel('Magnitude (dB)',fontsize=12)
+    plt.legend(facecolor='white', framealpha=1,fontsize=12)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
     plt.grid()
     plt.tight_layout()
+    return plt
 
     """  
     if margins:
@@ -244,10 +253,11 @@ fr = 33e6  # Frequeência de referência
 # a = 2 ** -7  # alpha value
 a = 2 ** -6  # alpha value
 # p = 2 ** -14  # rho value
-p = 2 ** -15  # rho value
+p = 2 ** -12  # rho value
 # Coeficiêntes do filtro IIR
 # l = [2 ** -2, 2 ** -3, 2 ** -2, 2 ** -3]
-l = [2 ** -2 , 2 ** -1 , 2 ** -1 , 2 ** -1]
+# l = [2 ** -2 , 2 ** -1 , 2 ** -1 , 2 ** -1]
+l = [2 ** -1 , 2 ** -1 , 2 ** -2 , 2 ** -2]
 
 # Open Loop Unit Gain
 w1 = a * fr * ( 0.5 + 0.5 * np.sqrt(1 + (4 * p / a**2)))
@@ -262,6 +272,14 @@ if __name__ == "__main__":
     loop BandWidth = alpha/2pi * FREF
     
     '''
+    plt.style.use(['science','ieee'])
+    # plt.style.use(['science','ieee'])
+
+    plt.rcParams['legend.frameon'] = True  # Mostrar a moldura da legenda
+    plt.rcParams['legend.edgecolor'] = 'lightgray'  # Cor da borda da legenda
+    plt.rcParams['legend.facecolor'] = 'lightgray'  # Cor do fundo da legenda
+    plt.rcParams['legend.shadow'] = False  # Adicionar sombra à legenda
+    
     w = np.logspace(3, 8, 100000)  # List of frequencies in rad/sec to be used for frequency response ( 10^-1 até 10^3)
     margem = True
     # show the response in frequency of signal sampled
@@ -273,19 +291,22 @@ if __name__ == "__main__":
 
     mag, phase, f, Hol_irr = h_to_bode(H=HOL, freq=w, irr=l, margem=margem, prints=True, plot=False)
     # plt.figure()
-    format_plot("Open Loop Hol(s)" ,"Open Loop Hol(s) + IRR", Hol, Hol_irr, w, margins=True)
+    # format_plot("Open Loop Hol(s)" ,"Open Loop Hol(s) + IRR", Hol, Hol_irr, w, margins=True)
 
-    plt.figure()
-    # # Função de tranferência de loop fechado para referência
-    Hcl_ref = N * (Hol / (1 + Hol))
-    Hcl_ref_irr = N * (Hol_irr / (1 + Hol_irr))
-    format_plot("Closed Loop Hcl reference(s)", "Closed Loop Hcl reference(s) + IRR", Hcl_ref, Hcl_ref_irr, w, margins=True)
+    # # plt.figure()
+    # plt.figure(figsize=(6,4), dpi=600)
+    # # # Função de tranferência de loop fechado para referência
+    # Hcl_ref = N * (Hol / (1 + Hol))
+    # Hcl_ref_irr = N * (Hol_irr / (1 + Hol_irr))
+    # format_plot("Closed Loop Hcl reference(s)", "Closed Loop Hcl reference(s) + IRR", Hcl_ref, Hcl_ref_irr, w, margins=True)
 
-    plt.figure()
+    # plt.figure()
+    plt.figure(figsize=(6,4), dpi=600)
     # # Função de tranferência de loop fechado para o TDC
     Hcl_TDC = (Hol / (1 + Hol))
     Hcl_TDC_irr = (Hol_irr / (1 + Hol_irr))
-    format_plot("$H_{TDC}$", "$H_{TDC}$ + IRR", Hcl_TDC, Hcl_TDC_irr, w, margins=True)
+    plt = format_plot("$H_{TDC}$", "$H_{TDC}$ + IRR", Hcl_TDC, Hcl_TDC_irr, w, margins=True)
+    plt.savefig(r'C:\Users\ander\OneDrive\Área de Trabalho\Imagens\s_domain_htdc_loop_filter.eps',format='eps')
     """ 
         plt.figure()
         t, y = control.step_response(Hcl_TDC)
@@ -301,19 +322,22 @@ if __name__ == "__main__":
     """
 
 
-    plt.figure()
+    # plt.figure()
+    plt.figure(figsize=(6,4), dpi=600)
     # # Função de tranferência de loop fechado para o DCO
     Hcl_DCO = (1 / (1 + Hol))
     Hcl_DCO_irr = (1 / (1 + Hol_irr))
-    format_plot("$H_{DCO}$", "$H_{DCO}$ + IRR", Hcl_DCO, Hcl_DCO_irr, w, margins=True)
-
-    plt.figure()
-    num = [1]
-    den = [1, 0,0,0]  # Denominador é s
-    tf = control.TransferFunction(num, den)
-    Hcl_ADPLL = Hcl_DCO * Hcl_TDC
-    Hcl_ADPLL_irr = Hcl_DCO_irr * Hcl_TDC_irr * Hcl_ref_irr
-    format_plot("Ruído de fase do DCO", "Ruído de fase do ADPLL + IRR", Hcl_ADPLL, Hcl_ADPLL_irr, w, margins=False, offset=0)
+    plt = format_plot("$H_{DCO}$", "$H_{DCO}$ + IRR", Hcl_DCO, Hcl_DCO_irr, w, margins=True)
+    plt.savefig(r'C:\Users\ander\OneDrive\Área de Trabalho\Imagens\s_domain_hdco_loop_filter.eps', bbox_inches='tight',format='eps')
+    # plt.figure()
+    # plt.figure(figsize=(6,4), dpi=600)
+    # num = [1]
+    # den = [1, 0,0,0]  # Denominador é s
+    # tf = control.TransferFunction(num, den)
+    # Hcl_ADPLL = Hcl_DCO * Hcl_TDC
+    # # Hcl_ADPLL_irr = Hcl_DCO_irr * Hcl_TDC_irr * Hcl_ref_irr
+    # plt = format_plot("Ruído de fase do DCO", "Ruído de fase do ADPLL + IRR", Hcl_ADPLL, Hcl_ADPLL_irr, w, margins=False, offset=0, )
+   
     # plt.figure()
     # control.bode(Hcl_DCO_irr, w, Hz=True, dB=True, deg=False, Plot=True, margins=False)
     """     mag, phase, f = control.bode(Hcl_ADPLL, omega=w, Hz=True, dB=False, deg=True, margins=margem, plot=False)

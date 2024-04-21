@@ -263,20 +263,35 @@ def plot_histogram_noise(lenght):
     lenght     :  Quantidade de pontos aleatórios
     '''
     global Jt_noise , Wt_noise
-    jitter_noise = np.random.randn(lenght) * Jt_noise
-    wander_noise = np.random.randn(lenght) * Wt_noise
+    jitter_noise = np.random.randn(lenght) * 103e-15
+    wander_noise = np.random.randn(lenght) * 17e-15
+    # plt.style.use(['science','ieee'])
+    plt.rcParams['legend.frameon'] = True  # Mostrar a moldura da legenda
+    plt.rcParams['legend.edgecolor'] = 'lightgray'  # Cor da borda da legenda
+    plt.rcParams['legend.facecolor'] = 'lightgray'  # Cor do fundo da legenda
+    # plt.figure()
+    # plt.figure(figsize=(8,4), dpi=600)
+    plt.figure(figsize=(6.4,4), dpi=600)
     plt.subplot(121)
     # plt.hist(jitter_noise , bins=100 , label="jitter") 
-    plt.hist(jitter_noise , bins=100 , label="Jitter $\\sigma_{\\Delta t}$ = 103 fs ") 
+    plt.hist(jitter_noise , bins=100 , label="$\\sigma_{\\Delta t}$ = 103 fs ") 
     #label="Normal distribution of the Jitter noise")
-    plt.legend()
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    # plt.legend(loc='upper left')#,fontsize=)
+    plt.legend(facecolor='white', framealpha=1, loc='center left', fontsize=10)
     plt.grid(visible=True)
     plt.subplot(122)
     # plt.hist(wander_noise , bins=100 , color="r" , label="Wander")
-    plt.hist(wander_noise , bins=100 , color="r" , label="Wander $\\sigma_{\\Delta T}$ = 17 fs ") 
+    plt.hist(wander_noise , bins=100 , color="r" , label="$\\sigma_{\\Delta T}$ = 17 fs ") 
     #label="Normal distribution of the wander noise")
-    plt.legend()
+    # plt.legend(loc='upper left')#,fontsize=8)
+    plt.legend(facecolor='white', framealpha=1, loc='center left', fontsize=10)
     plt.grid(visible=True)
+    plt.xticks([-6e-14, -4e-14,-2e-14,-0e-14,2e-14,4e-14,6e-14], fontsize=12)
+    plt.yticks(fontsize=12)
+    # plt.grid(visible=True)
+    plt.savefig(r'C:\Users\ander\OneDrive\Área de Trabalho\Imagens\noise_distribuition_normal.eps', bbox_inches='tight',format='eps' )
     plt.show()
 
 '''------------------------------------------------------------------------------------------------------- '''
@@ -386,12 +401,12 @@ DIVISION_OUTPUT = 2 # Divisor after DCO output
 FREF = 26e6  # Frequência de referência
 F_DESIRED = 2.4e9
 NOISE = True
-IRR = True
 SDM = False
+IRR = False
 SAVE = False
-ENGLISH = True
-MISMATCH_DCO = 5/100 # 0,01%
-TDC_MISMATCH = 5/100  #5%
+ENGLISH = False
+MISMATCH_DCO = 0#5/100 # 0,01%
+TDC_MISMATCH = 0#5/100  #5%
 '''------------------------------------------------------------------------------------------------------- '''
 '''
 Normalize the FCW integer + fractional in relationship the Nbits resolutions
@@ -658,14 +673,14 @@ if __name__ == "__main__":
         if trk_bank_calib:
             #  error_fractional[k] = TDC(t_R*TDC_DIVISOR , t_CKV[n-1]*TDC_DIVISOR ,1 / np.sum(freq_array))
             #  error_fractional[k] = TDC(t_R*TDC_DIVISOR , t_CKV[n]*TDC_DIVISOR ,1 / np.sum(freq_array))
-            error_fractional[k] = TDC(t_R , t_CKV[n] ,1 / (np.sum(freq_array)))
+            error_fractional[k] = 0#TDC(t_R , t_CKV[n] ,1 / (np.sum(freq_array)))
         RV_k = RV_n  # variable phase accumulator
         erro_esperado = f_CKV / FREF
         erro_esperado = FCW - erro_esperado
         phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
         if int(phase_error[k]) < 0:
             phase_error[k] = phase_error[k - 1]
-            print("if int(phase_error[k]) < 0:", phase_error[k])
+            #print("if int(phase_error[k]) < 0:", phase_error[k])
             pass
         #######################################################################################################################
 
@@ -736,8 +751,8 @@ if __name__ == "__main__":
                 OTW[k] = 0
             OTW_trk = OTW[k]  # calcula o novo valor de NTW como inteiro
         #######################################################################################################################
-        # f_CKV = SET_DCO(93 , 48 , 34 , OTW_trk_f)   #2,4Ghz
-        f_CKV = SET_DCO(OTW_pvt , OTW_acq , OTW_trk , OTW_trk_f)
+        f_CKV = SET_DCO(85 , 63 , 100 , OTW_trk_f)   #2,4Ghz
+        # f_CKV = SET_DCO(OTW_pvt , OTW_acq , OTW_trk , OTW_trk_f)
         last_To = T0
         T0 = 1 / f_CKV
         freqs[k] = f_CKV/DIVISION_OUTPUT  # insere o valor de frequência ajustado no index k
@@ -813,9 +828,13 @@ if __name__ == "__main__":
     else:
         label1 = "Ciclos de clock de referência"
         label2 = 'Frequência de saída do DCO (GHz)'
-    plt.style.use(['science','ieee'])
+    # plt.style.use(['science','ieee'])
+    # plt.style.use(['science','ieee'])
+    plt.rcParams['legend.frameon'] = True  # Mostrar a moldura da legenda
+    plt.rcParams['legend.edgecolor'] = 'lightgray'  # Cor da borda da legenda
+    plt.rcParams['legend.facecolor'] = 'lightgray'  # Cor do fundo da legenda
     # plt.figure()
-    plt.figure(figsize=(3.54,2), dpi=600)
+    # plt.figure(figsize=(6,4), dpi=600)
     indice = 800
     marker_dB = freqs[indice]/1e9
     label_anotate = '$\\Delta f = $' + '{:.3f}'.format((freqs[4999] - F_DESIRED) / 1e3) + " kHz"
@@ -829,12 +848,14 @@ if __name__ == "__main__":
     # # plt.plot(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, '.')
     # # plt.stem(np.arange(0, len(fractional_error_trk), 1), fractional_error_trk, linefmt='r', markerfmt='.', basefmt="-b")
     # # plt.plot(np.arange(0, len(fractional_error_trk_IRR), 1), fractional_error_trk_IRR, '-b')
-    plt.legend(loc='lower right')#,fontsize=12)
+    plt.legend(loc='lower right',fontsize=11,facecolor='white', framealpha=1)#,fontsize=12)
     # plt.xticks([0,50,100, 150, 200, 250, 300, 350, 400, 450, 500])
-    plt.xlabel(label1)#, fontsize=11)
-    plt.ylabel(label2)#, fontsize=11)
+    plt.xlabel(label1, fontsize=12)
+    plt.ylabel(label2, fontsize=12)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
     plt.grid(visible=True)
-    plt.savefig(r'C:\Users\ander\OneDrive\Área de Trabalho\artigo\f_out.png', bbox_inches='tight')
+    # plt.savefig(r'C:\Users\ander\OneDrive\Área de Trabalho\Imagens\f_out_plot.eps', bbox_inches='tight',format='eps')
     # plt.show()
     ##################################################################################
 
@@ -914,6 +935,7 @@ if __name__ == "__main__":
     # SaveCsvValues("PN_model_sem_TDC.csv",x=f, y=Xdb_o)
     # SaveCsvValues("PN_desvio_0.csv",x=f, y=Xdb_o)
     # SaveCsvValues("PN_com_desvio_1.csv",x=f, y=Xdb_o)
+    SaveCsvValues("last_sim.csv",x=f, y=Xdb_o)
     plt.semilogx(f , Xdb_o , label=label1)
     plt.scatter(marker, marker_dB, color='black', marker='o', label=f'{marker_dB:.2f} dBc/Hz  @1 MHz')
     # plt.scatter(marker_tdc, marker_dB_tdc, color='red', marker='o', label=f'{marker_dB_tdc:.2f} dBc/Hz  @100 kHz')

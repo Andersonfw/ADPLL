@@ -259,7 +259,12 @@ if __name__ == "__main__":
     w = np.logspace(3, 8, 10000)  # List of frequencies in rad/sec to be used for frequency response ( 10^-1 até 10^3)
     margem = True
     plt.style.use(['science','ieee'])
-    plt.figure(figsize=(3.54,2), dpi=600)
+    plt.style.use(['science','ieee'])
+    plt.rcParams['legend.frameon'] = True  # Mostrar a moldura da legenda
+    plt.rcParams['legend.edgecolor'] = 'lightgray'  # Cor da borda da legenda
+    plt.rcParams['legend.facecolor'] = 'lightgray'  # Cor do fundo da legenda
+    # plt.figure(figsize=(3.54,2), dpi=600)
+    plt.figure(figsize=(6,4), dpi=600)
     # plt.figure()
     # Plotar a resposta ao degrau
     #plt.plot(t, y)
@@ -271,12 +276,16 @@ if __name__ == "__main__":
         t, y = control.step_response(Hcl_TDC)
         plt.plot(t, y, label=f"$\zeta$: {qsi:.2f}  $K_I$={pas[sys]}")
     #plt.title('Resposta ao Degrau da função $H_{TDC}$ variando $\zeta$ com $K_p=2^-5$ e $f_{REF}=$ 26MHz')
-    plt.xlabel('Time (s)')#, fontsize=12)
-    plt.ylabel('Step responde')#,fontsize=12)
-    plt.legend()#fontsize=12)
+    # plt.xlabel('Time (s)')#, fontsize=12)
+    plt.xlabel('Tempo (s)', fontsize=12)
+    # plt.ylabel('Step responde')#,fontsize=12)
+    plt.ylabel('Resposta',fontsize=12)
+    plt.legend(facecolor='white', framealpha=1,fontsize=12)
     plt.xlim(0, 2e-5)
+    plt.yticks(fontsize=12)
+    plt.xticks(fontsize=12)
     plt.grid()
-    plt.savefig(r'C:\Users\ander\OneDrive\Área de Trabalho\artigo\step_htdc.png', bbox_inches='tight')
+    plt.savefig(r'C:\Users\ander\OneDrive\Área de Trabalho\Imagens\step_htdc.eps', bbox_inches='tight', format='eps')
 
     plt.tight_layout()
     plt.show()
