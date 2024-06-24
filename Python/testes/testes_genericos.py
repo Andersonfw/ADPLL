@@ -401,8 +401,8 @@ DIVISION_OUTPUT = 2 # Divisor after DCO output
 FREF = 26e6  # Frequência de referência
 F_DESIRED = 2.4e9
 NOISE = True
-SDM = False
 IRR = False
+SDM = False
 SAVE = False
 ENGLISH = False
 MISMATCH_DCO = 0#5/100 # 0,01%
@@ -511,8 +511,9 @@ deltaf = 0.5e6  # offset frequency
 
 j_noise = (t_required / (2 * np.pi)) * np.sqrt(L_j * f_desired)  # Jitter noise standard deviation
 W_noise = deltaf / f_desired * np.sqrt(t_required) * np.sqrt(L_w)  # Wander noise standard deviation (including the 1/f noise)
-# W_noise = 1 / np.sqrt(DIVISION_OUTPUT) * W_noise
+#W_noise = 1/np.sqrt(DIVISION_OUTPUT) * W_noise
 # Converte o número em um decimal
+j_noise *= np.sqrt(DIVISION_OUTPUT)
 j_decimal = decimal.Decimal(j_noise)
 w_decimal = decimal.Decimal(W_noise)
 # Arredonda o número com uma precisão de 15 dígitos
@@ -680,7 +681,7 @@ if __name__ == "__main__":
         phase_error[k] = (RR_k - RV_k + error_fractional[k])  # Phase detector
         if int(phase_error[k]) < 0:
             phase_error[k] = phase_error[k - 1]
-            #print("if int(phase_error[k]) < 0:", phase_error[k])
+            print("if int(phase_error[k]) < 0:", phase_error[k])
             pass
         #######################################################################################################################
 
@@ -916,7 +917,7 @@ if __name__ == "__main__":
     indice = np.where(f == marker)[0][0]
     marker_dB = Xdb_o[indice]
 
-    marker_tdc = 1e3  # Substitua pelo valor específico de frequência desejado
+    marker_tdc = 500e3  # Substitua pelo valor específico de frequência desejado
     indice_tdc = np.where(f == marker_tdc)[0][0]
     marker_dB_tdc = Xdb_o[indice_tdc]
     
@@ -938,7 +939,7 @@ if __name__ == "__main__":
     SaveCsvValues("last_sim.csv",x=f, y=Xdb_o)
     plt.semilogx(f , Xdb_o , label=label1)
     plt.scatter(marker, marker_dB, color='black', marker='o', label=f'{marker_dB:.2f} dBc/Hz  @1 MHz')
-    # plt.scatter(marker_tdc, marker_dB_tdc, color='red', marker='o', label=f'{marker_dB_tdc:.2f} dBc/Hz  @100 kHz')
+    plt.scatter(marker_tdc, marker_dB_tdc, color='red', marker='o', label=f'{marker_dB_tdc:.2f} dBc/Hz  @500 kHz')
     # plt.semilogx(freq, mask_phase_noise, label='Phase Noise MASK')
     plt.grid(visible=True)
     plt.legend()

@@ -115,7 +115,7 @@ def format_plot(name1, name2, sys1, sys2,  omega, margins=False, offset=0):
     plt.semilogx(omega1, mag_dB1, '-r')
     plt.xlabel('Frequência (Hz)',fontsize=12)
     step = 10
-    plt.yticks(np.arange(-150, -90, step))
+    plt.yticks(np.arange(-150, -90, step),fontsize=12)
     plt.xticks(fontsize=12)
     plt.ylabel('PN (dBc/Hz)',fontsize=12)
     # plt.legend()
